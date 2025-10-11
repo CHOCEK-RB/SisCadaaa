@@ -5,6 +5,9 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
 import { ProfileModule } from './domain/profiles/profile.module';
+import { CourseModule } from './domain/courses/course.module';
+import { ClassroomModule } from './domain/classroom/classrom.module';
+import { GroupsModule } from './domain/groups/groups.module';
 
 @Module({
   imports: [
@@ -26,6 +29,9 @@ import { ProfileModule } from './domain/profiles/profile.module';
     }),
 
     ProfileModule,
+    CourseModule,
+    ClassroomModule,
+    GroupsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
