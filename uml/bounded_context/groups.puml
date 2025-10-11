@@ -1,0 +1,48 @@
+package "AcademicGroups" {
+  package Aggregates {
+    class AcademicGroup <<(A), Aggregate Root>> {
+      - id: number
+      - name: string
+      - type: GroupType
+      - capacity: int
+
+      + assignTeacher(teacherId: UUID): void
+      + addSchedule(slot: ScheduleSlot): void
+      + isFull(currentStudents: int): boolean
+      + completeTopic(topicId: UUID): void
+      + getSchedule(): List<ScheduleSlot>
+    }
+
+    class ScheduleSlot <<(V), Value Object>> {
+      - day: DayOfWeek
+      - startTime: Time
+      - endTime: Time
+      - classroomId: UUID
+    }
+
+    enum DayOfWeek { 
+      MONDAY
+      TUESDAY
+      WEDNESDAY
+      THURSDAY
+      FRIDAY 
+    }
+
+    enum GroupType {
+      LABORATORY
+      THEORY
+      PRACTICE
+    }
+  }
+
+  package Repositories {
+    interface IAcademicGroupRepository <<(I, #BDB76B)>> {
+      + findById(id: UUID): AcademicGroup
+      + findByCourse(courseId: UUID): List<AcademicGroup>
+      + save(group: AcademicGroup): void
+    }
+  }
+}
+
+ScheduleSlot "1..*" --> "1" AcademicGroup 
+

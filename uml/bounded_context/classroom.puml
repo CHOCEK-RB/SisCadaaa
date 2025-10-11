@@ -1,0 +1,18 @@
+package "Classroom Information" {
+  package Aggregates {
+    class Classroom << (A) Aggregate Root >> {
+      - id: number
+      - name: string
+      - type: ClassroomType
+    }
+    
+    enum ClassroomType {
+      NORMAL
+      LABORATORY
+    }
+  }
+  
+  package Repositories {
+    interface IClassroomRepository <<(I, #BDB76B)>> {}
+  }
+}

@@ -1,0 +1,62 @@
+package "Data Transfer Objects (DTOs)" {
+  class EnrollStudentDTO <<DTO>> {}
+  class GradeInputDTO <<DTO>> {}
+  class TakeAttendanceDTO <<DTO>> {}
+  class CreateCourseDTO <<DTO>> {}
+  class UserProfileDTO <<DTO>> {}
+  class UserCredentialsDTO <<DTO>> {}
+}
+
+package "Application Services (Use Cases)" {
+  class EnrollmentApplicationService <<Service>> {
+    - enrollmentRepo: IEnrollmentRepository
+    - groupRepo: IAcademicGroupRepository
+
+    + handleEnrollStudent(dto: EnrollStudentDTO): void
+    + handleInputGrades(enrollmentId: UUID, grades: List<GradeInputDTO>): void
+    + handleWithdrawEnrollment(enrollmentId: UUID): void
+    + getStudentGradesForCourse(studentId: UUID, courseId: UUID): List<Grade>
+  }
+
+  class AttendanceApplicationService <<Service>> {
+    - attendanceRepo: IAttendanceRecordRepository
+    - balanceService: AcademicBalanceApplicationService
+    
+    + handleTakeAttendance(dto: TakeAttendanceDTO): void
+    + handleCancelClass(groupId: UUID, date: Date): void
+  }
+  
+  class ReservationApplicationService <<Service>> {
+    - reserveRepo: IReserveRepository
+    - classroomRepo: IClassroomRepository
+    
+    + handleCreateReservation(teacherId: UUID, classroomId: UUID, ...): Reserve
+    + handleCancelReservation(reserveId: UUID): void
+    + findAvailableClassrooms(date: Date, ...): List<Classroom>
+  }
+  
+  class AcademicBalanceApplicationService <<Service>> {
+    - hourLogRepo: IAcademicHourLogRepository
+    
+    + getCourseHourBalance(courseId: UUID): float
+    + _createLogForCancelledClass(record: AttendanceRecord): void
+    + _createLogForRecoveredClass(record: AttendanceRecord): void
+  }
+  
+  class ProfileApplicationService <<Service>> {
+    - studentRepo: IStudentRepository
+    - teacherRepo: ITeacherRepository
+    
+    + updateUserProfile(userId: UUID, profile: UserProfileDTO): void
+    + getProfile(userId: UUID): UserProfileDTO
+  }
+
+  class AccessApplicationService <<Service>> {
+    - userRepo: IUserRepository
+    
+    + handleUserLogin(dto: UserCredentialsDTO): AuthToken
+    + handleUserRegistration(dto: ...): User
+  }
+}
+
+

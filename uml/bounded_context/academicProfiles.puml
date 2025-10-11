@@ -1,0 +1,49 @@
+package "Academic Profiles" {
+  package Aggregates {
+    class Student <<Aggregate Root>> {
+      - id: UUID
+      - name: string
+      - lastName: string
+      - semester: int
+
+      + updateDetails(name: string, lastName: string, semester: int): void
+      + getProfile(): StudentDetailsDTO
+    }
+
+    class Teacher <<Aggregate Root>> {
+      - id: UUID
+      - name: string
+      - lastName: string
+      - department: string
+
+      + updateDetails(name: string, lastName: string, department: string): void
+      + getProfile(): TeacherDetailsDTO
+    }
+
+    class Secretary <<Aggregate Root>> {
+      - id: UUID
+      - name: string
+      - lastName: string
+      - office: string
+    }
+
+    class Admin <<Aggregate Root>> {
+      - id: UUID
+      - name: string
+      - lastName: string
+      - accessLevel: int
+    }
+  }
+
+  package Repositories {
+    interface IStudentRepository <<(I, #BDB76B)>> {
+      + findById(id: UUID): Student
+      + save(student: Student): void
+    }
+      
+    interface ITeacherRepository <<(I, #BDB76B)>> {
+      + findById(id: UUID): Student
+      + save(student: Student): void
+    }
+  }
+}

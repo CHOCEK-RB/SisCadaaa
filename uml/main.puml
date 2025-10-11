@@ -1,0 +1,85 @@
+@startuml
+
+!theme reddress-darkred
+
+'hide methods
+
+<style>
+  package {
+    BackgroundColor: #222222
+  }
+
+  class {
+    BackgroundColor: #444444
+  }
+</style>
+
+skinparam BackgroundColor #000000
+skinparam ClassBorderColor #8F5300
+skinparam ClassBorderThickness 2
+skinparam ArrowThickness 2
+skinparam ArrowFontSize 20
+skinparam ArrowFontColor #F1FF00
+skinparam packageStyle folder
+skinparam shadowing true
+'skinparam linetype ortho
+
+top to bottom direction
+
+package "Presentation" <<API>>{
+  !include layers/presentation.puml
+}
+
+package "Application" <<Use Cases>>{
+  !include layers/application.puml
+}
+
+package "Domain" <<Business Logic>>{
+  !include bounded_context/academicProfiles.puml
+  !include bounded_context/attendence.puml
+  !include bounded_context/classroom.puml
+  !include bounded_context/courses.puml
+  !include bounded_context/enrollment.puml
+  !include bounded_context/groups.puml
+  !include bounded_context/iam.puml
+  !include bounded_context/reserve.puml
+}
+
+package "Infrastructure" <<External>>{
+  !include layers/infrastructure.puml
+}
+
+Presentation -d-> Application
+Application -d-> Domain
+Domain -d-> Infrastructure
+
+AcademicGroups --u[hidden]-> ReserveProccess
+ReserveProccess --d[hidden]-> AcademicGroups
+Student ..> User
+Teacher ..> User
+Secretary ..> User
+Admin ..> User
+
+Teacher ..> AcademicGroup : enseña
+AcademicCourse ..> AcademicGroup : tiene grupos
+AttendanceRecord "0..*" -u-> "1" AcademicGroup : registra asistencia de
+
+Enrollment "0..*" ..> "1" Student: es realizado
+Enrollment "1" ..> "1" AcademicCourse: es de
+Enrollment "1" ..> "1..*" AcademicGroup: tiene
+
+AttendanceRecord "1..*" ..> "1" Teacher: es realizado 
+
+Reserve .u.> Classroom : usa aula
+Reserve ..> Teacher : solicitado por
+
+AccessService ..> IUserRepository
+CatalogService ..> ICourseRepository
+EnrollmentService ..> IEnrollmentRepository
+EnrollmentService ..> IAcademicGroupRepository
+EnrollmentService ..> EnrollmentFactory
+AttendanceService ..> IAttendanceRecordRepository
+ReservationService ..> IReserveRepository
+ReservationService ..> IClassroomRepository
+
+@enduml

@@ -1,0 +1,46 @@
+package Attendance {
+  package Aggregates {
+    class AttendanceRecord << (A) Aggregate Root >> {
+      - id: UUID
+      - idTeacher: UUID
+      - activityGroupId: UUID
+      - classDate: DateTime
+      - studentStatuses: Map<UUID, AttendanceStatus> 
+      - ipAddress: string
+      - location: LocationStatus
+
+      + markStudent(studentId: UUID, status: AttendanceStatus): void
+      + finalizeRecord(): void
+      + updateSessionStatus(status: SessionStatus): void
+    }
+
+    enum AttendanceStatus {
+      PRESENT
+      ABSENT
+    }
+
+    enum LocationStatus {
+      UNIVERSITY
+      OTHER
+    }
+  }
+
+  package Repositories {
+    interface IAttendanceRecordRepository <<(I, #BDB76B)>> {
+      + findById(id: UUID): AttendanceRecord
+      + findByGroupAndDate(groupId: UUID, date: Date): AttendanceRecord
+      + save(record: AttendanceRecord): void
+    }
+  }
+  package Services {
+    class AttendanceService <<(S, #ADD8E6)>> {
+      - attendanceRepo: IAttendanceRecordRepository
+
+      + takeAttendance(teacherId: UUID, groupId: UUID, statuses: Map<UUID, AttendanceStatus>): AttendanceRecord
+      + getStudentAttendanceReport(studentId: UUID, courseId: UUID): List<AttendanceRecord>
+      + getGroupAttendanceHistory(groupId: UUID): List<AttendanceRecord>
+    }
+  }
+}
+
+AttendanceStatus -[hidden]u->LocationStatus

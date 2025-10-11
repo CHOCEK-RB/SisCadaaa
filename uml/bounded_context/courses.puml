@@ -1,0 +1,69 @@
+package "Academic Courses" {
+  package Aggregate {
+    class AcademicCourse <<(A) Aggregate Root>> {
+      - id: UUID
+      - idCordinator: UUID
+      - topicStates: Map<UUID, TopicState>
+
+      + updateDetails(name: string, credits: int): void
+      + addTopic(topic: CourseTopic): void
+      + removeTopic(topicId: UUID): void
+      + defineGradingScheme(scheme: GradingScheme): void
+      + addEvidence(evidence: Evidence): void
+    }
+
+    class Course <<(E) Entity>> {
+      id: UUID
+      name: string
+      credits: number
+      semester: number
+      pre_rrq: List<UUID>
+    }
+
+    class CourseTopic <<(E) Entity>> {
+      - id: UUID
+      - topic: string
+    }
+
+    class GradingScheme <<(V) Value Object>> {
+      - firstContinue: number
+      - secondContinue: number
+      - thirdContinue: number
+      - firstPartial: number
+      - secondPartial: number
+      - thirdPartial: number
+    }
+
+    class Evidence <<(V) Value Object>> {
+      - urlHighestGrade: string
+      - urlLowestGrade: string
+      - urlAverageGrade: string
+    }
+
+    enum TopicState {
+      COMPLETE
+      PENDING
+    }
+  }
+
+  package Repositories {
+    interface ICourseRepository <<(I, #BDB76B)>> {
+      + findById(id: UUID): Course
+      + save(course: Course): void
+    }
+  }
+  package Services {
+    class CatalogService <<(S, #ADD8E6)>> {
+      - courseRepo: ICourseRepository
+
+      + createNewCourse(name: string, credits: int): Course
+      + getCourseDetails(courseId: UUID): Course
+      + getCourseSyllabus(courseId: UUID): List<CourseTopic>
+    }
+  }
+}
+
+Course --> AcademicCourse
+CourseTopic "1..*" --> "1" AcademicCourse
+GradingScheme --> AcademicCourse
+Evidence --> AcademicCourse

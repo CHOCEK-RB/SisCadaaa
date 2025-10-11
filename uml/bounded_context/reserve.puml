@@ -1,0 +1,37 @@
+package "ReserveProccess" {
+  package Aggregates {
+    class Reserve << (A) Aggregate Root >> {
+      - id: number
+      - classId: number
+      - purpose: ReserveType
+      - topic: string
+      - classDate: Date
+      - startTime: Time
+      - endTime: Time
+
+      + changeTime(newDate: Date, newStart: Time, newEnd: Time): void
+      + cancel(): void
+    }
+    
+    enum ReserveType {
+      RECOVERY
+      COUNSELING
+      OTHER 
+    }
+  }
+
+  package Repositories {
+    interface IReserveRepository <<(I, #BDB76B)>> {}
+  }
+
+  package Services {
+    class ReservationService <<(S, #ADD8E6)>> {
+      - reserveRepo: IReserveRepository
+      - classroomRepo: IClassroomRepository
+      
+      + createReservation(teacherId: UUID, classroomId: UUID, date: Date, purpose: ReserveType): Reserve
+      + cancelReservation(reserveId: UUID): void
+      + findAvailableClassrooms(date: Date, startTime: Time, endTime: Time): List<Classroom>
+    }
+  }
+}

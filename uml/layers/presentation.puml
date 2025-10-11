@@ -1,0 +1,54 @@
+class UserController <<Controller>> {
+  - accessService: AccessApplicationService
+  - profileService: ProfileApplicationService
+ 
+ + POST /users/register(): HttpResponse
+  + POST /users/login(): HttpResponse
+  + POST /users/activate(): HttpResponse
+  + GET /users/me/profile(): HttpResponse
+  + PUT /users/me/profile(): HttpResponse
+  + PUT /users/me/password(): HttpResponse
+}
+
+class EnrollmentController <<Controller>> {
+  - enrollmentService: EnrollmentApplicationService
+ 
+  + POST /enrollments(): HttpResponse
+  + POST /enrollments/{id}/groups(): HttpResponse
+  + DELETE /enrollments/{id}(): HttpResponse
+  + GET /students/{id}/enrollments(): HttpResponse
+  + POST /enrollments/{id}/grades(): HttpResponse
+}
+
+class AttendanceController <<Controller>> {
+  - attendanceService: AttendanceApplicationService
+
+  + POST /attendance-records(): HttpResponse
+  + PUT /attendance-records/{id}/cancel(): HttpResponse
+  + GET /groups/{id}/attendance(): HttpResponse
+}
+
+class AcademicBalanceController <<Controller>> {
+  - balanceService: AcademicBalanceApplicationService
+
+  + GET /courses/{id}/hour-balance(): HttpResponse
+}
+
+class ReservationController <<Controller>> {
+  - reservationService: ReservationApplicationService
+  
+  + POST /reservations(): HttpResponse
+  + DELETE /reservations/{id}(): HttpResponse
+  + GET /teachers/{id}/reservations(): HttpResponse
+  + GET /classrooms/available(): HttpResponse
+}
+
+class AdminController <<Controller>> {
+  - adminService: AdminApplicationService
+  
+  + POST /courses(): HttpResponse
+  + POST /courses/{id}/groups(): HttpResponse
+  + PUT /groups/{id}/teacher(): HttpResponse
+}
+
+

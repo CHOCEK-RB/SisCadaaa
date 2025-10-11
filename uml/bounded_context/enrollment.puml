@@ -1,0 +1,63 @@
+package "Enrollment & Grading" {
+  package Aggregates {
+    class Enrollment << (A) Aggregate Root >> {
+      - id: UUID
+      - idStudent: UUID
+      - idCourse: UUID
+      - period: string
+      - assignedGroupIds: List<UUID>
+      - state: EnrolledState
+
+      + assignToGroup(groupId: UUID): void
+      + removeFromGroup(groupId: UUID): void
+      + recordGrade(grade: Grade): void
+      + updateGrade(evaluationType: string, newScore: float): void
+      + withdraw(): void
+      + complete(): void
+      + calculateFinalGrade(scheme: GradingScheme): float
+    }
+
+    class Grades << (V) Value Object >> {
+      - firstContinue: number
+      - secondConitnue: number
+      - thirdContinue: number
+      - firstPartial: number
+      - secondPartial: number
+      - thirdPartial: number
+    }
+
+    enum EnrolledState {
+      ENROLLED
+      WITHDRAWN
+      COMPLETED
+    }
+  }
+
+  package Repositories {
+    interface IEnrollmentRepository <<(I, #BDB76B)>> {
+      + findById(id: UUID): Enrollment
+      + findByStudentAndCourse(studentId: UUID, courseId: UUID): Enrollment
+      + save(enrollment: Enrollment): void
+    }
+  }
+
+  package Services {
+    class EnrollmentService <<(S, #ADD8E6)>> {
+      - enrollmentRepo: IEnrollmentRepository
+      - groupRepo: IAcademicGroupRepository
+      - factory: EnrollmentFactory
+
+      + enrollStudentToCourse(studentId: UUID, courseId: UUID, groupIds: List<UUID>): Enrollment
+      + assignStudentToLabGroup(enrollmentId: UUID, labGroupId: UUID): void
+      + inputStudentGrades(enrollmentId: UUID, grades: List<Grade>): void
+      + getStudentGrades(enrollmentId: UUID): List<Grade>
+    }
+  }
+  package Factories {
+    class EnrollmentFactory <<(F, #FFD700)>> {
+      + create(student: Student, course: Course, groups: List<AcademicGroup>): Enrollment
+    }
+  }
+}
+
+Grades --> Enrollment

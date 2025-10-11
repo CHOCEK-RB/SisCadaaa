@@ -1,0 +1,37 @@
+package "Persistence" {
+  class PostgresEnrollmentRepository <<Repository Impl>> {
+    - dbContext: PostgresContext
+    
+    + findById(id: UUID): Enrollment
+    + save(enrollment: Enrollment): void
+    + ...
+  }
+
+  class PostgresStudentRepository <<Repository Impl>> {}
+  class PostgresCourseRepository <<Repository Impl>> {}
+  class PostgresUserRepository <<Repository Impl>> {}
+}
+
+package "ExternalServices" {
+  class SmtpEmailService <<Service Impl>> {
+    - smtpClient: SmtpClient
+    
+    + sendPasswordResetEmail(to: string, token: string): void
+    + sendEnrollmentConfirmation(to: string, course: string): void
+  }
+    
+  class LocalFileSystemService <<Service Impl>> {
+    + saveAccreditationFile(file: File, courseId: UUID): FileURL
+    + getFile(fileUrl: FileURL): File
+  }
+}
+
+Persistence -d[hidden]-> ExternalServices
+
+
+PostgresEnrollmentRepository ..|> IEnrollmentRepository
+PostgresStudentRepository ..|> IStudentRepository
+PostgresCourseRepository ..|> ICourseRepository
+PostgresUserRepository ..|> IUserRepository
+
+

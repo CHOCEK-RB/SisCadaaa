@@ -1,0 +1,32 @@
+package "Identity and Access" {
+  package Aggregates {
+    class User <<(A), Aggregate Root>> {
+      + id: UUID
+      + email: string
+      + hashContraseña: string
+      + activo: boolean
+
+      + changePassword(oldHash: string, newHash: string): void
+      + activate(): void
+      + deactivate(): void
+      + generatePasswordResetToken(): string
+    }
+  }
+
+  package Repositories {
+    interface IUserRepository <<(I, #BDB76B)>> {
+      + findById(id: UUID): User
+      + findByEmail(email: string): User
+      + save(user: User): void
+    }
+  }
+  package Services {
+    class AccessService <<(S, #ADD8E6)>> {
+      - userRepo: IUserRepository
+      
+      + registerNewUser(email: string, password: string): User
+      + authenticate(email: string, password: string): User
+      + activateAccount(activationToken: string): boolean
+    }
+  }
+}
