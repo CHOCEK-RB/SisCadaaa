@@ -1,0 +1,14 @@
+services:
+  postgres:
+    container_name: postgres_db
+    image: postgres:latest
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: sisacad
+      POSTGRES_PASSWORD: 123
+      POSTGRES_DB: sistema
+    volumes:
+      - ./data:/var/lib/postgres/data
+
