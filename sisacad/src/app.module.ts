@@ -8,7 +8,7 @@ import { ProfileModule } from './domain/profiles/profile.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.db.env'] }),
 
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
