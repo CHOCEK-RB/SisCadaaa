@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 
 import { ScheduleSlot } from './schedule.entity';
+import { Attendance } from 'src/domain/attendance/aggregates/attendance.entity';
 
 export enum GroupType {
   LABORATORY = 'laboratory',
@@ -27,4 +28,7 @@ export class AcademicGroup {
     eager: true,
   })
   schedule: ScheduleSlot[];
+
+  @OneToMany(() => Attendance, (record) => record.academicGroup)
+  attendances: Promise<Attendance[]>;
 }

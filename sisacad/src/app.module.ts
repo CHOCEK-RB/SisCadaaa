@@ -8,6 +8,7 @@ import { ProfileModule } from './domain/profiles/profile.module';
 import { CourseModule } from './domain/courses/course.module';
 import { ClassroomModule } from './domain/classroom/classrom.module';
 import { GroupsModule } from './domain/groups/groups.module';
+import { AttendanceModule } from './domain/attendance/attendance.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { GroupsModule } from './domain/groups/groups.module';
     ProfileModule,
     CourseModule,
     ClassroomModule,
+    AttendanceModule,
     GroupsModule,
   ],
   controllers: [AppController],
