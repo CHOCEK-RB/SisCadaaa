@@ -9,10 +9,11 @@ import { CourseModule } from './courses/course.module';
 import { ClassroomModule } from './classroom/classrom.module';
 import { GroupsModule } from './groups/groups.module';
 import { AttendanceModule } from './attendance/attendance.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.db.env'] }),
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.db.env', '.env'] }),
 
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -31,6 +32,7 @@ import { AttendanceModule } from './attendance/attendance.module';
 
     UserModule,
     CourseModule,
+    AuthModule,
     ClassroomModule,
     AttendanceModule,
     GroupsModule,
