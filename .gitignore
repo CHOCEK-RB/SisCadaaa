@@ -2,6 +2,7 @@ sisacad/node_modules/
 
 sisacad/dist/
 sisacad/build/
+sisacad/students.csv
 
 *.log
 npm-debug.log*
