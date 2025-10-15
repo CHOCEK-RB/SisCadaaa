@@ -1,5 +1,25 @@
-import { Entity } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToOne,
+  JoinColumn,
+} from 'typeorm';
+
 import { User } from './user.entity';
 
-@Entity()
-export class Teacher extends User {}
+@Entity('teachers')
+export class Teacher {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column('varchar', { length: 70 })
+  name: string;
+
+  @Column('varchar', { length: 70 })
+  lastName: string;
+
+  @OneToOne(() => User, (user) => user.teacherProfile, { cascade: true })
+  @JoinColumn()
+  user: User;
+}

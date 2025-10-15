@@ -25,6 +25,7 @@
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/typeorm": "^11.0.0",
+    "class-validator": "^0.14.2",
     "google-auth-library": "^10.4.0",
     "mysql2": "^3.15.1",
     "pg": "^8.16.3",
