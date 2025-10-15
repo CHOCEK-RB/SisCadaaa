@@ -9,8 +9,12 @@ import { Admin } from './aggregates/admin.entity';
 
 import { UsersController } from './presentation/users.controller';
 import { UsersApplicationService } from './application/users.application.service';
+
 import { IUserRepository } from './infrastructure/iuser.repository';
+import { IStudentRepository } from './infrastructure/istudent.repository';
+
 import { UserPostgresRepository } from './infrastructure/user.postgres.repository';
+import { StudentPostgresRepository } from './infrastructure/student.repository';
 
 @Module({
   imports: [
@@ -24,7 +28,11 @@ import { UserPostgresRepository } from './infrastructure/user.postgres.repositor
       provide: IUserRepository,
       useClass: UserPostgresRepository,
     },
+    {
+      provide: IStudentRepository,
+      useClass: StudentPostgresRepository,
+    },
   ],
-  exports: [IUserRepository, UsersApplicationService],
+  exports: [IUserRepository, IStudentRepository],
 })
 export class UserModule {}

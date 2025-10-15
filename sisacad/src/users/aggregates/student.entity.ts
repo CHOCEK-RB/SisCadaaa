@@ -13,11 +13,17 @@ export class Student {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column({ unique: true })
+  cui: string;
+
   @Column('varchar', { length: 70 })
   name: string;
 
   @Column('varchar', { length: 70 })
-  lastName: string;
+  firstLastName: string;
+
+  @Column('varchar', { length: 70 })
+  secondLastName: string;
 
   @Column({ nullable: true })
   semester?: number;

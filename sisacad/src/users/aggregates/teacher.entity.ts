@@ -17,7 +17,10 @@ export class Teacher {
   name: string;
 
   @Column('varchar', { length: 70 })
-  lastName: string;
+  firstLastName: string;
+
+  @Column('varchar', { length: 70 })
+  secondLastName: string;
 
   @OneToOne(() => User, (user) => user.teacherProfile, { cascade: true })
   @JoinColumn()
