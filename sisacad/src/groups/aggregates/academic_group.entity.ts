@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 
 import { ScheduleSlot } from './schedule.entity';
-import { Attendance } from 'src/domain/attendance/aggregates/attendance.entity';
+import { Attendance } from 'src/attendance/aggregates/attendance.entity';
 
 export enum GroupType {
   LABORATORY = 'laboratory',

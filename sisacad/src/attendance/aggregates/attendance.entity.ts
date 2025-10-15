@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 
-import { AcademicGroup } from 'src/domain/groups/aggregates/academic_group.entity';
+import { AcademicGroup } from 'src/groups/aggregates/academic_group.entity';
 
 export enum LocationStatus {
   UNIVERSITY = 'university',

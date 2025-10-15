@@ -12,4 +12,4 @@ import { Admin } from './aggregates/admin.entity';
     TypeOrmModule.forFeature([User, Student, Teacher, Secretary, Admin]),
   ],
 })
-export class ProfileModule {}
+export class UserModule {}

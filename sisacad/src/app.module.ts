@@ -4,11 +4,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
-import { ProfileModule } from './domain/profiles/profile.module';
-import { CourseModule } from './domain/courses/course.module';
-import { ClassroomModule } from './domain/classroom/classrom.module';
-import { GroupsModule } from './domain/groups/groups.module';
-import { AttendanceModule } from './domain/attendance/attendance.module';
+import { UserModule } from './users/users.module';
+import { CourseModule } from './courses/course.module';
+import { ClassroomModule } from './classroom/classrom.module';
+import { GroupsModule } from './groups/groups.module';
+import { AttendanceModule } from './attendance/attendance.module';
 
 @Module({
   imports: [
@@ -29,7 +29,7 @@ import { AttendanceModule } from './domain/attendance/attendance.module';
       }),
     }),
 
-    ProfileModule,
+    UserModule,
     CourseModule,
     ClassroomModule,
     AttendanceModule,
