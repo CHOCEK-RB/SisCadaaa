@@ -35,6 +35,8 @@ export class GoogleAuthService {
     });
     const payload = ticket.getPayload();
 
+    console.log(payload);
+
     if (!payload || !payload.email) {
       throw new UnauthorizedException('Invalid Google token');
     }

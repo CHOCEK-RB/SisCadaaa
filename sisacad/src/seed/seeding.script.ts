@@ -1,14 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { SeedingModule } from './seeding.module';
-import { SeedingService } from './application/seed_students.service';
+import { ISeederService } from './application/iseeder.service';
 
 async function bootstrap() {
   const appContext = await NestFactory.createApplicationContext(SeedingModule);
 
-  const seeder = appContext.get(SeedingService);
+  const seeder = appContext.get<ISeederService>(ISeederService);
 
   try {
-    await seeder.seedStudentsFromCsv('students.csv');
+    await seeder.runAll();
     console.log('Seeding completed successfully!');
   } catch (error) {
     console.error('Seeding failed:', error);

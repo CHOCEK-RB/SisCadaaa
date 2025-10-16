@@ -28,8 +28,14 @@ export class CourseRepository implements ICourseRepository {
     return this.typeormRepo.find();
   }
 
-  async save(course: Course): Promise<Course> {
-    return this.typeormRepo.save(course);
+  save(course: Course): Promise<Course>;
+  save(courses: Course[]): Promise<Course[]>;
+  async save(courseOrCourses: Course | Course[]): Promise<Course | Course[]> {
+    if (Array.isArray(courseOrCourses)) {
+      return this.typeormRepo.save(courseOrCourses);
+    } else {
+      return this.typeormRepo.save(courseOrCourses);
+    }
   }
 
   async create(code: string, name: string, credits: number): Promise<Course> {
