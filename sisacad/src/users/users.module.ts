@@ -12,9 +12,15 @@ import { UsersApplicationService } from './application/users.application.service
 
 import { IUserRepository } from './infrastructure/iuser.repository';
 import { IStudentRepository } from './infrastructure/istudent.repository';
+import { ITeacherRepository } from './infrastructure/iteacher.repository';
+import { ISecretaryRepository } from './infrastructure/isecretary.repository';
+import { IAdminRepository } from './infrastructure/iadmin.repository';
 
 import { UserPostgresRepository } from './infrastructure/user.postgres.repository';
-import { StudentPostgresRepository } from './infrastructure/student.repository';
+import { StudentPostgresRepository } from './infrastructure/student.postgres.repository';
+import { TeacherPostgresRepository } from './infrastructure/teacher.postgres.repository';
+import { SecretaryPostgresRepository } from './infrastructure/secretary.postgres.repository';
+import { AdminPostgresRepository } from './infrastructure/admin.postgres.repository';
 
 @Module({
   imports: [
@@ -32,7 +38,25 @@ import { StudentPostgresRepository } from './infrastructure/student.repository';
       provide: IStudentRepository,
       useClass: StudentPostgresRepository,
     },
+    {
+      provide: ITeacherRepository,
+      useClass: TeacherPostgresRepository,
+    },
+    {
+      provide: ISecretaryRepository,
+      useClass: SecretaryPostgresRepository,
+    },
+    {
+      provide: IAdminRepository,
+      useClass: AdminPostgresRepository,
+    },
   ],
-  exports: [IUserRepository, IStudentRepository],
+  exports: [
+    IUserRepository,
+    IStudentRepository,
+    ITeacherRepository,
+    ISecretaryRepository,
+    IAdminRepository,
+  ],
 })
 export class UserModule {}
