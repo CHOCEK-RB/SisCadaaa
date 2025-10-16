@@ -9,7 +9,10 @@ import {
 @Entity()
 export class Course {
   @PrimaryGeneratedColumn('uuid')
-  id: number;
+  id: string;
+
+  @Column({ unique: true })
+  code: string;
 
   @Column('varchar', { length: 60 })
   name: string;

@@ -1,0 +1,39 @@
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+
+import { Course } from '../aggregates/course.entity';
+import { ICourseRepository } from './icourse.repository';
+
+@Injectable()
+export class CourseRepository implements ICourseRepository {
+  constructor(
+    @InjectRepository(Course)
+    private readonly typeormRepo: Repository<Course>,
+  ) {}
+
+  async findById(id: string): Promise<Course | null> {
+    return this.typeormRepo.findOne({ where: { id } });
+  }
+
+  async findByCode(code: string): Promise<Course | null> {
+    return this.typeormRepo.findOne({ where: { code } });
+  }
+
+  async findByName(name: string): Promise<Course | null> {
+    return this.typeormRepo.findOne({ where: { name } });
+  }
+
+  async findAll(): Promise<Course[]> {
+    return this.typeormRepo.find();
+  }
+
+  async save(course: Course): Promise<Course> {
+    return this.typeormRepo.save(course);
+  }
+
+  async create(code: string, name: string, credits: number): Promise<Course> {
+    const newCourse = this.typeormRepo.create({ code, name, credits });
+    return this.typeormRepo.save(newCourse);
+  }
+}
