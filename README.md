@@ -40,3 +40,34 @@ cd Sisacad_frontend
 pnpm install
 pnpm run dev
 ```
+
+## Seeding
+- **Requirements:**
+    + **students.csv**
+    ```csv
+    cui,firstLastName,secondLastName,name,email,semester
+    ```
+    + **teachers.csv**
+    ```csv
+    name,firstLastName,secondLastName,email
+    ```
+    + **secretaries.csv**
+    ```csv
+    name,firstLastName,secondLastName,email
+    ```
+    + **admins.csv**
+    ```csv
+    name,firstLastName,secondLastName,email
+    ```
+    + **courses.csv**
+    ```csv
+    code,name,credits,prrq_1,prrq_2,semester
+    ```
+- **Run**
+```
+cd sisacad
+pnpm run seed
+```
+## Suggestion
+- It may ask you for administrator permissions to launch the backend.
+
