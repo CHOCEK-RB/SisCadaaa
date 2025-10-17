@@ -9,5 +9,10 @@ export interface ICourseRepository {
   findAll(): Promise<Course[]>;
   save(course: Course): Promise<Course>;
   save(courses: Course[]): Promise<Course[]>;
-  create(code: string, name: string, credits: number): Promise<Course>;
+  create(
+    code: string,
+    name: string,
+    credits: number,
+    semester: number,
+  ): Promise<Course>;
 }

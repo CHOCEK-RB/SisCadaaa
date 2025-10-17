@@ -3,12 +3,14 @@ import {
   Column,
   PrimaryGeneratedColumn,
   OneToOne,
-  JoinTable,
+  ManyToOne,
   OneToMany,
 } from 'typeorm';
 
 import { Course } from './course.entity';
 import { CourseTopic } from './course_topic.entity';
+
+import { Teacher } from 'src/users/aggregates/teacher.entity';
 
 export class GradingScheme {
   firstContinue: number;
@@ -22,15 +24,23 @@ export class GradingScheme {
 @Entity()
 export class AcademicCourse {
   @PrimaryGeneratedColumn('uuid')
-  id: number;
+  id: string;
 
-  @Column('jsonb')
-  grades: GradingScheme;
+  @OneToOne(() => Teacher)
+  coordinator: Promise<Teacher>;
 
-  @OneToOne(() => Course)
-  @JoinTable()
+  @Column('timestamptz')
+  creationDate: Date;
+
+  @Column({ nullable: true })
+  urlSyllabus?: string;
+
+  @Column('jsonb', { nullable: true })
+  grades?: GradingScheme;
+
+  @ManyToOne(() => Course, (course) => course.academicCourses)
   course: Course;
 
   @OneToMany(() => CourseTopic, (topics) => topics.course)
-  topics: CourseTopic[];
+  topics: Promise<CourseTopic[]>;
 }

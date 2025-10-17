@@ -38,8 +38,18 @@ export class CourseRepository implements ICourseRepository {
     }
   }
 
-  async create(code: string, name: string, credits: number): Promise<Course> {
-    const newCourse = this.typeormRepo.create({ code, name, credits });
+  async create(
+    code: string,
+    name: string,
+    credits: number,
+    semester: number,
+  ): Promise<Course> {
+    const newCourse = this.typeormRepo.create({
+      code: code,
+      name: name,
+      credits: credits,
+      semester: semester,
+    });
     return this.typeormRepo.save(newCourse);
   }
 }

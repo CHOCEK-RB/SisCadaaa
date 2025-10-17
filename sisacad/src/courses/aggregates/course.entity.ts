@@ -4,7 +4,9 @@ import {
   Column,
   ManyToMany,
   JoinTable,
+  OneToMany,
 } from 'typeorm';
+import { AcademicCourse } from './academic_course.entity';
 
 @Entity()
 export class Course {
@@ -26,4 +28,7 @@ export class Course {
   @ManyToMany(() => Course)
   @JoinTable()
   preRrqs: Course[];
+
+  @OneToMany(() => AcademicCourse, (academicCourse) => academicCourse.course)
+  academicCourses: Promise<AcademicCourse[]>;
 }
