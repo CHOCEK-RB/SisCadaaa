@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { ScheduleSlot } from 'src/groups/aggregates/schedule.entity';
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 
 export enum ClassroomType {
   NORMAL = 'normal',
@@ -8,11 +9,17 @@ export enum ClassroomType {
 @Entity()
 export class Classroom {
   @PrimaryGeneratedColumn('uuid')
-  id: number;
+  id: string;
 
   @Column('varchar', { length: 50 })
   name: string;
 
+  @Column()
+  location: string;
+
   @Column('enum', { enum: ClassroomType, default: ClassroomType.NORMAL })
   type: ClassroomType;
+
+  @OneToMany(() => ScheduleSlot, (schedule) => schedule.classroom)
+  schedules: Promise<ScheduleSlot[]>;
 }

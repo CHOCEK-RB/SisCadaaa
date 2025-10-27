@@ -11,6 +11,10 @@ import { Teacher } from 'src/users/aggregates/teacher.entity';
 import { Secretary } from 'src/users/aggregates/secretary.entity';
 import { Admin } from 'src/users/aggregates/admin.entity';
 import { Course } from 'src/courses/aggregates/course.entity';
+import {
+  Classroom,
+  ClassroomType,
+} from 'src/classroom/aggregates/classrom.entity';
 
 import { IUserRepository } from 'src/users/infrastructure/iuser.repository';
 import { IStudentRepository } from 'src/users/infrastructure/istudent.repository';
@@ -18,6 +22,7 @@ import { ITeacherRepository } from 'src/users/infrastructure/iteacher.repository
 import { ISecretaryRepository } from 'src/users/infrastructure/isecretary.repository';
 import { IAdminRepository } from 'src/users/infrastructure/iadmin.repository';
 import { ICourseRepository } from 'src/courses/infrastructure/icourse.repository';
+import { IClassroomRepository } from 'src/classroom/application/iclassroom.repository';
 
 @Injectable()
 export class SeederService implements ISeederService {
@@ -34,6 +39,8 @@ export class SeederService implements ISeederService {
     private readonly adminRepository: IAdminRepository,
     @Inject(ICourseRepository)
     private readonly courseRepository: ICourseRepository,
+    @Inject(IClassroomRepository)
+    private readonly classroomRepository: IClassroomRepository,
   ) {}
 
   async seedStudents(filePath: string): Promise<void> {
@@ -327,12 +334,41 @@ export class SeederService implements ISeederService {
     console.log('Course seeding completed successfully!');
   }
 
+  async seedClassrooms(filePath: string): Promise<void> {
+    const csvFile = fs.readFileSync(filePath, 'utf8');
+    const parseResult = Papa.parse<typeCsv.Classroom>(csvFile, {
+      header: true,
+      skipEmptyLines: true,
+    });
+
+    if (parseResult.errors.length > 0) {
+      console.error('Errors parsing CSV:', parseResult.errors);
+      throw new Error('Failed to parse CSV file.');
+    }
+
+    const classroomRows = parseResult.data;
+    console.log(parseResult.data);
+
+    const classroomToCreate = classroomRows.map((row) => {
+      const classroom = new Classroom();
+      classroom.name = row.name;
+      classroom.location = row.location;
+      classroom.type =
+        row.type === 'normal' ? ClassroomType.NORMAL : ClassroomType.LABORATORY;
+      return classroom;
+    });
+
+    await this.classroomRepository.save(classroomToCreate);
+    console.log('Successfully create classrooms');
+  }
+
   async runAll(): Promise<void> {
     await this.seedStudents('students.csv');
     await this.seedTeachers('teachers.csv');
     await this.seedSecretary('secretaries.csv');
     await this.seedAdmin('admins.csv');
     await this.seedCourses('courses.csv');
+    await this.seedClassrooms('classrooms.csv');
     console.log('All data has been seeded!');
   }
 }

@@ -16,11 +16,32 @@ export class TeacherPostgresRepository implements ITeacherRepository {
     return this.typeormRepo.findOne({ where: { id }, relations: ['user'] });
   }
 
+  async findAll(): Promise<Teacher[] | null> {
+    return this.typeormRepo.find();
+  }
+
   async findByUserId(userId: string): Promise<Teacher | null> {
     return this.typeormRepo.findOne({
       where: { user: { id: userId } },
       relations: ['user'],
     });
+  }
+
+  async findRandom(): Promise<Teacher | null> {
+    const count = await this.typeormRepo.count();
+
+    if (count === 0) {
+      return null;
+    }
+
+    const randomOffset = Math.floor(Math.random() * count);
+    const randomTeacher = await this.typeormRepo
+      .createQueryBuilder('teacher')
+      .offset(randomOffset)
+      .limit(1)
+      .getOne();
+
+    return randomTeacher;
   }
 
   async save(teacher: Teacher): Promise<Teacher> {

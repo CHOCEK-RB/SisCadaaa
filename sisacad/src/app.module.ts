@@ -13,6 +13,7 @@ import { ClassroomModule } from './classroom/classrom.module';
 import { GroupsModule } from './groups/groups.module';
 import { AttendanceModule } from './attendance/attendance.module';
 import { AuthModule } from './auth/auth.module';
+import { EnrollmentModule } from './enrollment/enrollment.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { AuthModule } from './auth/auth.module';
     ClassroomModule,
     AttendanceModule,
     GroupsModule,
+    EnrollmentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AcademicCourse } from './aggregates/academic_course.entity';
@@ -12,9 +12,14 @@ import { ICourseTopicRepository } from './infrastructure/icourse_topic.repositor
 import { CourseRepository } from './infrastructure/course.repository';
 import { AcademicCourseRepository } from './infrastructure/course_academic.repository';
 import { CourseTopicRepository } from './infrastructure/course_topic.repository';
+import { GroupsModule } from 'src/groups/groups.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([AcademicCourse, Course, CourseTopic])],
+  imports: [
+    TypeOrmModule.forFeature([AcademicCourse, Course, CourseTopic]),
+    forwardRef(() => GroupsModule),
+  ],
+
   providers: [
     {
       provide: ICourseRepository,

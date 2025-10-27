@@ -7,6 +7,7 @@ import {
 } from 'typeorm';
 
 import { AcademicGroup } from './academic_group.entity';
+import { Classroom } from 'src/classroom/aggregates/classrom.entity';
 
 export enum DayOfWeek {
   MONDAY = 'monday',
@@ -24,14 +25,14 @@ export class ScheduleSlot {
   @Column('enum', { enum: DayOfWeek })
   day: DayOfWeek;
 
-  @Column('time')
+  @Column('timetz')
   startTime: string;
 
-  @Column('time')
+  @Column('timetz')
   endTime: string;
 
-  @Column()
-  classroomId: string;
+  @ManyToOne(() => Classroom, (classroom) => classroom.schedules)
+  classroom: Classroom;
 
   @ManyToOne(() => AcademicGroup, (group) => group.schedule)
   @JoinColumn({ name: 'academicGroupId' })

@@ -30,7 +30,7 @@ export class AcademicCourseRepository implements IAcademicCourseRepository {
   }
 
   async findAll(): Promise<AcademicCourse[]> {
-    return this.typeormRepo.find();
+    return this.typeormRepo.find({ relations: { course: true } });
   }
   save(courses: AcademicCourse[]): Promise<AcademicCourse[]>;
   save(course: AcademicCourse): Promise<AcademicCourse>;

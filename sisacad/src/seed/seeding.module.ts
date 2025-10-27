@@ -10,6 +10,9 @@ import { SeeederServiceAcademic } from './application/seeder_academic.service';
 
 import { UserModule } from 'src/users/users.module';
 import { CourseModule } from 'src/courses/course.module';
+import { ClassroomModule } from 'src/classroom/classrom.module';
+import { GroupsModule } from 'src/groups/groups.module';
+import { EnrollmentModule } from 'src/enrollment/enrollment.module';
 
 import { typeOrmConfig } from '../config/typeorm.config';
 
@@ -19,6 +22,9 @@ import { typeOrmConfig } from '../config/typeorm.config';
     TypeOrmModule.forRootAsync(typeOrmConfig),
     UserModule,
     CourseModule,
+    ClassroomModule,
+    GroupsModule,
+    EnrollmentModule,
   ],
 
   providers: [

@@ -2,7 +2,6 @@ import {
   Entity,
   Column,
   PrimaryGeneratedColumn,
-  OneToOne,
   ManyToOne,
   OneToMany,
 } from 'typeorm';
@@ -11,6 +10,8 @@ import { Course } from './course.entity';
 import { CourseTopic } from './course_topic.entity';
 
 import { Teacher } from 'src/users/aggregates/teacher.entity';
+import { AcademicGroup } from 'src/groups/aggregates/academic_group.entity';
+import { Enrollment } from 'src/enrollment/aggregates/enrollment.entity';
 
 export class GradingScheme {
   firstContinue: number;
@@ -26,8 +27,8 @@ export class AcademicCourse {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @OneToOne(() => Teacher)
-  coordinator: Promise<Teacher>;
+  @ManyToOne(() => Teacher, (teacher) => teacher.coordinatedCourses)
+  coordinator: Teacher;
 
   @Column('timestamptz')
   creationDate: Date;
@@ -41,6 +42,12 @@ export class AcademicCourse {
   @ManyToOne(() => Course, (course) => course.academicCourses)
   course: Course;
 
+  @OneToMany(() => AcademicGroup, (group) => group.academicCourse)
+  groups: Promise<AcademicGroup[]>;
+
   @OneToMany(() => CourseTopic, (topics) => topics.course)
   topics: Promise<CourseTopic[]>;
+
+  @OneToMany(() => Enrollment, (enrollments) => enrollments.course)
+  enrollments: Promise<Enrollment[]>;
 }

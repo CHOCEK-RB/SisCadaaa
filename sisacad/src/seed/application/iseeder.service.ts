@@ -6,5 +6,6 @@ export interface ISeederService {
   seedSecretary(filePath: string): Promise<void>;
   seedAdmin(filePath: string): Promise<void>;
   seedCourses(filePath: string): Promise<void>;
+  seedClassrooms(filePath: string): Promise<void>;
   runAll(): Promise<void>;
 }

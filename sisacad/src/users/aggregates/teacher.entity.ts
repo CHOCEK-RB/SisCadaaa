@@ -4,9 +4,12 @@ import {
   Column,
   OneToOne,
   JoinColumn,
+  OneToMany,
 } from 'typeorm';
 
 import { User } from './user.entity';
+import { AcademicGroup } from 'src/groups/aggregates/academic_group.entity';
+import { AcademicCourse } from 'src/courses/aggregates/academic_course.entity';
 
 @Entity('teachers')
 export class Teacher {
@@ -25,4 +28,10 @@ export class Teacher {
   @OneToOne(() => User, (user) => user.teacherProfile, { cascade: true })
   @JoinColumn()
   user: User;
+
+  @OneToMany(() => AcademicCourse, (course) => course.coordinator)
+  coordinatedCourses: Promise<AcademicCourse[]>;
+
+  @OneToMany(() => AcademicGroup, (groups) => groups.teacher)
+  groups: Promise<AcademicGroup[]>;
 }

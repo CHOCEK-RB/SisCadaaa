@@ -16,6 +16,10 @@ export class StudentPostgresRepository implements IStudentRepository {
     return this.typeormRepo.findOne({ where: { id }, relations: ['user'] });
   }
 
+  async findAll(): Promise<Student[] | null> {
+    return this.typeormRepo.find({ relations: ['user'] });
+  }
+
   async findByUserId(userId: string): Promise<Student | null> {
     return this.typeormRepo.findOne({
       where: { user: { id: userId } },

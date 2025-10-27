@@ -1,3 +1,5 @@
+import { type } from 'os';
+
 export type Student = {
   cui: string;
   email: string;
@@ -35,4 +37,10 @@ export type Course = {
   prrq_1: string;
   prrq_2: string;
   semester: string;
+};
+
+export type Classroom = {
+  name: string;
+  location: string;
+  type: string;
 };

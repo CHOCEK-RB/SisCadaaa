@@ -3,10 +3,12 @@ import {
   PrimaryGeneratedColumn,
   Column,
   OneToOne,
+  OneToMany,
   JoinColumn,
 } from 'typeorm';
 
 import { User } from './user.entity';
+import { Enrollment } from 'src/enrollment/aggregates/enrollment.entity';
 
 @Entity('students')
 export class Student {
@@ -25,10 +27,13 @@ export class Student {
   @Column('varchar', { length: 70 })
   secondLastName: string;
 
-  @Column({ nullable: true })
-  semester?: number;
+  @Column({ default: 1 })
+  semester: number;
 
   @OneToOne(() => User, (user) => user.studentProfile, { cascade: true })
   @JoinColumn()
   user: User;
+
+  @OneToMany(() => Enrollment, (enrollment) => enrollment.student)
+  enrollments: Promise<Enrollment[]>;
 }
