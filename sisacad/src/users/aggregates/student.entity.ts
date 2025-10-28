@@ -35,5 +35,5 @@ export class Student {
   user: User;
 
   @OneToMany(() => Enrollment, (enrollment) => enrollment.student)
-  enrollments: Promise<Enrollment[]>;
+  enrollments: Enrollment[];
 }

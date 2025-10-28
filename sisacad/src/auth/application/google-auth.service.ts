@@ -60,7 +60,11 @@ export class GoogleAuthService {
       await this.userRepository.save(user);
     }
 
-    const jwtPayload: JwtPayload = { sub: user.id, email: user.email };
+    const jwtPayload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      pictureURL: payload.picture || '',
+    };
     const accessToken = this.jwtService.sign(jwtPayload);
 
     return { accessToken };

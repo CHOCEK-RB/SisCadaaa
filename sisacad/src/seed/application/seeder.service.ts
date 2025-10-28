@@ -22,7 +22,7 @@ import { ITeacherRepository } from 'src/users/infrastructure/iteacher.repository
 import { ISecretaryRepository } from 'src/users/infrastructure/isecretary.repository';
 import { IAdminRepository } from 'src/users/infrastructure/iadmin.repository';
 import { ICourseRepository } from 'src/courses/infrastructure/icourse.repository';
-import { IClassroomRepository } from 'src/classroom/application/iclassroom.repository';
+import { IClassroomRepository } from 'src/classroom/infrastructure/iclassroom.repository';
 
 @Injectable()
 export class SeederService implements ISeederService {

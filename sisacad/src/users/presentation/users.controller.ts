@@ -6,24 +6,43 @@ import {
   Patch,
   HttpCode,
   HttpStatus,
+  Get,
+  UseGuards,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 
-import { UsersApplicationService } from '../application/users.application.service';
+import { UserService, AnyProfileDTO } from '../application/user.service';
 import { PreRegisterUserDto } from '../application/pre-register-user.dto';
+import { GetUser } from './decorators/get_user.decorator';
+
+interface AuthenticatedUserInfo {
+  id: string;
+  email: string;
+  pictureURL?: string;
+  isActive: boolean;
+}
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersApplicationService) {}
+  constructor(private readonly userService: UserService) {}
+
+  @Get('profile')
+  @UseGuards(AuthGuard('jwt'))
+  async getMyProfile(
+    @GetUser() user: AuthenticatedUserInfo,
+  ): Promise<AnyProfileDTO> {
+    return await this.userService.getUserProfile(user.id);
+  }
 
   @Post('pre-register')
   @HttpCode(HttpStatus.CREATED)
   preRegisterUser(@Body() preRegisterUserDto: PreRegisterUserDto) {
-    return this.usersService.preRegisterUser(preRegisterUserDto);
+    return this.userService.preRegisterUser(preRegisterUserDto);
   }
 
   @Patch(':id/activate')
   @HttpCode(HttpStatus.OK)
   activateUser(@Param('id') userId: string) {
-    return this.usersService.activateUser(userId);
+    return this.userService.activateUser(userId);
   }
 }

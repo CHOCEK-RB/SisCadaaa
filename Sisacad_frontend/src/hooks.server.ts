@@ -3,7 +3,7 @@ import { JWT_SECRET } from '$env/static/private';
 import { verifyToken } from '$lib/utils/auth';
 import type { UserSession } from '$lib/store/auth.store';
 
-const protectedRoutes = ['/dashboard'];
+const protectedRoutes = ['/home'];
 
 export const handle: Handle = async ({ event, resolve }) => {
   const token = event.cookies.get('jwt_token');
@@ -37,8 +37,8 @@ export const handle: Handle = async ({ event, resolve }) => {
   }
 
   if (event.url.pathname === '/login' && event.locals.user) {
-    console.log(`Redirecting logged-in user from /login to /dashboard`);
-    throw redirect(303, '/dashboard');
+    console.log(`Redirecting logged-in user from /login to /home`);
+    throw redirect(303, '/home');
   }
 
   const response = await resolve(event);

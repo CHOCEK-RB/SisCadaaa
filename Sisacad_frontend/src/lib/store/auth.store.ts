@@ -4,6 +4,7 @@ import { browser } from '$app/environment';
 export interface UserSession {
   sub: string;
   email: string;
+  pictureURL: string;
   iat?: number;
   exp: number;
 }

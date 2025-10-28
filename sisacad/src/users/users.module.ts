@@ -8,7 +8,7 @@ import { Secretary } from './aggregates/secretary.entity';
 import { Admin } from './aggregates/admin.entity';
 
 import { UsersController } from './presentation/users.controller';
-import { UsersApplicationService } from './application/users.application.service';
+import { UserService } from './application/user.service';
 
 import { IUserRepository } from './infrastructure/iuser.repository';
 import { IStudentRepository } from './infrastructure/istudent.repository';
@@ -29,7 +29,7 @@ import { AdminPostgresRepository } from './infrastructure/admin.postgres.reposit
 
   controllers: [UsersController],
   providers: [
-    UsersApplicationService,
+    UserService,
     {
       provide: IUserRepository,
       useClass: UserPostgresRepository,

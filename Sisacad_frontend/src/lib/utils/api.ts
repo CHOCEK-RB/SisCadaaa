@@ -2,6 +2,7 @@ import { browser } from '$app/environment';
 import { PUBLIC_API_URL } from '$env/static/public';
 import { goto } from '$app/navigation';
 import { authStore } from '$lib/store/auth.store';
+import { resolve } from '$app/paths';
 
 export async function fetchApi(path: string, options: RequestInit = {}) {
   let token: string | null = null;
@@ -27,7 +28,7 @@ export async function fetchApi(path: string, options: RequestInit = {}) {
     if (!response.ok) {
       if (response.status === 401 && browser) {
         authStore.logout();
-        goto('/login');
+        goto(resolve('/login'));
       }
       const errorData = await response.json();
       throw new Error(errorData.message || 'API request failed');

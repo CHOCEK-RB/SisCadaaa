@@ -16,7 +16,15 @@ export class UserPostgresRepository implements IUserRepository {
   }
 
   async findById(id: string): Promise<User | null> {
-    return this.typeormRepo.findOne({ where: { id } });
+    return this.typeormRepo.findOne({
+      where: { id },
+      relations: {
+        studentProfile: true,
+        teacherProfile: true,
+        adminProfile: true,
+        secretaryProfile: true,
+      },
+    });
   }
 
   async save(user: User): Promise<User> {

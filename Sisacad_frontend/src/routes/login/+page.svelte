@@ -1,4 +1,4 @@
-<script context="module" lang="ts">
+<script module lang="ts">
   interface GoogleCredentialResponse {
     credential: string;
   }
@@ -25,16 +25,16 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import { PUBLIC_GOOGLE_CLIENT_ID } from '$env/static/public';
   import { fetchApi } from '$lib/utils/api';
   import { resolve } from '$app/paths';
   import { authStore } from '$lib/store/auth.store';
 
   let errorMessage: string | null = null;
-  let redirectTo: string | null = null;
-
-  $: redirectTo = $page.url.searchParams.get('redirectTo');
+  const redirectTo: string | null = $derived(
+    page.url.searchParams.get('redirectTo'),
+  );
 
   onMount(() => {
     window.handleGoogleSignIn = async (response: GoogleCredentialResponse) => {
@@ -48,7 +48,7 @@
         });
 
         localStorage.setItem('jwt_token', data.accessToken);
-        document.cookie = `jwt_token=${data.accessToken}; path=/; max-age=86400; samesite=lax; secure`;
+        document.cookie = `jwt_token=${data.accessToken}; path=/; max-age=86400; samesite=lax`;
 
         authStore.initialize();
 
@@ -56,8 +56,8 @@
           console.log(`Login successful, redirecting to: ${redirectTo}`);
           goto(resolve(redirectTo));
         } else {
-          console.log('Login successful, redirecting to /dashboard');
-          goto(resolve('/dashboard'));
+          console.log('Login successful, redirecting to home');
+          goto(resolve('/home'));
         }
       } catch (error: unknown) {
         console.error('Login failed:', error);
