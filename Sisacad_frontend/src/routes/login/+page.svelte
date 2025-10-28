@@ -25,10 +25,16 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
+  import { page } from '$app/stores';
   import { PUBLIC_GOOGLE_CLIENT_ID } from '$env/static/public';
   import { fetchApi } from '$lib/utils/api';
+  import { resolve } from '$app/paths';
+  import { authStore } from '$lib/store/auth.store';
 
   let errorMessage: string | null = null;
+  let redirectTo: string | null = null;
+
+  $: redirectTo = $page.url.searchParams.get('redirectTo');
 
   onMount(() => {
     window.handleGoogleSignIn = async (response: GoogleCredentialResponse) => {
@@ -44,7 +50,15 @@
         localStorage.setItem('jwt_token', data.accessToken);
         document.cookie = `jwt_token=${data.accessToken}; path=/; max-age=86400; samesite=lax; secure`;
 
-        goto('/dashboard');
+        authStore.initialize();
+
+        if (redirectTo) {
+          console.log(`Login successful, redirecting to: ${redirectTo}`);
+          goto(resolve(redirectTo));
+        } else {
+          console.log('Login successful, redirecting to /dashboard');
+          goto(resolve('/dashboard'));
+        }
       } catch (error: unknown) {
         console.error('Login failed:', error);
 
@@ -53,6 +67,10 @@
         } else {
           errorMessage = 'An unknown error occurred.';
         }
+
+        authStore.logout();
+        document.cookie =
+          'jwt_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
       }
     };
 
@@ -62,15 +80,19 @@
         callback: window.handleGoogleSignIn,
       });
 
-      window.google.accounts.id.renderButton(
-        document.getElementById('google-signin-button')!,
-        {
+      const buttonContainer = document.getElementById('google-signin-button');
+      if (buttonContainer) {
+        window.google.accounts.id.renderButton(buttonContainer, {
           theme: 'outline',
           size: 'large',
           type: 'standard',
           text: 'signin_with',
-        },
-      );
+        });
+      } else {
+        console.error('Google Sign-In button container not found.');
+      }
+    } else {
+      console.error('Google Identity Services script not loaded yet.');
     }
   });
 </script>
@@ -90,7 +112,8 @@
 
     {#if errorMessage}
       <div
-        class="mt-6 p-3 bg-red-100 border-red-400 text-red-700 rounded-md text-center"
+        class="mt-6 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md text-center"
+        role="alert"
       >
         <p>{errorMessage}</p>
       </div>
