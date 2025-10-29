@@ -5,7 +5,6 @@ import {
   ManyToOne,
   ManyToMany,
   JoinTable,
-  OneToOne,
 } from 'typeorm';
 
 import { Student } from 'src/users/aggregates/student.entity';

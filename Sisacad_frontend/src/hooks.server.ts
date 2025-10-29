@@ -3,7 +3,7 @@ import { JWT_SECRET } from '$env/static/private';
 import { verifyToken } from '$lib/utils/auth';
 import type { UserSession } from '$lib/store/auth.store';
 
-const protectedRoutes = ['/home'];
+const protectedRoutes = ['/home', '/courses'];
 
 export const handle: Handle = async ({ event, resolve }) => {
   const token = event.cookies.get('jwt_token');

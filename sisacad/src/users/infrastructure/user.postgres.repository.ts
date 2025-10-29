@@ -12,7 +12,15 @@ export class UserPostgresRepository implements IUserRepository {
   ) {}
 
   async findByEmail(email: string): Promise<User | null> {
-    return this.typeormRepo.findOne({ where: { email } });
+    return this.typeormRepo.findOne({
+      where: { email },
+      relations: {
+        studentProfile: true,
+        teacherProfile: true,
+        adminProfile: true,
+        secretaryProfile: true,
+      },
+    });
   }
 
   async findById(id: string): Promise<User | null> {

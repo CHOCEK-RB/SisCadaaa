@@ -14,13 +14,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { UserService, AnyProfileDTO } from '../application/user.service';
 import { PreRegisterUserDto } from '../application/pre-register-user.dto';
 import { GetUser } from './decorators/get_user.decorator';
-
-interface AuthenticatedUserInfo {
-  id: string;
-  email: string;
-  pictureURL?: string;
-  isActive: boolean;
-}
+import type { JwtPayload } from 'src/auth/interface/jwt-payload.interface';
 
 @Controller('users')
 export class UsersController {
@@ -28,10 +22,8 @@ export class UsersController {
 
   @Get('profile')
   @UseGuards(AuthGuard('jwt'))
-  async getMyProfile(
-    @GetUser() user: AuthenticatedUserInfo,
-  ): Promise<AnyProfileDTO> {
-    return await this.userService.getUserProfile(user.id);
+  async getMyProfile(@GetUser() user: JwtPayload): Promise<AnyProfileDTO> {
+    return await this.userService.getUserProfile(user.sub);
   }
 
   @Post('pre-register')

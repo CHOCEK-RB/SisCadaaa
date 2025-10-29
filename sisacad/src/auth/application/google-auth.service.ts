@@ -64,7 +64,21 @@ export class GoogleAuthService {
       sub: user.id,
       email: user.email,
       pictureURL: payload.picture || '',
+      role: 'unknown',
     };
+
+    if (user.studentProfile) {
+      jwtPayload.role = 'student';
+    } else if (user.teacherProfile) {
+      jwtPayload.role = 'teacher';
+    } else if (user.secretaryProfile) {
+      jwtPayload.role = 'secretary';
+    } else if (user.adminProfile) {
+      jwtPayload.role = 'admin';
+    }
+
+    console.log(jwtPayload);
+
     const accessToken = this.jwtService.sign(jwtPayload);
 
     return { accessToken };

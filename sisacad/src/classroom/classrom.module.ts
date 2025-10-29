@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { Classroom } from './aggregates/classrom.entity';
-import { IClassroomRepository } from './application/iclassroom.repository';
-import { ClassroomRepository } from './application/classroom.repository';
+import { IClassroomRepository } from './infrastructure/iclassroom.repository';
+import { ClassroomRepository } from './infrastructure/classroom.repository';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Classroom])],

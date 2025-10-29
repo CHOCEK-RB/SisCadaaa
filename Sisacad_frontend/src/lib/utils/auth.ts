@@ -16,11 +16,10 @@ export async function verifyToken(
         'sub' in decoded &&
         'email' in decoded &&
         'pictureURL' in decoded &&
-        'exp' in decoded
+        'exp' in decoded &&
+        'role' in decoded
       ) {
         resolve(decoded as UserSession);
-
-        localStorage.setItem('pictureURL', decoded.pictureURL);
       } else {
         reject(new Error('Invalid token payload structure'));
       }

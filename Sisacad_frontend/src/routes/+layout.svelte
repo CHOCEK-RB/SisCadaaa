@@ -53,11 +53,3 @@
 {:else}
   <slot />
 {/if}
-
-<style lang="postcss">
-  @media print {
-    .print\:hidden {
-      display: none;
-    }
-  }
-</style>

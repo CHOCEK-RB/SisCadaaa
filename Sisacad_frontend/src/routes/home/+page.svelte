@@ -72,9 +72,3 @@
     </div>
   </div>
 </div>
-
-<style lang="postcss">
-  .text-shadow-md {
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
-  }
-</style>

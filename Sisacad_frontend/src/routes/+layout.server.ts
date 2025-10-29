@@ -13,6 +13,7 @@ export const load: LayoutServerLoad = async ({ cookies, url, fetch }) => {
   if (token) {
     try {
       const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+
       const profileResponse = await fetch(`${PUBLIC_API_URL}/users/profile`, {
         headers: {
           Authorization: `Bearer ${token}`,

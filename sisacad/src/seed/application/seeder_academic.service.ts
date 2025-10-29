@@ -193,9 +193,7 @@ export class SeeederServiceAcademic implements ISeederServiceAcademic {
         targetSemester < student.semester;
         targetSemester++
       ) {
-        const yearOffset = Math.floor(
-          (student.semester - targetSemester + 1) / 2,
-        );
+        const yearOffset = Math.floor((student.semester - targetSemester) / 2);
         const targetYear = currentBaseYear - yearOffset;
         const isFirstAcademicSemester = targetSemester % 2 !== 0;
         const targetMonth = isFirstAcademicSemester ? 3 : 8;

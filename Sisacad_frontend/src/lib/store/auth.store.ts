@@ -5,6 +5,7 @@ export interface UserSession {
   sub: string;
   email: string;
   pictureURL: string;
+  role?: string;
   iat?: number;
   exp: number;
 }
