@@ -12,7 +12,7 @@ export class AcademicCourseDTO {
   course: CourseDTO;
   grades?: GradingScheme;
 
-  cordinator?: TeacherProfileDTO;
+  coordinator?: TeacherProfileDTO;
   groups?: AcademicGroupDTO[];
   topics?: CourseTopicDTO[];
   enrollments?: EnrollmentDetailDTO[];

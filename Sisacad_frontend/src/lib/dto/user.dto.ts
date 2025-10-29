@@ -48,7 +48,7 @@ export interface AcademicCourseDTO {
   course: CourseDTO;
   grades?: GradingScheme;
 
-  cordinator?: TeacherProfileDTO;
+  coordinator?: TeacherProfileDTO;
   groups?: AcademicGroupDTO[];
   topics?: CourseTopicDTO[];
   enrollments?: EnrollmentDetailDTO[];
@@ -123,3 +123,32 @@ export interface StudentProfileDTO extends UserProfileDTO {
 export interface TeacherProfileDTO extends UserProfileDTO {
   role: 'teacher';
 }
+
+export enum AttendanceStatus {
+  PRESENT = 'present',
+  ABSENT = 'absent',
+}
+
+export enum GroupType {
+  LABORATORY = 'laboratory',
+  THEORY = 'theory',
+  PRACTICE = 'practice',
+}
+
+export interface StudentAttendanceRecordDTO {
+  classDate: string;
+  status: AttendanceStatus;
+}
+
+export interface GroupAttendanceDTO {
+  groupId: string;
+  groupName: string;
+  groupType: GroupType;
+  records: StudentAttendanceRecordDTO[];
+  presentCount: number;
+  absentCount: number;
+  totalClasses: number;
+  attendancePercentage: number;
+}
+
+export type StudentCourseAttendanceDTO = GroupAttendanceDTO[];

@@ -8,6 +8,11 @@ import {
 import { Teacher } from 'src/users/aggregates/teacher.entity';
 import { Student } from 'src/users/aggregates/student.entity';
 import { Enrollment } from 'src/enrollment/aggregates/enrollment.entity';
+import {
+  Attendance,
+  LocationStatus,
+  AttendanceStatus,
+} from 'src/attendance/aggregates/attendance.entity';
 
 import { ISeederServiceAcademic } from './iseeder_academic.service';
 
@@ -17,6 +22,7 @@ import { IAcademicGroupRepository } from 'src/groups/infrastructure/iacademic_gr
 import { ITeacherRepository } from 'src/users/infrastructure/iteacher.repository';
 import { IStudentRepository } from 'src/users/infrastructure/istudent.repository';
 import { IEnrollmentRepository } from 'src/enrollment/infrastructure/ienrollment.repository';
+import { IAttendanceRepository } from 'src/attendance/infrastructure/iattendance.repository';
 
 @Injectable()
 export class SeeederServiceAcademic implements ISeederServiceAcademic {
@@ -33,6 +39,8 @@ export class SeeederServiceAcademic implements ISeederServiceAcademic {
     private readonly studentRepository: IStudentRepository,
     @Inject(IEnrollmentRepository)
     private readonly enrollmentRepository: IEnrollmentRepository,
+    @Inject(IAttendanceRepository)
+    private readonly attendanceRepository: IAttendanceRepository,
   ) {}
 
   async seedAcademicCourses(): Promise<void> {
@@ -178,39 +186,72 @@ export class SeeederServiceAcademic implements ISeederServiceAcademic {
       return;
     }
     if (!students || students.length === 0) {
-      console.log('No students found. Cannot assign students to groups.');
+      console.log('No students found. Cannot assign students to enrollments.');
       return;
     }
+
+    academicCourses.forEach((ac) => {
+      if (typeof ac.creationDate === 'string') {
+        ac.creationDate = new Date(ac.creationDate);
+      }
+    });
 
     const enrollmentsToCreate: Partial<Enrollment>[] = [];
     const currentBaseYear = 2025;
 
     for (const student of students) {
-      if (student.semester % 2 !== 0 || student.semester < 2) continue;
+      if (student.semester < 2) continue;
+
+      const yearsSinceStart = Math.floor((student.semester - 1) / 2);
+      const startYear = currentBaseYear - yearsSinceStart;
+      console.log(
+        `Student ${student.cui} (Semester ${student.semester}) started in ${startYear}-A`,
+      );
 
       for (
         let targetSemester = 1;
-        targetSemester < student.semester;
+        targetSemester - 1 < student.semester;
         targetSemester++
       ) {
-        const yearOffset = Math.floor((student.semester - targetSemester) / 2);
-        const targetYear = currentBaseYear - yearOffset;
+        const yearsToAdd = Math.floor((targetSemester - 1) / 2);
+        const targetYear = startYear + yearsToAdd;
         const isFirstAcademicSemester = targetSemester % 2 !== 0;
         const targetMonth = isFirstAcademicSemester ? 3 : 8;
 
+        console.log(
+          ` -> Processing Target Semester: ${targetSemester}, Calculated Period: ${targetYear}-${isFirstAcademicSemester ? 'A' : 'B'} (Month: ${targetMonth})`,
+        );
+
         const relevantAcademicCourses = academicCourses.filter(
           (ac) =>
+            ac.course &&
             ac.course.semester === targetSemester &&
-            ac.creationDate.getFullYear() === targetYear &&
+            ac.creationDate instanceof Date &&
+            ac.creationDate.getUTCFullYear() === targetYear &&
             ac.creationDate.getUTCMonth() === targetMonth - 1,
         );
 
-        console.log(`Test length: ${relevantAcademicCourses.length}`);
+        console.log(
+          `   Found ${relevantAcademicCourses.length} relevant academic courses.`,
+        );
+
+        if (relevantAcademicCourses.length === 0) continue;
 
         const groupName = Math.random() < 0.5 ? 'A' : 'B';
 
         for (const ac of relevantAcademicCourses) {
-          const groups = await ac.groups;
+          let groups: AcademicGroup[] = [];
+          try {
+            groups = ac.groups instanceof Promise ? await ac.groups : ac.groups;
+          } catch (e) {
+            console.error(`Error fetching groups for AC ${ac.id}: `, e);
+            continue;
+          }
+
+          if (!Array.isArray(groups)) {
+            console.warn(`Groups for AC ${ac.id} is not an array. Skipping.`);
+            continue;
+          }
 
           const theoryGroup = groups.find(
             (g) => g.type === GroupType.THEORY && g.name === groupName,
@@ -225,7 +266,7 @@ export class SeeederServiceAcademic implements ISeederServiceAcademic {
 
           if (assignedGroupIds.length === 0) {
             console.warn(
-              `Skipping enrollment for ${student.id} in course ${ac.course.id} - No groups found.`,
+              `Skipping enrollment for ${student.cui} in course ${ac.course?.code || ac.id} (${targetYear}-${isFirstAcademicSemester ? 'A' : 'B'}) - No suitable groups found for '${groupName}'. Available groups: ${groups.map((g) => `${g.name}-${g.type}`).join(', ')}`,
             );
             continue;
           }
@@ -250,31 +291,183 @@ export class SeeederServiceAcademic implements ISeederServiceAcademic {
       }
 
       console.log(
-        `Created ${enrollmentsToCreate.length} enrollments for student ${student.cui}.`,
+        `Prepared ${enrollmentsToCreate.length} potential enrollments for student ${student.cui}.`,
       );
     }
 
     try {
       if (enrollmentsToCreate.length > 0) {
-        console.log('Saving enrollments...');
+        console.log(`Saving ${enrollmentsToCreate.length} enrollments...`);
+
         await this.enrollmentRepository.save(
           enrollmentsToCreate as Enrollment[],
         );
         console.log(
-          `Successfully created ${enrollmentsToCreate.length} enrollments.`,
+          `Successfully created/updated ${enrollmentsToCreate.length} enrollments.`,
         );
       } else {
-        console.log('No new enrollments needed.');
+        console.log('No new enrollments needed to be created.');
       }
     } catch (error) {
       console.error('Failed to save enrollments:', error);
       throw error;
     }
   }
+  async seedAttendance(): Promise<void> {
+    console.log('Starting attendance seeding for 2025-B...');
+
+    const startDate2025B = new Date('2025-07-30T00:00:00Z');
+
+    const academicCourses2025B =
+      await this.academicCourseRepository.findCreatedAfterDate(startDate2025B);
+
+    console.log(academicCourses2025B);
+
+    if (!academicCourses2025B || academicCourses2025B.length === 0) {
+      console.log('No academic courses found starting from 2025-B.');
+      return;
+    }
+    console.log(
+      `Found ${academicCourses2025B.length} academic courses for 2025-B period.`,
+    );
+
+    const attendancesToCreate: Attendance[] = [];
+    const today = new Date();
+
+    const getRandomIP = (): string =>
+      `192.168.1.${Math.floor(Math.random() * 254) + 1}`;
+
+    const generateClassDates = (
+      count: number,
+      startDate: Date,
+      endDate: Date,
+    ): Date[] => {
+      const dates: Date[] = [];
+      const startMillis = startDate.getTime();
+      const endMillis = Math.min(endDate.getTime(), today.getTime());
+      if (startMillis >= endMillis) return [];
+
+      for (let i = 0; i < count; i++) {
+        let randomDate: Date;
+        let dayOfWeek: number;
+        do {
+          const randomMillis =
+            startMillis + Math.random() * (endMillis - startMillis);
+          randomDate = new Date(randomMillis);
+          dayOfWeek = randomDate.getUTCDay();
+        } while (dayOfWeek === 0 || dayOfWeek === 6);
+        dates.push(randomDate);
+      }
+      return dates.sort((a, b) => a.getTime() - b.getTime());
+    };
+
+    for (const ac of academicCourses2025B) {
+      if (
+        ac.creationDate.getUTCFullYear() !== 2025 ||
+        ac.creationDate.getUTCMonth() < 7
+      ) {
+        continue;
+      }
+
+      if (ac.enrollments.length === 0) {
+        console.log(
+          `Skipping course ${ac.course?.code || ac.id} - No enrollments found ${ac.course.name}.`,
+        );
+        continue;
+      }
+
+      const studentsByGroup = new Map<string, Student[]>();
+      for (const enrollment of ac.enrollments) {
+        if (!enrollment.student || !enrollment.groups) continue;
+        const student = enrollment.student;
+        for (const group of enrollment.groups) {
+          if (!studentsByGroup.has(group.id)) {
+            studentsByGroup.set(group.id, []);
+          }
+
+          if (
+            !studentsByGroup.get(group.id)?.some((s) => s.id === student.id)
+          ) {
+            studentsByGroup.get(group.id)?.push(student);
+          }
+        }
+      }
+
+      const uniqueGroupsInCourse = new Map<string, AcademicGroup>();
+      ac.enrollments.forEach((enr) =>
+        enr.groups?.forEach((g) => {
+          if (g && g.teacher) {
+            uniqueGroupsInCourse.set(g.id, g);
+          }
+        }),
+      );
+
+      for (const [groupId, group] of uniqueGroupsInCourse.entries()) {
+        const studentsInGroup = studentsByGroup.get(groupId);
+        const teacher = group.teacher;
+
+        if (!studentsInGroup || studentsInGroup.length === 0 || !teacher) {
+          console.log(
+            `Skipping group ${group.name} for course ${ac.course?.code || ac.id} - No students or teacher.`,
+          );
+          continue;
+        }
+
+        const semesterStartDate = new Date('2025-08-01T00:00:00Z');
+        const semesterEndDate = new Date('2025-12-20T00:00:00Z');
+        const numberOfAttendances = Math.floor(Math.random() * 3) + 8;
+        const classDates = generateClassDates(
+          numberOfAttendances,
+          semesterStartDate,
+          semesterEndDate,
+        );
+
+        for (const classDate of classDates) {
+          const attendance = new Attendance();
+          attendance.academicGroup = group;
+          attendance.teacher = teacher;
+          attendance.classDate = classDate;
+          attendance.ipAddress = getRandomIP();
+          attendance.location = LocationStatus.UNIVERSITY;
+          attendance.studentStatuses = {};
+
+          for (const student of studentsInGroup) {
+            const status =
+              Math.random() < 0.85
+                ? AttendanceStatus.PRESENT
+                : AttendanceStatus.ABSENT;
+            attendance.studentStatuses[student.id] = status;
+          }
+
+          attendancesToCreate.push(attendance);
+        }
+      }
+    }
+
+    try {
+      if (attendancesToCreate.length > 0) {
+        console.log(
+          `Saving ${attendancesToCreate.length} attendance records...`,
+        );
+
+        await this.attendanceRepository.save(attendancesToCreate);
+        console.log(
+          `Successfully created ${attendancesToCreate.length} attendance records.`,
+        );
+      } else {
+        console.log('No attendance records needed to be created.');
+      }
+    } catch (error) {
+      console.error('Failed to save attendance records:', error);
+      throw error;
+    }
+  }
+
   async runAll(): Promise<void> {
     await this.seedAcademicCourses();
     await this.seedAcademicGroups();
     await this.seedEnrollment();
+    await this.seedAttendance();
     return;
   }
 }

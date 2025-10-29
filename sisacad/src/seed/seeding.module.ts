@@ -13,6 +13,7 @@ import { CourseModule } from 'src/courses/course.module';
 import { ClassroomModule } from 'src/classroom/classrom.module';
 import { GroupsModule } from 'src/groups/groups.module';
 import { EnrollmentModule } from 'src/enrollment/enrollment.module';
+import { AttendanceModule } from 'src/attendance/attendance.module';
 
 import { typeOrmConfig } from '../config/typeorm.config';
 
@@ -25,6 +26,7 @@ import { typeOrmConfig } from '../config/typeorm.config';
     ClassroomModule,
     GroupsModule,
     EnrollmentModule,
+    AttendanceModule,
   ],
 
   providers: [

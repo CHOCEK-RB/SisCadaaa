@@ -29,7 +29,7 @@ export class EnrollmentService {
 
   private getAcademicPeriodLabel(date: Date): string {
     const year = date.getFullYear();
-    const month = date.getMonth();
+    const month = date.getUTCMonth();
 
     if (month >= 2 && month < 7) {
       return `${year}-A`;

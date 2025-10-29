@@ -29,9 +29,15 @@ export class EnrollmentRepository implements IEnrollmentRepository {
   async findByStudentId(studentId: string): Promise<Enrollment[]> {
     return this.typeormRepo.find({
       where: { student: { id: studentId } },
-      relations: { groups: true, course: { course: true } },
+      relations: {
+        groups: true,
+        course: {
+          course: true,
+          coordinator: true,
+        },
+      },
       order: {
-        course: { creationDate: 'ASC' },
+        course: { creationDate: 'DESC' },
       },
     });
   }
@@ -45,6 +51,8 @@ export class EnrollmentRepository implements IEnrollmentRepository {
         student: { id: studentId },
         course: { id: courseId },
       },
+
+      relations: { groups: true, course: { course: true } },
     });
   }
   save(enrollment: Enrollment): Promise<Enrollment>;

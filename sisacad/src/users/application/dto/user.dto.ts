@@ -11,5 +11,5 @@ export abstract class UserProfileDTO {
   firstName: string;
   lastName: string;
   abstract role: UserRole;
-  isActive: boolean;
+  isActive?: boolean;
 }

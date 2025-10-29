@@ -10,6 +10,7 @@ import {
 import { User } from './user.entity';
 import { AcademicGroup } from 'src/groups/aggregates/academic_group.entity';
 import { AcademicCourse } from 'src/courses/aggregates/academic_course.entity';
+import { Attendance } from 'src/attendance/aggregates/attendance.entity';
 
 @Entity('teachers')
 export class Teacher {
@@ -34,4 +35,7 @@ export class Teacher {
 
   @OneToMany(() => AcademicGroup, (groups) => groups.teacher)
   groups: Promise<AcademicGroup[]>;
+
+  @OneToMany(() => Attendance, (attendances) => attendances.teacher)
+  attendances: Promise<Attendance[]>;
 }

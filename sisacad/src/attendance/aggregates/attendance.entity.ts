@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 
 import { AcademicGroup } from 'src/groups/aggregates/academic_group.entity';
+import { Teacher } from 'src/users/aggregates/teacher.entity';
 
 export enum LocationStatus {
   UNIVERSITY = 'university',
@@ -10,17 +11,15 @@ export enum LocationStatus {
 export enum AttendanceStatus {
   PRESENT = 'present',
   ABSENT = 'absent',
-  LATE = 'late',
-  JUSTIFIED = 'justified',
 }
 
 @Entity()
 export class Attendance {
   @PrimaryGeneratedColumn('uuid')
-  id: number;
+  id: string;
 
-  @Column('uuid')
-  idTeacher: number;
+  @ManyToOne(() => Teacher, (teacher) => teacher.attendances)
+  teacher: Teacher;
 
   @Column('timestamptz')
   classDate: Date;

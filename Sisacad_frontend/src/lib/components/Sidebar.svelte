@@ -78,6 +78,3 @@
     </button>
   </div>
 </aside>
-
-<style>
-</style>

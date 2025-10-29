@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, MoreThan } from 'typeorm';
 
 import { Course } from '../aggregates/course.entity';
 import { AcademicCourse } from '../aggregates/academic_course.entity';
@@ -16,7 +16,7 @@ export class AcademicCourseRepository implements IAcademicCourseRepository {
   async findById(id: string): Promise<AcademicCourse | null> {
     return this.typeormRepo.findOne({
       where: { id },
-      relations: ['topics', 'cordinator'],
+      relations: ['course', 'topics'],
       order: {
         topics: {
           topicOrder: 'ASC',
@@ -25,8 +25,42 @@ export class AcademicCourseRepository implements IAcademicCourseRepository {
     });
   }
 
-  async findByYear(date: Date): Promise<AcademicCourse | null> {
-    return this.typeormRepo.findOne({ where: { creationDate: date } });
+  async findByIdWithCoordinator(id: string): Promise<AcademicCourse | null> {
+    return this.typeormRepo.findOne({
+      where: { id },
+      relations: ['course', 'topics', 'coordinator'],
+      order: {
+        topics: {
+          topicOrder: 'ASC',
+        },
+      },
+    });
+  }
+
+  async findByIdAndStudentId(
+    id: string,
+    studentId: string,
+  ): Promise<AcademicCourse | null> {
+    return this.typeormRepo.findOne({
+      where: { id, enrollments: { student: { id: studentId } } },
+      relations: {
+        course: true,
+        enrollments: { groups: { teacher: true } },
+      },
+    });
+  }
+
+  async findCreatedAfterDate(date: Date): Promise<AcademicCourse[] | null> {
+    const results = await this.typeormRepo.find({
+      where: {
+        creationDate: MoreThan(date),
+      },
+      relations: {
+        course: true,
+        enrollments: { student: true, groups: { teacher: true } },
+      },
+    });
+    return results.length > 0 ? results : null;
   }
 
   async findAll(): Promise<AcademicCourse[]> {
