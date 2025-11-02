@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Enrollment } from '../aggregates/enrollment.entity';
+import { Enrollment, EnrollmentStatus } from '../aggregates/enrollment.entity';
 import { IEnrollmentRepository } from './ienrollment.repository';
 import { Student } from 'src/users/aggregates/student.entity';
 import { AcademicCourse } from 'src/courses/aggregates/academic_course.entity';
@@ -30,7 +30,7 @@ export class EnrollmentRepository implements IEnrollmentRepository {
     return this.typeormRepo.find({
       where: { student: { id: studentId } },
       relations: {
-        groups: true,
+        groups: { schedule: true },
         course: {
           course: true,
           coordinator: true,
@@ -38,6 +38,28 @@ export class EnrollmentRepository implements IEnrollmentRepository {
       },
       order: {
         course: { creationDate: 'DESC' },
+      },
+    });
+  }
+
+  async findByStudentIdAndActives(
+    studentId: string,
+  ): Promise<Enrollment[] | null> {
+    return this.typeormRepo.find({
+      where: {
+        student: { id: studentId },
+        status: EnrollmentStatus.ACTIVE,
+      },
+      relations: {
+        student: true,
+        groups: {
+          schedule: { classroom: true },
+          academicCourse: { course: true },
+        },
+      },
+      order: {
+        course: { course: { id: 'ASC' } },
+        groups: { schedule: { startTime: 'ASC' } },
       },
     });
   }
@@ -52,9 +74,34 @@ export class EnrollmentRepository implements IEnrollmentRepository {
         course: { id: courseId },
       },
 
-      relations: { groups: true, course: { course: true } },
+      relations: { student: true, groups: true, course: { course: true } },
+      order: {
+        groups: { schedule: { startTime: 'ASC' } },
+      },
     });
   }
+
+  async findByStudentAndCourse_Schedule(
+    studentId: string,
+    courseId: string,
+  ): Promise<Enrollment | null> {
+    return this.typeormRepo.findOne({
+      where: {
+        student: { id: studentId },
+        course: { id: courseId },
+      },
+
+      relations: {
+        student: true,
+        groups: {
+          schedule: { classroom: true },
+          academicCourse: { course: true },
+        },
+        course: { course: true },
+      },
+    });
+  }
+
   save(enrollment: Enrollment): Promise<Enrollment>;
   save(enrollment: Enrollment[]): Promise<Enrollment[]>;
   async save(

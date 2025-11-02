@@ -402,12 +402,22 @@ export class SeederService implements ISeederService {
           throw new Error(`Classroom ${scheduleData.classroomName} not found.`);
         }
 
-        const group =
+        const groups =
           await this.academicGroupRepository.findByCourseCodeTypeName(
             scheduleData.courseCode,
             groupType,
             scheduleData.groupName,
           );
+
+        if (!groups) {
+          throw new Error(
+            `Group ${scheduleData.groupName} not found for course ${scheduleData.courseCode} type ${groupType}`,
+          );
+        }
+
+        const group = groups.find(
+          (group) => group.academicCourse.creationDate.getFullYear() === 2025,
+        );
 
         if (!group) {
           throw new Error(
@@ -427,7 +437,12 @@ export class SeederService implements ISeederService {
 
         await this.scheduleSlotRepository.save(slot);
 
-        console.log('Saved schedule slot:', slot.id);
+        console.log(
+          'Saved schedule slot:',
+          slot.academicGroup.academicCourse.course.name,
+          slot.academicGroup.academicCourse.creationDate,
+          slot.id,
+        );
       } catch (error) {
         console.warn(`Skipping row due to error: ${error}`);
       }

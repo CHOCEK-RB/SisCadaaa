@@ -7,7 +7,7 @@ import { EnrollmentDetailDTO } from 'src/enrollment/application/dto/enrollment.d
 
 export class AcademicCourseDTO {
   id: string;
-  creationDate: Date;
+  creationDate?: Date;
   urlSyllabus?: string;
   course: CourseDTO;
   grades?: GradingScheme;

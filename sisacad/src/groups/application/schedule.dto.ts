@@ -6,5 +6,5 @@ export class ScheduleSlotDTO {
   start: string;
   end: string;
   classroom: ClassroomDTO;
-  group: string;
+  group?: string;
 }

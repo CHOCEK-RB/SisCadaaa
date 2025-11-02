@@ -20,6 +20,11 @@ export class Grades {
   thirdPartial: number;
 }
 
+export enum EnrollmentStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+}
+
 @Entity()
 export class Enrollment {
   @PrimaryGeneratedColumn('uuid')
@@ -40,4 +45,7 @@ export class Enrollment {
 
   @Column('jsonb', { nullable: true })
   grades: Grades;
+
+  @Column('enum', { enum: EnrollmentStatus, default: EnrollmentStatus.ACTIVE })
+  status: EnrollmentStatus;
 }

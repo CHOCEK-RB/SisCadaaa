@@ -7,7 +7,10 @@ import {
 } from 'src/groups/aggregates/academic_group.entity';
 import { Teacher } from 'src/users/aggregates/teacher.entity';
 import { Student } from 'src/users/aggregates/student.entity';
-import { Enrollment } from 'src/enrollment/aggregates/enrollment.entity';
+import {
+  Enrollment,
+  EnrollmentStatus,
+} from 'src/enrollment/aggregates/enrollment.entity';
 import {
   Attendance,
   LocationStatus,
@@ -67,6 +70,15 @@ export class SeeederServiceAcademic implements ISeederServiceAcademic {
         } else {
           academicCourse.creationDate = new Date(`${currentYear}-08-01`);
         }
+
+        academicCourse.grades = {
+          firstContinue: 15,
+          secondContinue: 15,
+          thirdContinue: 20,
+          firstPartial: 15,
+          secondPartial: 15,
+          thirdPartial: 20,
+        };
 
         academicCoursesToCreate.push(academicCourse);
       }
@@ -237,7 +249,10 @@ export class SeeederServiceAcademic implements ISeederServiceAcademic {
           continue;
         }
 
-        const groupName = Math.random() < 0.5 ? 'A' : 'B';
+        let groupName = Math.random() < 0.5 ? 'A' : 'B';
+        if (student.cui === '20233595') {
+          groupName = 'A';
+        }
 
         for (const ac of relevantAcademicCourses) {
           let groups: AcademicGroup[] = [];
@@ -259,6 +274,9 @@ export class SeeederServiceAcademic implements ISeederServiceAcademic {
           const availablePracticeGroups = groups.filter(
             (g) => g.type === GroupType.PRACTICE,
           );
+          const availableLabGroups = groups.filter(
+            (g) => g.type === GroupType.LABORATORY,
+          );
 
           const theoryGroup =
             availableTheoryGroups.find((g) => g.name === groupName) ||
@@ -266,10 +284,14 @@ export class SeeederServiceAcademic implements ISeederServiceAcademic {
           const practiceGroup =
             availablePracticeGroups.find((g) => g.name === groupName) ||
             availablePracticeGroups[0];
+          const labGroup =
+            availableLabGroups.find((g) => g.name === groupName) ||
+            availableLabGroups[0];
 
           const assignedGroupIds: { id: string }[] = [];
           if (theoryGroup) assignedGroupIds.push({ id: theoryGroup.id });
           if (practiceGroup) assignedGroupIds.push({ id: practiceGroup.id });
+          if (labGroup) assignedGroupIds.push({ id: labGroup.id });
 
           if (assignedGroupIds.length === 0) {
             console.warn(
@@ -283,6 +305,10 @@ export class SeeederServiceAcademic implements ISeederServiceAcademic {
             course: { id: ac.id } as AcademicCourse,
             groups: assignedGroupIds as AcademicGroup[],
             date: ac.creationDate.toISOString(),
+            status:
+              targetSemester < student.semester
+                ? EnrollmentStatus.INACTIVE
+                : EnrollmentStatus.ACTIVE,
             grades: {
               firstContinue: Math.floor(Math.random() * 10) + 11,
               secondConitnue: Math.floor(Math.random() * 10) + 11,
@@ -304,13 +330,23 @@ export class SeeederServiceAcademic implements ISeederServiceAcademic {
 
     try {
       if (enrollmentsToCreate.length > 0) {
-        console.log(`Saving ${enrollmentsToCreate.length} enrollments...`);
+        const BATCH_SIZE = 1000;
 
-        await this.enrollmentRepository.save(
-          enrollmentsToCreate as Enrollment[],
-        );
         console.log(
-          `Successfully created/updated ${enrollmentsToCreate.length} enrollments.`,
+          `\nSaving ${enrollmentsToCreate.length} total enrollments in batches of ${BATCH_SIZE}...`,
+        );
+
+        for (let i = 0; i < enrollmentsToCreate.length; i += BATCH_SIZE) {
+          const batch = enrollmentsToCreate.slice(i, i + BATCH_SIZE);
+          console.log(
+            `Processing batch ${i / BATCH_SIZE + 1} (${batch.length} items)...`,
+          );
+
+          await this.enrollmentRepository.save(batch as Enrollment[]);
+        }
+
+        console.log(
+          `Successfully created all ${enrollmentsToCreate.length} enrollments.`,
         );
       } else {
         console.log('No new enrollments needed to be created.');

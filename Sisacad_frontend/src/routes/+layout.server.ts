@@ -17,6 +17,8 @@ export const load: LayoutServerLoad = async ({ locals, cookies }) => {
     if (token) {
       const profileResponse = await userService.getProfile(token);
 
+      console.log('Profile response:', profileResponse);
+
       if (profileResponse) {
         profile = profileResponse as UserProfileDTO;
         profile!.iconURL = user.pictureURL;

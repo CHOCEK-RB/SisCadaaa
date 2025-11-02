@@ -13,7 +13,9 @@ import { IStudentRepository } from 'src/users/infrastructure/istudent.repository
 import { EnrollmentDetailDTO } from '../application/dto/enrollment.dto';
 import { AcademicCourseDTO } from 'src/courses/application/dto/academic_course.dto';
 import { CourseDTO } from 'src/courses/application/dto/course.dto';
-import { Grades } from '../aggregates/enrollment.entity';
+import { Enrollment, Grades } from '../aggregates/enrollment.entity';
+import { AcademicGroupDTO } from 'src/groups/application/academic_group.dto';
+import { ScheduleSlotDTO } from 'src/groups/application/schedule.dto';
 
 export interface GroupedEnrollments {
   [period: string]: EnrollmentDetailDTO[];
@@ -42,8 +44,6 @@ export class EnrollmentService {
   async getMyEnrollmentsGroupedByPeriod(
     authenticatedUser: JwtPayload,
   ): Promise<GroupedEnrollments> {
-    console.log(authenticatedUser);
-
     if (authenticatedUser.role !== 'student') {
       throw new ForbiddenException(
         'Only students can access their enrollments.',
@@ -109,8 +109,6 @@ export class EnrollmentService {
       grouped[period].push(enrollmentDTO);
     }
 
-    console.log(grouped);
-
     const sortedGrouped: GroupedEnrollments = Object.keys(grouped)
       .sort((a, b) => {
         const [yearA, semesterA] = a.split('-');
@@ -156,5 +154,139 @@ export class EnrollmentService {
     }
 
     return enrollment.grades || null;
+  }
+
+  async getMyScheduleForCourse(
+    academicCourseId: string,
+    authenticatedUser: JwtPayload,
+  ): Promise<AcademicGroupDTO[] | null> {
+    if (authenticatedUser.role !== 'student') {
+      throw new ForbiddenException('Only students can view their schedule.');
+    }
+
+    const studentProfile = await this.studentRepository.findByUserId(
+      authenticatedUser.sub,
+    );
+    if (!studentProfile) {
+      throw new NotFoundException(
+        `Student profile not found for user ID ${authenticatedUser.sub}.`,
+      );
+    }
+
+    const studentId = studentProfile.id;
+
+    const enrollment =
+      await this.enrollmentRepository.findByStudentAndCourse_Schedule(
+        studentId,
+        academicCourseId,
+      );
+
+    if (!enrollment || !enrollment.groups || enrollment.groups.length === 0) {
+      throw new NotFoundException(
+        `Enrollment or associated groups not found for student ${studentId} in course ${academicCourseId}.`,
+      );
+    }
+
+    const groups: AcademicGroupDTO[] = [];
+
+    for (const group of enrollment.groups) {
+      const schedules: ScheduleSlotDTO[] = group.schedule.map((schedule) => ({
+        id: schedule.id,
+        day: schedule.day,
+        start: schedule.startTime,
+        end: schedule.endTime,
+        classroom: {
+          id: schedule.classroom.id,
+          name: schedule.classroom.name,
+          type: schedule.classroom.type,
+        },
+      }));
+
+      const groupDto: AcademicGroupDTO = {
+        id: group.id,
+        name: group.name,
+        type: group.type,
+        schedule: schedules,
+        course: {
+          id: group.academicCourse.id,
+          course: {
+            id: group.academicCourse.course.id,
+            name: group.academicCourse.course.name,
+            code: group.academicCourse.course.code,
+          },
+        },
+      };
+
+      groups.push(groupDto);
+    }
+
+    return groups;
+  }
+
+  async getMySchedule(
+    authenticatedUser: JwtPayload,
+  ): Promise<AcademicGroupDTO[] | null> {
+    if (authenticatedUser.role !== 'student') {
+      throw new ForbiddenException('Only students can view their schedule.');
+    }
+
+    const studentProfile = await this.studentRepository.findByUserId(
+      authenticatedUser.sub,
+    );
+    if (!studentProfile) {
+      throw new NotFoundException(
+        `Student profile not found for user ID ${authenticatedUser.sub}.`,
+      );
+    }
+
+    const enrollments: Enrollment[] | null =
+      await this.enrollmentRepository.findByStudentIdAndActives(
+        studentProfile.id,
+      );
+
+    console.log('sssssssssss', enrollments);
+
+    if (!enrollments || enrollments.length === 0) {
+      throw new NotFoundException(
+        `Enrollment or associated groups not found for student ${studentProfile.id}.`,
+      );
+    }
+
+    const groups: AcademicGroupDTO[] = [];
+
+    for (const enrollment of enrollments) {
+      for (const group of enrollment.groups) {
+        const schedules: ScheduleSlotDTO[] = group.schedule.map((schedule) => ({
+          id: schedule.id,
+          day: schedule.day,
+          start: schedule.startTime,
+          end: schedule.endTime,
+          classroom: {
+            id: schedule.classroom.id,
+            name: schedule.classroom.name,
+            type: schedule.classroom.type,
+          },
+        }));
+
+        const groupDto: AcademicGroupDTO = {
+          id: group.id,
+          name: group.name,
+          type: group.type,
+          course: {
+            id: group.academicCourse.id,
+            course: {
+              id: group.academicCourse.course.id,
+              name: group.academicCourse.course.name,
+              code: group.academicCourse.course.code,
+            },
+          },
+          schedule: schedules,
+        };
+
+        groups.push(groupDto);
+      }
+    }
+
+    return groups;
   }
 }

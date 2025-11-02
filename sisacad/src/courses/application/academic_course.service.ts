@@ -3,7 +3,6 @@ import { IAcademicCourseRepository } from '../infrastructure/icourse_academic.re
 import { AcademicCourseDTO } from './dto/academic_course.dto';
 import { CourseDTO } from './dto/course.dto';
 import { CourseTopicDTO } from './dto/course_topic.dto';
-import { JwtPayload } from 'src/auth/interface/jwt-payload.interface';
 
 @Injectable()
 export class AcademicCourseService {
@@ -12,12 +11,7 @@ export class AcademicCourseService {
     private readonly academicCourseRepository: IAcademicCourseRepository,
   ) {}
 
-  async findDetailsById(
-    id: string,
-    authenticatedUser: JwtPayload,
-  ): Promise<AcademicCourseDTO> {
-    console.log(id);
-    console.log(authenticatedUser);
+  async findDetailsById(id: string): Promise<AcademicCourseDTO> {
     const academicCourse = await this.academicCourseRepository.findById(id);
 
     if (!academicCourse) {

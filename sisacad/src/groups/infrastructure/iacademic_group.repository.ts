@@ -14,6 +14,12 @@ export interface IAcademicGroupRepository {
     courseCode: string,
     type: GroupType,
     name: string,
+  ): Promise<AcademicGroup[] | null>;
+  findByCourseCodeTypeNameAge(
+    courseCode: string,
+    age: string,
+    type: GroupType,
+    name: string,
   ): Promise<AcademicGroup | null>;
   save(group: AcademicGroup): Promise<AcademicGroup>;
   save(groups: AcademicGroup[]): Promise<AcademicGroup[]>;

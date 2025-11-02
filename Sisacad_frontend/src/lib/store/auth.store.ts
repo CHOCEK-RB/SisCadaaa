@@ -1,6 +1,9 @@
 import { writable, derived, get } from 'svelte/store';
 import { goto } from '$app/navigation';
 import { browser } from '$app/environment';
+import { userService } from '$lib/services/user.service';
+import { authService } from '$lib/services/auth.service';
+import { resolve } from '$app/paths';
 
 interface User {
   id: string;
@@ -60,27 +63,9 @@ function createAuthStore() {
     update((state) => ({ ...state, isLoading: true }));
 
     try {
-      const response = await fetch(
-        'http://sisacad.local.io:3000/user/profile',
-        {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${currentToken}`,
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-        },
-      );
+      const response = await userService.getProfile(currentToken);
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          logout();
-          throw new Error('Token inválido');
-        }
-        throw new Error('Error al cargar perfil');
-      }
-
-      const userData = await response.json();
+      const userData = response;
 
       update((state) => ({
         ...state,
@@ -105,24 +90,9 @@ function createAuthStore() {
     update((state) => ({ ...state, isLoading: true }));
 
     try {
-      const response = await fetch(
-        'http://sisacad.local.io:3000/auth/google/login',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({ token: idToken }),
-        },
-      );
+      const response = await authService.login(idToken);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error en login');
-      }
-
-      const { accessToken } = await response.json();
+      const { accessToken } = await response;
 
       if (browser) {
         localStorage.setItem('token', accessToken);
@@ -161,7 +131,7 @@ function createAuthStore() {
       isInitialized: true,
     });
 
-    goto('/login', { replaceState: true });
+    goto(resolve('/login'), { replaceState: true });
   }
 
   async function refreshProfile() {

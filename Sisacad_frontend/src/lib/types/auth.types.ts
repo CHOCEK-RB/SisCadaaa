@@ -27,4 +27,6 @@ export interface UserProfileDTO {
   role: UserRole;
   iconURL?: string;
   isActive: boolean;
+  cui?: string;
+  semester?: number;
 }

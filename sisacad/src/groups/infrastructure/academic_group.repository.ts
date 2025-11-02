@@ -31,6 +31,7 @@ export class AcademicGroupRepository implements IAcademicGroupRepository {
   ): Promise<AcademicGroup[] | null> {
     return this.typeormRepo.find({
       where: { academicCourse: { id: courseAcademicId } },
+      relations: { academicCourse: { course: true }, schedule: true },
     });
   }
 
@@ -38,9 +39,9 @@ export class AcademicGroupRepository implements IAcademicGroupRepository {
     courseCode: string,
     type: GroupType,
     name: string,
-  ): Promise<AcademicGroup | null> {
+  ): Promise<AcademicGroup[] | null> {
     console.log(courseCode, type, name);
-    return this.typeormRepo.findOne({
+    return this.typeormRepo.find({
       where: {
         type: type,
         name: name,
@@ -52,6 +53,34 @@ export class AcademicGroupRepository implements IAcademicGroupRepository {
         },
       },
     });
+  }
+
+  async findByCourseCodeTypeNameAge(
+    courseCode: string,
+    age: string,
+    type: GroupType,
+    name: string,
+  ): Promise<AcademicGroup | null> {
+    if (!courseCode || !type || !name || !age) {
+      return null;
+    }
+
+    const pattern = `%${age}%`;
+    const query = this.typeormRepo
+      .createQueryBuilder('group')
+      .innerJoin('group.academicCourse', 'ac')
+      .innerJoin('ac.course', 'course')
+      .where('group.type = :type', { type })
+      .andWhere('group.name = :name', { name })
+      .andWhere('course.code = :courseCode', { courseCode })
+      .andWhere('CAST(ac.creationDate AS TEXT) LIKE :agePattern', {
+        agePattern: pattern,
+      })
+      .take(1);
+
+    const result = await query.getOne();
+
+    return result || null;
   }
 
   save(group: AcademicGroup): Promise<AcademicGroup>;

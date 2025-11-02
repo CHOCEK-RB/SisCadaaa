@@ -1,5 +1,6 @@
 import { api } from './api.service';
 import type { Grades } from '$lib/types/enrollment.types';
+import type { AcademicGroupDTO } from '$lib/types/group.types';
 
 export const enrollmentService = {
   async getEnrollments(token: string) {
@@ -22,6 +23,36 @@ export const enrollmentService = {
 
     if (!response) {
       throw new Error('No se recibieron datos del servidor, calificaciones');
+    }
+
+    return response;
+  },
+
+  async getScheduleForCourse(academicCourseId: string, token: string) {
+    const response = await api.get<AcademicGroupDTO[]>(
+      `/enrollments/my-schedule/${academicCourseId}`,
+      {
+        token: token,
+      },
+    );
+
+    if (!response) {
+      throw new Error('No se recibieron datos del servidor, horario del curso');
+    }
+
+    return response;
+  },
+
+  async getMySchedule(token: string) {
+    const response = await api.get<AcademicGroupDTO[]>(
+      `/enrollments/my-schedule`,
+      {
+        token: token,
+      },
+    );
+
+    if (!response) {
+      throw new Error('No se recibieron datos del servidor, horario completo');
     }
 
     return response;

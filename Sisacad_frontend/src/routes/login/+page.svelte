@@ -3,6 +3,7 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { authStore, isAuthenticated } from '$lib/store/auth.store';
+  import { resolve } from '$app/paths';
 
   let isLoading = false;
   let error = '';
@@ -10,7 +11,7 @@
   $: if ($isAuthenticated) {
     const user = authStore.getUser();
     if (user) {
-      goto('/', { replaceState: true });
+      goto(resolve('/'), { replaceState: true });
     }
   }
 

@@ -42,4 +42,20 @@ export class EnrollmentController {
       user,
     );
   }
+
+  @Get('my-schedule/:academicCourseId')
+  async getMyScheduleForCourse(
+    @Param('academicCourseId', ParseUUIDPipe) academicCourseId: string,
+    @GetUser() user: JwtPayload,
+  ) {
+    return await this.enrollmentService.getMyScheduleForCourse(
+      academicCourseId,
+      user,
+    );
+  }
+
+  @Get('my-schedule')
+  async getMySchedule(@GetUser() user: JwtPayload) {
+    return await this.enrollmentService.getMySchedule(user);
+  }
 }

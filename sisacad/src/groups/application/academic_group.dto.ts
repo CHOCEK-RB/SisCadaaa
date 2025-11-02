@@ -5,9 +5,9 @@ import { TeacherProfileDTO } from 'src/users/application/dto/teacher.dto';
 export class AcademicGroupDTO {
   id: string;
   name: string;
-  capacity: number;
+  capacity?: number;
   type: string;
   schedule?: ScheduleSlotDTO[];
-  course: AcademicCourseDTO;
-  teacher: TeacherProfileDTO;
+  course?: AcademicCourseDTO;
+  teacher?: TeacherProfileDTO;
 }
