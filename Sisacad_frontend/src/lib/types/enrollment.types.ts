@@ -3,7 +3,7 @@ import type { StudentProfileDTO } from './user.types';
 
 export interface Grades {
   firstContinue: number;
-  secondConitnue: number;
+  secondContinue: number;
   thirdContinue: number;
   firstPartial: number;
   secondPartial: number;

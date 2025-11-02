@@ -1,6 +1,14 @@
 import { api } from './api.service';
 import type { Grades } from '$lib/types/enrollment.types';
 import type { AcademicGroupDTO } from '$lib/types/group.types';
+import type { AcademicCourseDTO } from '$lib/types/course.types';
+import type { GradingScheme } from '$lib/types/course.types';
+
+export interface GradesAndPercent {
+  course: AcademicCourseDTO;
+  grades: Grades;
+  percent: GradingScheme;
+}
 
 export const enrollmentService = {
   async getEnrollments(token: string) {
@@ -53,6 +61,21 @@ export const enrollmentService = {
 
     if (!response) {
       throw new Error('No se recibieron datos del servidor, horario completo');
+    }
+
+    return response;
+  },
+
+  async getAllMyGrades(token: string) {
+    const response = await api.get<GradesAndPercent[]>(
+      '/enrollments/my-grades',
+      {
+        token: token,
+      },
+    );
+
+    if (!response) {
+      throw new Error('No se recibieron datos del servidor, calificaciones');
     }
 
     return response;

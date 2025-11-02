@@ -16,9 +16,16 @@ import { CourseDTO } from 'src/courses/application/dto/course.dto';
 import { Enrollment, Grades } from '../aggregates/enrollment.entity';
 import { AcademicGroupDTO } from 'src/groups/application/academic_group.dto';
 import { ScheduleSlotDTO } from 'src/groups/application/schedule.dto';
+import { GradingScheme } from 'src/courses/aggregates/academic_course.entity';
 
 export interface GroupedEnrollments {
   [period: string]: EnrollmentDetailDTO[];
+}
+
+export interface GradesAndPercent {
+  course: AcademicCourseDTO;
+  grades: Grades;
+  percent: GradingScheme;
 }
 
 @Injectable()
@@ -244,8 +251,6 @@ export class EnrollmentService {
         studentProfile.id,
       );
 
-    console.log('sssssssssss', enrollments);
-
     if (!enrollments || enrollments.length === 0) {
       throw new NotFoundException(
         `Enrollment or associated groups not found for student ${studentProfile.id}.`,
@@ -288,5 +293,70 @@ export class EnrollmentService {
     }
 
     return groups;
+  }
+
+  async getAllGrades(
+    authenticatedUser: JwtPayload,
+  ): Promise<GradesAndPercent[]> {
+    if (authenticatedUser.role !== 'student') {
+      throw new ForbiddenException('Only students can view their schedule.');
+    }
+
+    const studentProfile = await this.studentRepository.findByUserId(
+      authenticatedUser.sub,
+    );
+    if (!studentProfile) {
+      throw new NotFoundException(
+        `Student profile not found for user ID ${authenticatedUser.sub}.`,
+      );
+    }
+
+    const enrollments: Enrollment[] | null =
+      await this.enrollmentRepository.findAllWithGradesByStudent(
+        studentProfile.id,
+      );
+
+    if (!enrollments || enrollments.length === 0) {
+      throw new NotFoundException(
+        `Enrollment or associated groups not found for student ${studentProfile.id}.`,
+      );
+    }
+
+    const grades: GradesAndPercent[] = [];
+
+    for (const enrollment of enrollments) {
+      const courseGrades: GradesAndPercent = {
+        course: {
+          id: enrollment.course.id,
+          course: {
+            id: enrollment.course.course.id,
+            name: enrollment.course.course.name,
+            code: enrollment.course.course.code,
+          },
+        },
+
+        grades: {
+          firstContinue: enrollment.grades.firstContinue,
+          secondContinue: enrollment.grades.secondContinue,
+          thirdContinue: enrollment.grades.thirdContinue,
+          firstPartial: enrollment.grades.firstPartial,
+          secondPartial: enrollment.grades.secondPartial,
+          thirdPartial: enrollment.grades.thirdPartial,
+        },
+
+        percent: {
+          firstContinue: enrollment.course.grades!.firstContinue,
+          secondContinue: enrollment.course.grades!.secondContinue,
+          thirdContinue: enrollment.course.grades!.thirdContinue,
+          firstPartial: enrollment.course.grades!.firstPartial,
+          secondPartial: enrollment.course.grades!.secondPartial,
+          thirdPartial: enrollment.course.grades!.thirdPartial,
+        },
+      };
+
+      grades.push(courseGrades);
+    }
+
+    return grades;
   }
 }

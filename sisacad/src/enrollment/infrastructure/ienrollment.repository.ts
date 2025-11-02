@@ -7,6 +7,7 @@ export const IEnrollmentRepository = Symbol('IEnrollmentRepository');
 export interface IEnrollmentRepository {
   findById(id: string): Promise<Enrollment | null>;
   findAll(): Promise<Enrollment[]>;
+  findAllWithGradesByStudent(studentId: string): Promise<Enrollment[]>;
   findByStudentId(studentId: string): Promise<Enrollment[]>;
   findByStudentIdAndActives(studentId: string): Promise<Enrollment[] | null>;
   findByStudentAndCourse(

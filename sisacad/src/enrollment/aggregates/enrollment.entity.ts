@@ -12,12 +12,12 @@ import { AcademicGroup } from 'src/groups/aggregates/academic_group.entity';
 import { AcademicCourse } from 'src/courses/aggregates/academic_course.entity';
 
 export class Grades {
-  firstContinue: number;
-  secondConitnue: number;
-  thirdContinue: number;
-  firstPartial: number;
-  secondPartial: number;
-  thirdPartial: number;
+  firstContinue: number = -1;
+  secondContinue: number = -1;
+  thirdContinue: number = -1;
+  firstPartial: number = -1;
+  secondPartial: number = -1;
+  thirdPartial: number = -1;
 }
 
 export enum EnrollmentStatus {

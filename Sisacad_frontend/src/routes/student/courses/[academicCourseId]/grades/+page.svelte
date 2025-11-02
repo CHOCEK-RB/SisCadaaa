@@ -10,7 +10,6 @@
   const courseName = fullData.courseDetails?.course?.name ?? 'Curso';
   const gradeLabels: { [key: string]: string } = {
     firstContinue: 'Continua 1',
-    secondConitnue: 'Continua 2',
     secondContinue: 'Continua 2',
     thirdContinue: 'Continua 3',
     firstPartial: 'Parcial 1',

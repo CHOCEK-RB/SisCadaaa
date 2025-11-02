@@ -311,7 +311,7 @@ export class SeeederServiceAcademic implements ISeederServiceAcademic {
                 : EnrollmentStatus.ACTIVE,
             grades: {
               firstContinue: Math.floor(Math.random() * 10) + 11,
-              secondConitnue: Math.floor(Math.random() * 10) + 11,
+              secondContinue: Math.floor(Math.random() * 10) + 11,
               thirdContinue: Math.floor(Math.random() * 10) + 11,
               firstPartial: Math.floor(Math.random() * 10) + 11,
               secondPartial: Math.floor(Math.random() * 10) + 11,

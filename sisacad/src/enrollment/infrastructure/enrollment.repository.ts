@@ -26,6 +26,16 @@ export class EnrollmentRepository implements IEnrollmentRepository {
     });
   }
 
+  async findAllWithGradesByStudent(studentId: string): Promise<Enrollment[]> {
+    return this.typeormRepo.find({
+      where: { student: { id: studentId } },
+      relations: {
+        student: true,
+        course: { course: true },
+      },
+    });
+  }
+
   async findByStudentId(studentId: string): Promise<Enrollment[]> {
     return this.typeormRepo.find({
       where: { student: { id: studentId } },

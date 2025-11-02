@@ -11,6 +11,7 @@ import { AuthGuard } from '@nestjs/passport';
 import {
   EnrollmentService,
   GroupedEnrollments,
+  GradesAndPercent,
 } from '../application/enrollment.service';
 
 import { GetUser } from 'src/users/presentation/decorators/get_user.decorator';
@@ -41,6 +42,12 @@ export class EnrollmentController {
       academicCourseId,
       user,
     );
+  }
+
+  @Get('my-grades')
+  @UseGuards(AuthGuard('jwt'))
+  async getAllGrades(@GetUser() user: JwtPayload): Promise<GradesAndPercent[]> {
+    return await this.enrollmentService.getAllGrades(user);
   }
 
   @Get('my-schedule/:academicCourseId')
