@@ -1,99 +1,66 @@
-<script module lang="ts">
-  interface GoogleCredentialResponse {
-    credential: string;
-  }
-
-  declare global {
-    interface Window {
-      handleGoogleSignIn: (response: GoogleCredentialResponse) => void;
-
-      google: {
-        accounts: {
-          id: {
-            initialize: (config: {
-              client_id: string;
-              callback: (response: GoogleCredentialResponse) => void;
-            }) => void;
-            renderButton: (parent: HTMLElement, options: object) => void;
-          };
-        };
-      };
-    }
-  }
-</script>
-
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
-  import { PUBLIC_GOOGLE_CLIENT_ID } from '$env/static/public';
-  import { fetchApi } from '$lib/utils/api';
   import { resolve } from '$app/paths';
-  import { authStore } from '$lib/store/auth.store';
+  import { PUBLIC_GOOGLE_CLIENT_ID } from '$env/static/public';
 
-  let errorMessage: string | null = null;
-  const redirectTo: string | null = $derived(
-    page.url.searchParams.get('redirectTo'),
-  );
+  import { authService } from '$lib/services/auth.service';
+  import { authStore } from '$lib/store/auth.store';
+  import { GoogleAuthManager } from '$lib/utils/google-auth';
+  import {
+    saveAuthToken,
+    clearAuthToken,
+    getRedirectPath,
+  } from '$lib/utils/auth-helpers';
+  import type { GoogleCredentialResponse } from '$lib/types/google.types';
+
+  let errorMessage: string | null = $state(null);
+  let isLoading: boolean = $state(false);
+
+  const googleAuth = new GoogleAuthManager(PUBLIC_GOOGLE_CLIENT_ID);
+
+  async function handleGoogleSignIn(
+    response: GoogleCredentialResponse,
+  ): Promise<void> {
+    errorMessage = null;
+    isLoading = true;
+
+    console.log('Google sign-in response:', response.credential);
+
+    try {
+      const data = await authService.login(response.credential);
+
+      const success = saveAuthToken(data.accessToken);
+
+      if (!success) {
+        throw new Error('Token inválido o expirado');
+      }
+
+      const redirectPath = getRedirectPath(page.url.searchParams);
+      console.log(`Login successful, redirecting to: ${redirectPath}`);
+
+      await goto(resolve(redirectPath));
+    } catch (error: unknown) {
+      console.error('Login failed:', error);
+
+      errorMessage =
+        error instanceof Error ? error.message : 'An unknown error occurred.';
+
+      clearAuthToken();
+    } finally {
+      isLoading = false;
+    }
+  }
 
   onMount(() => {
-    window.handleGoogleSignIn = async (response: GoogleCredentialResponse) => {
-      errorMessage = null;
-      const idToken = response.credential;
-
-      try {
-        const data = await fetchApi('/auth/google/login', {
-          method: 'POST',
-          body: JSON.stringify({ token: idToken }),
-        });
-
-        localStorage.setItem('jwt_token', data.accessToken);
-        document.cookie = `jwt_token=${data.accessToken}; path=/; max-age=86400; samesite=lax`;
-
-        authStore.initialize();
-
-        if (redirectTo) {
-          console.log(`Login successful, redirecting to: ${redirectTo}`);
-          goto(resolve(redirectTo));
-        } else {
-          console.log('Login successful, redirecting to home');
-          goto(resolve('/home'));
-        }
-      } catch (error: unknown) {
-        console.error('Login failed:', error);
-
-        if (error instanceof Error) {
-          errorMessage = error.message;
-        } else {
-          errorMessage = 'An unknown error occurred.';
-        }
-
-        authStore.logout();
-        document.cookie =
-          'jwt_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-      }
-    };
-
-    if (window.google) {
-      window.google.accounts.id.initialize({
-        client_id: PUBLIC_GOOGLE_CLIENT_ID,
-        callback: window.handleGoogleSignIn,
-      });
-
-      const buttonContainer = document.getElementById('google-signin-button');
-      if (buttonContainer) {
-        window.google.accounts.id.renderButton(buttonContainer, {
-          theme: 'outline',
-          size: 'large',
-          type: 'standard',
-          text: 'signin_with',
-        });
-      } else {
-        console.error('Google Sign-In button container not found.');
-      }
-    } else {
-      console.error('Google Identity Services script not loaded yet.');
+    if (authStore.isAuthenticated()) {
+      const redirectPath = getRedirectPath(page.url.searchParams);
+      goto(resolve(redirectPath));
+      return;
     }
+
+    googleAuth.setup(handleGoogleSignIn);
   });
 </script>
 
@@ -108,7 +75,11 @@
       </p>
     </div>
 
-    <div id="google-signin-button" class="flex justify-center"></div>
+    <div id="google-signin-button" class="flex justify-center">
+      {#if isLoading}
+        <div class="text-center text-gray-500">Iniciando sesión...</div>
+      {/if}
+    </div>
 
     {#if errorMessage}
       <div
@@ -124,3 +95,4 @@
     </div>
   </div>
 </div>
+*/

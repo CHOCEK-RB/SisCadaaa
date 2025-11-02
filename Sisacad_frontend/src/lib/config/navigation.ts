@@ -22,9 +22,9 @@ export type UserRole =
 
 export const navigationLinks: Record<UserRole, NavLink[]> = {
   student: [
-    { href: '/home', label: 'Inicio', icon: House },
-    { href: '/courses', label: 'Mis Cursos', icon: BookOpen },
-    { href: '/grades', label: 'Mis Notas', icon: BookOpen },
+    { href: '/student', label: 'Inicio', icon: House },
+    { href: '/student/courses', label: 'Mis Cursos', icon: BookOpen },
+    { href: '/student/grades', label: 'Mis Notas', icon: BookOpen },
     { href: '/settings', label: 'Configuración', icon: Settings },
   ],
   teacher: [

@@ -44,15 +44,6 @@
           {new Date(courseDetails.creationDate).toLocaleDateString()}
         </dd>
       </div>
-      {#if courseDetails.coordinator}
-        <div>
-          <dt class="text-sm font-medium text-gray-500">Coordinador</dt>
-          <dd class="mt-1 text-sm text-gray-900">
-            {courseDetails.coordinator.firstName}
-            {courseDetails.coordinator.lastName}
-          </dd>
-        </div>
-      {/if}
       {#if courseDetails.urlSyllabus}
         <div class="md:col-span-2">
           <dt class="text-sm font-medium text-gray-500">Syllabus</dt>

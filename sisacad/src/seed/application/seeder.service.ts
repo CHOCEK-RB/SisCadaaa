@@ -15,6 +15,9 @@ import {
   Classroom,
   ClassroomType,
 } from 'src/classroom/aggregates/classrom.entity';
+import { GroupType } from 'src/groups/aggregates/academic_group.entity';
+import { DayOfWeek, ScheduleSlot } from 'src/groups/aggregates/schedule.entity';
+import { CourseTopic } from 'src/courses/aggregates/course_topic.entity';
 
 import { IUserRepository } from 'src/users/infrastructure/iuser.repository';
 import { IStudentRepository } from 'src/users/infrastructure/istudent.repository';
@@ -23,6 +26,10 @@ import { ISecretaryRepository } from 'src/users/infrastructure/isecretary.reposi
 import { IAdminRepository } from 'src/users/infrastructure/iadmin.repository';
 import { ICourseRepository } from 'src/courses/infrastructure/icourse.repository';
 import { IClassroomRepository } from 'src/classroom/infrastructure/iclassroom.repository';
+import { IAcademicGroupRepository } from 'src/groups/infrastructure/iacademic_group.repository';
+import { IScheduleSlotRepository } from 'src/groups/infrastructure/ischedule.repository';
+import { ICourseTopicRepository } from 'src/courses/infrastructure/icourse_topic.repository';
+import { IAcademicCourseRepository } from 'src/courses/infrastructure/icourse_academic.repository';
 
 @Injectable()
 export class SeederService implements ISeederService {
@@ -41,6 +48,14 @@ export class SeederService implements ISeederService {
     private readonly courseRepository: ICourseRepository,
     @Inject(IClassroomRepository)
     private readonly classroomRepository: IClassroomRepository,
+    @Inject(IAcademicGroupRepository)
+    private readonly academicGroupRepository: IAcademicGroupRepository,
+    @Inject(IScheduleSlotRepository)
+    private readonly scheduleSlotRepository: IScheduleSlotRepository,
+    @Inject(ICourseTopicRepository)
+    private readonly courseTopicRepository: ICourseTopicRepository,
+    @Inject(IAcademicCourseRepository)
+    private readonly academicCourseRepository: IAcademicCourseRepository,
   ) {}
 
   async seedStudents(filePath: string): Promise<void> {
@@ -56,7 +71,6 @@ export class SeederService implements ISeederService {
     }
 
     const studentRows = parseResult.data;
-    console.log(parseResult.data);
 
     for (const studentData of studentRows) {
       try {
@@ -113,7 +127,6 @@ export class SeederService implements ISeederService {
     }
 
     const teacherRows = parseResult.data;
-    console.log(parseResult.data);
 
     for (const teacherData of teacherRows) {
       try {
@@ -168,7 +181,6 @@ export class SeederService implements ISeederService {
     }
 
     const secretaryRows = parseResult.data;
-    console.log(parseResult.data);
 
     for (const secretaryData of secretaryRows) {
       try {
@@ -223,7 +235,6 @@ export class SeederService implements ISeederService {
     }
 
     const adminRows = parseResult.data;
-    console.log(parseResult.data);
 
     for (const adminData of adminRows) {
       try {
@@ -278,7 +289,6 @@ export class SeederService implements ISeederService {
     }
 
     const courseRows = parseResult.data;
-    console.log(parseResult.data);
 
     const coursesToCreate = courseRows.map((row) => {
       const course = new Course();
@@ -347,7 +357,6 @@ export class SeederService implements ISeederService {
     }
 
     const classroomRows = parseResult.data;
-    console.log(parseResult.data);
 
     const classroomToCreate = classroomRows.map((row) => {
       const classroom = new Classroom();
@@ -360,6 +369,149 @@ export class SeederService implements ISeederService {
 
     await this.classroomRepository.save(classroomToCreate);
     console.log('Successfully create classrooms');
+  }
+
+  async seedSchedule(filePath: string): Promise<void> {
+    const csvFile = fs.readFileSync(filePath, 'utf8');
+    const parseResult = Papa.parse<typeCsv.ScheduleSlot>(csvFile, {
+      header: true,
+      skipEmptyLines: true,
+    });
+
+    if (parseResult.errors.length > 0) {
+      console.error('Errors parsing CSV:', parseResult.errors);
+      throw new Error('Failed to parse CSV file.');
+    }
+
+    const scheduleRows = parseResult.data;
+
+    console.log(scheduleRows);
+
+    for (const scheduleData of scheduleRows) {
+      try {
+        const groupType: GroupType =
+          GroupType[
+            scheduleData.groupType.toUpperCase() as keyof typeof GroupType
+          ];
+
+        const classroom = await this.classroomRepository.findByName(
+          scheduleData.classroomName,
+        );
+
+        if (!classroom) {
+          throw new Error(`Classroom ${scheduleData.classroomName} not found.`);
+        }
+
+        const group =
+          await this.academicGroupRepository.findByCourseCodeTypeName(
+            scheduleData.courseCode,
+            groupType,
+            scheduleData.groupName,
+          );
+
+        if (!group) {
+          throw new Error(
+            `Group ${scheduleData.groupName} not found for course ${scheduleData.courseCode} type ${groupType}`,
+          );
+        }
+
+        const dayEnum =
+          DayOfWeek[scheduleData.day.toUpperCase() as keyof typeof DayOfWeek];
+
+        const slot = new ScheduleSlot();
+        slot.day = dayEnum;
+        slot.startTime = scheduleData.startTime;
+        slot.endTime = scheduleData.endTime;
+        slot.classroom = classroom;
+        slot.academicGroup = group;
+
+        await this.scheduleSlotRepository.save(slot);
+
+        console.log('Saved schedule slot:', slot.id);
+      } catch (error) {
+        console.warn(`Skipping row due to error: ${error}`);
+      }
+    }
+
+    console.log('Finished seeding schedule slots from CSV');
+  }
+
+  async seedTopics(filePath: string): Promise<void> {
+    const csvFile = fs.readFileSync(filePath, 'utf8');
+    const parseResult = Papa.parse<typeCsv.Topic>(csvFile, {
+      header: true,
+      skipEmptyLines: true,
+    });
+
+    if (parseResult.errors.length > 0) {
+      console.error('Errors parsing topics.csv:', parseResult.errors);
+      throw new Error('Failed to parse topics.csv file.');
+    }
+
+    const topicRows = parseResult.data;
+    if (!topicRows || topicRows.length === 0) {
+      console.log('No topics found in topics.csv.');
+      return;
+    }
+
+    const allAcademicCourses = await this.academicCourseRepository.findAll();
+    if (!allAcademicCourses || allAcademicCourses.length === 0) {
+      console.log('No academic courses found in DB. Skipping topic seeding.');
+      return;
+    }
+
+    const topicsByCourseCode = new Map<string, typeCsv.Topic[]>();
+    for (const row of topicRows) {
+      if (!row.code) continue;
+      if (!topicsByCourseCode.has(row.code)) {
+        topicsByCourseCode.set(row.code, []);
+      }
+      topicsByCourseCode.get(row.code)!.push(row);
+    }
+
+    const topicsToCreate: CourseTopic[] = [];
+
+    for (const ac of allAcademicCourses) {
+      if (!ac.course || !ac.course.code) {
+        console.warn(
+          `AcademicCourse ${ac.id} is missing base course info or code. Skipping topics.`,
+        );
+        continue;
+      }
+
+      const courseCode = ac.course.code;
+      const topicsForThisCourse = topicsByCourseCode.get(courseCode);
+
+      if (topicsForThisCourse && topicsForThisCourse.length > 0) {
+        for (const topicRow of topicsForThisCourse) {
+          const newTopic = new CourseTopic();
+          newTopic.course = ac;
+          newTopic.topicOrder = parseInt(topicRow.order, 10);
+          newTopic.topic = topicRow.topic;
+
+          if (!isNaN(newTopic.topicOrder) && newTopic.topic) {
+            topicsToCreate.push(newTopic);
+          } else {
+            console.warn(
+              `Invalid order ('${topicRow.order}') or empty topic for course ${courseCode}. Skipping.`,
+            );
+          }
+        }
+      }
+    }
+
+    try {
+      if (topicsToCreate.length > 0) {
+        console.log(`Creating ${topicsToCreate.length} course topics...`);
+        await this.courseTopicRepository.save(topicsToCreate);
+        console.log('Successfully created course topics.');
+      } else {
+        console.log('No new course topics needed to be created.');
+      }
+    } catch (error) {
+      console.error('Failed to save course topics:', error);
+      throw error;
+    }
   }
 
   async runAll(): Promise<void> {

@@ -16,7 +16,11 @@ export class AcademicCourseRepository implements IAcademicCourseRepository {
   async findById(id: string): Promise<AcademicCourse | null> {
     return this.typeormRepo.findOne({
       where: { id },
-      relations: ['course', 'topics'],
+      relations: {
+        coordinator: true,
+        course: true,
+        topics: true,
+      },
       order: {
         topics: {
           topicOrder: 'ASC',

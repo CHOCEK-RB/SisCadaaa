@@ -31,6 +31,8 @@ export default defineConfig(
     },
   },
   {
-    rules: {},
+    rules: {
+      '@typescript-eslint/no-explicit-any': ['off'],
+    },
   },
 );

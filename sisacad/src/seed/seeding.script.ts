@@ -20,6 +20,14 @@ async function bootstrap() {
     await seederAcademic.runAll();
     console.log('Academic seeder finished.');
 
+    console.log('Seeding topics...');
+    await seeder.seedTopics('topics.csv');
+    console.log('Seeding topics finished.');
+
+    console.log('Seeding schedule...');
+    await seeder.seedSchedule('schedule.csv');
+    console.log('Seeding schedule finished.');
+
     console.log('Seeding completed successfully!');
   } catch (error) {
     console.error('Seeding failed:', error);

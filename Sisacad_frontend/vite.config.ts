@@ -5,6 +5,6 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   plugins: [tailwindcss(), sveltekit()],
   server: {
-    allowedHosts: ['dev.sisacad.127.0.0.1.nip.io'],
+    allowedHosts: ['sisacad.local.io', '127.0.0.1'],
   },
 });

@@ -16,7 +16,7 @@ import { PreRegisterUserDto } from '../application/pre-register-user.dto';
 import { GetUser } from './decorators/get_user.decorator';
 import type { JwtPayload } from 'src/auth/interface/jwt-payload.interface';
 
-@Controller('users')
+@Controller('user')
 export class UsersController {
   constructor(private readonly userService: UserService) {}
 

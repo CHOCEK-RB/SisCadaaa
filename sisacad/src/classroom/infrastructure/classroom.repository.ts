@@ -17,6 +17,10 @@ export class ClassroomRepository implements IClassroomRepository {
     return this.typeormRepo.findOne({ where: { id } });
   }
 
+  async findByName(name: string): Promise<Classroom | null> {
+    return this.typeormRepo.findOne({ where: { name } });
+  }
+
   async findByType(type: ClassroomType): Promise<Classroom[] | null> {
     return this.typeormRepo.find({ where: { type: type } });
   }

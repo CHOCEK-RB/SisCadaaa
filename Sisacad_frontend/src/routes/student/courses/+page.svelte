@@ -24,7 +24,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {#each groupedEnrollments[period] as enrollment (enrollment.id)}
             <a
-              href={`/courses/${enrollment.academicCourse.id}`}
+              href={`/student/courses/${enrollment.academicCourse.id}`}
               class="block bg-white rounded-lg shadow-md hover:shadow-lg focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-shadow duration-200 overflow-hidden border border-gray-200 group"
               aria-label={`Ver detalles del curso ${enrollment.academicCourse.course.name}`}
             >

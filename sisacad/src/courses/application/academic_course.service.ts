@@ -2,7 +2,6 @@ import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { IAcademicCourseRepository } from '../infrastructure/icourse_academic.repository';
 import { AcademicCourseDTO } from './dto/academic_course.dto';
 import { CourseDTO } from './dto/course.dto';
-import { TeacherProfileDTO } from 'src/users/application/dto/teacher.dto';
 import { CourseTopicDTO } from './dto/course_topic.dto';
 import { JwtPayload } from 'src/auth/interface/jwt-payload.interface';
 
@@ -19,8 +18,7 @@ export class AcademicCourseService {
   ): Promise<AcademicCourseDTO> {
     console.log(id);
     console.log(authenticatedUser);
-    const academicCourse =
-      await this.academicCourseRepository.findByIdWithCoordinator(id);
+    const academicCourse = await this.academicCourseRepository.findById(id);
 
     if (!academicCourse) {
       throw new NotFoundException(`AcademicCourse with ID ${id} not found`);
@@ -40,35 +38,19 @@ export class AcademicCourseService {
       semester: academicCourse.course.semester,
     };
 
-    let coordinatorDto: TeacherProfileDTO | undefined = undefined;
-    if (authenticatedUser.role !== 'student') {
-      coordinatorDto = academicCourse.coordinator
-        ? {
-            id: academicCourse.coordinator.id,
-            email: academicCourse.coordinator.user.email,
-            firstName: academicCourse.coordinator.name,
-            lastName:
-              `${academicCourse.coordinator.firstLastName} ${academicCourse.coordinator.secondLastName}`.trim(),
-            role: 'teacher',
-          }
-        : undefined;
-    }
-
-    const topicsArray = Array.isArray(await academicCourse.topics)
-      ? await academicCourse.topics
-      : [];
-    const topicsDto: CourseTopicDTO[] = topicsArray.map((topic) => ({
-      id: topic.id,
-      order: topic.topicOrder,
-      topic: topic.topic,
-    }));
+    const topicsDto: CourseTopicDTO[] | null = academicCourse.topics.map(
+      (topic) => ({
+        id: topic.id,
+        order: topic.topicOrder,
+        topic: topic.topic,
+      }),
+    );
 
     const detailDto: AcademicCourseDTO = {
       id: academicCourse.id,
       creationDate: academicCourse.creationDate,
       urlSyllabus: academicCourse.urlSyllabus,
       course: courseDto,
-      coordinator: coordinatorDto,
       topics: topicsDto,
     };
 

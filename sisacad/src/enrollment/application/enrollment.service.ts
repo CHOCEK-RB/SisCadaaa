@@ -13,6 +13,7 @@ import { IStudentRepository } from 'src/users/infrastructure/istudent.repository
 import { EnrollmentDetailDTO } from '../application/dto/enrollment.dto';
 import { AcademicCourseDTO } from 'src/courses/application/dto/academic_course.dto';
 import { CourseDTO } from 'src/courses/application/dto/course.dto';
+import { Grades } from '../aggregates/enrollment.entity';
 
 export interface GroupedEnrollments {
   [period: string]: EnrollmentDetailDTO[];
@@ -123,5 +124,37 @@ export class EnrollmentService {
       }, {} as GroupedEnrollments);
 
     return sortedGrouped;
+  }
+
+  async getMyGradesForCourse(
+    academicCourseId: string,
+    authenticatedUser: JwtPayload,
+  ): Promise<Grades | null> {
+    if (authenticatedUser.role !== 'student') {
+      throw new ForbiddenException('Only students can view their grades.');
+    }
+
+    const studentProfile = await this.studentRepository.findByUserId(
+      authenticatedUser.sub,
+    );
+    if (!studentProfile) {
+      throw new NotFoundException(
+        `Student profile not found for user ID ${authenticatedUser.sub}.`,
+      );
+    }
+    const studentEntityId = studentProfile.id;
+
+    const enrollment = await this.enrollmentRepository.findByStudentAndCourse(
+      studentEntityId,
+      academicCourseId,
+    );
+
+    if (!enrollment) {
+      throw new NotFoundException(
+        `Enrollment not found for student ${studentEntityId} in course ${academicCourseId}.`,
+      );
+    }
+
+    return enrollment.grades || null;
   }
 }

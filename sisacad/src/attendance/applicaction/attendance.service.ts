@@ -42,6 +42,8 @@ export class AttendanceService {
         `Student profile not found for user ID ${authenticatedUser.sub}.`,
       );
     }
+
+    console.log(studentProfile);
     const studentId = studentProfile.id;
 
     const enrollment = await this.enrollmentRepository.findByStudentAndCourse(

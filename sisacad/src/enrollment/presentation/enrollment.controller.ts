@@ -1,13 +1,26 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  UseGuards,
+  ParseUUIDPipe,
+  Param,
+} from '@nestjs/common';
+
 import { AuthGuard } from '@nestjs/passport';
+
 import {
   EnrollmentService,
   GroupedEnrollments,
 } from '../application/enrollment.service';
+
 import { GetUser } from 'src/users/presentation/decorators/get_user.decorator';
+
 import type { JwtPayload } from 'src/auth/interface/jwt-payload.interface';
 
+import { Grades } from '../aggregates/enrollment.entity';
+
 @Controller('enrollments')
+@UseGuards(AuthGuard('jwt'))
 export class EnrollmentController {
   constructor(private readonly enrollmentService: EnrollmentService) {}
 
@@ -17,5 +30,16 @@ export class EnrollmentController {
     @GetUser() user: JwtPayload,
   ): Promise<GroupedEnrollments> {
     return await this.enrollmentService.getMyEnrollmentsGroupedByPeriod(user);
+  }
+
+  @Get('my-grades/:academicCourseId')
+  async getMyGradesForCourse(
+    @Param('academicCourseId', ParseUUIDPipe) academicCourseId: string,
+    @GetUser() user: JwtPayload,
+  ): Promise<Grades | null> {
+    return await this.enrollmentService.getMyGradesForCourse(
+      academicCourseId,
+      user,
+    );
   }
 }

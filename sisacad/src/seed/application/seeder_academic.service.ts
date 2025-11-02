@@ -54,11 +54,12 @@ export class SeeederServiceAcademic implements ISeederServiceAcademic {
     const academicCoursesToCreate: AcademicCourse[] = [];
 
     for (const course of courses) {
-      for (let i = 0; i < 10 - course.semester + 1; i++) {
+      for (let i = 0; i < 10 - course.semester + 1; i += 2) {
         const academicCourse = new AcademicCourse();
         academicCourse.course = course;
 
         const currentYear = 2025 - Math.floor((10 - course.semester - i) / 2);
+
         const isFirstSemester = (course.semester + i) % 2 !== 0;
 
         if (isFirstSemester) {
@@ -84,7 +85,6 @@ export class SeeederServiceAcademic implements ISeederServiceAcademic {
       console.error('Failed to save academic courses:', error);
     }
   }
-
   async seedAcademicGroups(): Promise<void> {
     const academicCourses = await this.academicCourseRepository.findAll();
     const allTeachers = await this.teacherRepository.findAll();
@@ -200,13 +200,8 @@ export class SeeederServiceAcademic implements ISeederServiceAcademic {
     const currentBaseYear = 2025;
 
     for (const student of students) {
-      if (student.semester < 2) continue;
-
       const yearsSinceStart = Math.floor((student.semester - 1) / 2);
       const startYear = currentBaseYear - yearsSinceStart;
-      console.log(
-        `Student ${student.cui} (Semester ${student.semester}) started in ${startYear}-A`,
-      );
 
       for (
         let targetSemester = 1;
@@ -218,10 +213,6 @@ export class SeeederServiceAcademic implements ISeederServiceAcademic {
         const isFirstAcademicSemester = targetSemester % 2 !== 0;
         const targetMonth = isFirstAcademicSemester ? 3 : 8;
 
-        console.log(
-          ` -> Processing Target Semester: ${targetSemester}, Calculated Period: ${targetYear}-${isFirstAcademicSemester ? 'A' : 'B'} (Month: ${targetMonth})`,
-        );
-
         const relevantAcademicCourses = academicCourses.filter(
           (ac) =>
             ac.course &&
@@ -231,11 +222,20 @@ export class SeeederServiceAcademic implements ISeederServiceAcademic {
             ac.creationDate.getUTCMonth() === targetMonth - 1,
         );
 
-        console.log(
-          `   Found ${relevantAcademicCourses.length} relevant academic courses.`,
-        );
+        if (
+          targetYear === 2025 &&
+          targetMonth === 8 &&
+          targetSemester % 2 === 1
+        ) {
+          console.log(relevantAcademicCourses);
+        }
 
-        if (relevantAcademicCourses.length === 0) continue;
+        if (relevantAcademicCourses.length === 0) {
+          console.log(
+            `No relevant academic courses found for student ${student.cui} in target semester ${targetSemester}. Skipping...`,
+          );
+          continue;
+        }
 
         const groupName = Math.random() < 0.5 ? 'A' : 'B';
 
@@ -253,12 +253,19 @@ export class SeeederServiceAcademic implements ISeederServiceAcademic {
             continue;
           }
 
-          const theoryGroup = groups.find(
-            (g) => g.type === GroupType.THEORY && g.name === groupName,
+          const availableTheoryGroups = groups.filter(
+            (g) => g.type === GroupType.THEORY,
           );
-          const practiceGroup = groups.find(
-            (g) => g.type === GroupType.PRACTICE && g.name === groupName,
+          const availablePracticeGroups = groups.filter(
+            (g) => g.type === GroupType.PRACTICE,
           );
+
+          const theoryGroup =
+            availableTheoryGroups.find((g) => g.name === groupName) ||
+            availableTheoryGroups[0];
+          const practiceGroup =
+            availablePracticeGroups.find((g) => g.name === groupName) ||
+            availablePracticeGroups[0];
 
           const assignedGroupIds: { id: string }[] = [];
           if (theoryGroup) assignedGroupIds.push({ id: theoryGroup.id });
@@ -327,9 +334,6 @@ export class SeeederServiceAcademic implements ISeederServiceAcademic {
       console.log('No academic courses found starting from 2025-B.');
       return;
     }
-    console.log(
-      `Found ${academicCourses2025B.length} academic courses for 2025-B period.`,
-    );
 
     const attendancesToCreate: Attendance[] = [];
     const today = new Date();
@@ -362,13 +366,6 @@ export class SeeederServiceAcademic implements ISeederServiceAcademic {
     };
 
     for (const ac of academicCourses2025B) {
-      if (
-        ac.creationDate.getUTCFullYear() !== 2025 ||
-        ac.creationDate.getUTCMonth() < 7
-      ) {
-        continue;
-      }
-
       if (ac.enrollments.length === 0) {
         console.log(
           `Skipping course ${ac.course?.code || ac.id} - No enrollments found ${ac.course.name}.`,

@@ -1,20 +1,41 @@
 import { redirect, type Handle } from '@sveltejs/kit';
 import { JWT_SECRET } from '$env/static/private';
-import { verifyToken } from '$lib/utils/auth';
-import type { UserSession } from '$lib/store/auth.store';
+import jwt from 'jsonwebtoken';
+import type { UserSession } from '$lib/types/auth.types';
 
-const protectedRoutes = ['/home', '/courses'];
+const protectedRoutes = ['/student', '/student/courses'];
+
+const publicRoutes = ['/login'];
+
+function verifyToken(token: string): UserSession | null {
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as UserSession;
+
+    const user: UserSession = {
+      sub: decoded.sub,
+      email: decoded.email,
+      pictureURL: decoded.pictureURL,
+      role: decoded.role,
+      iat: decoded.iat,
+      exp: decoded.exp,
+    };
+
+    return user;
+  } catch (error) {
+    console.error('Token verification failed:', error);
+    return null;
+  }
+}
 
 export const handle: Handle = async ({ event, resolve }) => {
   const token = event.cookies.get('jwt_token');
-  let user: UserSession | null = null;
 
   if (token) {
-    try {
-      user = await verifyToken(token, JWT_SECRET);
+    const user = verifyToken(token);
+
+    if (user) {
       event.locals.user = user;
-    } catch (error) {
-      console.error('Invalid token:', error);
+    } else {
       event.locals.user = null;
       event.cookies.delete('jwt_token', { path: '/' });
     }
@@ -22,25 +43,23 @@ export const handle: Handle = async ({ event, resolve }) => {
     event.locals.user = null;
   }
 
+  const pathname = event.url.pathname;
+
   const isProtectedRoute = protectedRoutes.some((route) =>
-    event.url.pathname.startsWith(route),
+    pathname.startsWith(route),
+  );
+
+  const isPublicRoute = publicRoutes.some((route) =>
+    pathname.startsWith(route),
   );
 
   if (isProtectedRoute && !event.locals.user) {
-    console.log(
-      `Redirecting unauthorized access from ${event.url.pathname} to /login`,
-    );
-    throw redirect(
-      303,
-      `/login?redirectTo=${encodeURIComponent(event.url.pathname + event.url.search)}`,
-    );
+    throw redirect(303, `/login?redirectTo=${pathname}`);
   }
 
-  if (event.url.pathname === '/login' && event.locals.user) {
-    console.log(`Redirecting logged-in user from /login to /home`);
-    throw redirect(303, '/home');
+  if (isPublicRoute && event.locals.user) {
+    throw redirect(303, '/');
   }
 
-  const response = await resolve(event);
-  return response;
+  return resolve(event);
 };

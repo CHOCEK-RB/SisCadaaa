@@ -44,3 +44,19 @@ export type Classroom = {
   location: string;
   type: string;
 };
+
+export type ScheduleSlot = {
+  day: string;
+  startTime: string;
+  endTime: string;
+  classroomName: string;
+  courseCode: string;
+  groupType: string;
+  groupName: string;
+};
+
+export type Topic = {
+  code: string;
+  order: string;
+  topic: string;
+};

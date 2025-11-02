@@ -46,7 +46,7 @@ export class AcademicCourse {
   groups: Promise<AcademicGroup[]>;
 
   @OneToMany(() => CourseTopic, (topics) => topics.course)
-  topics: Promise<CourseTopic[]>;
+  topics: CourseTopic[];
 
   @OneToMany(() => Enrollment, (enrollments) => enrollments.course)
   enrollments: Enrollment[];

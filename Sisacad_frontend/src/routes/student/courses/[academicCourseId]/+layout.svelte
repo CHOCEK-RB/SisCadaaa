@@ -1,68 +1,40 @@
 <script lang="ts">
   import type { LayoutData } from './$types';
   import { page } from '$app/state';
-  import {
-    Info,
-    BookText,
-    Calendar,
-    SquareCheck,
-    SquarePen,
-    Users,
-  } from 'lucide-svelte';
+  import { Info, Calendar, SquareCheck, Users } from 'lucide-svelte';
 
   let { data } = $props<{ data: LayoutData }>();
-  const { userRole, courseDetails } = data;
+  const { courseDetails } = data;
   const academicCourseId = page.params.academicCourseId;
 
   interface Tab {
     href: string;
     label: string;
     icon: typeof Info;
-    roles: ('student' | 'teacher' | 'admin' | 'secretary')[];
   }
 
-  const allTabs: Tab[] = [
+  const tabs: Tab[] = [
     {
-      href: `/courses/${academicCourseId}`,
+      href: `/student/courses/${academicCourseId}`,
       label: 'Información',
       icon: Info,
-      roles: ['student', 'teacher', 'admin', 'secretary'],
     },
     {
-      href: `/courses/${academicCourseId}/topics`,
-      label: 'Temas',
-      icon: BookText,
-      roles: ['student', 'teacher', 'admin', 'secretary'],
-    },
-    {
-      href: `/courses/${academicCourseId}/schedule`,
+      href: `/student/courses/${academicCourseId}/schedule`,
       label: 'Horario',
       icon: Calendar,
-      roles: ['student', 'teacher'],
     },
     {
-      href: `/courses/${academicCourseId}/grades`,
+      href: `/student/courses/${academicCourseId}/grades`,
       label: 'Mis Notas',
       icon: SquareCheck,
-      roles: ['student'],
     },
     {
-      href: `/courses/${academicCourseId}/attendance`,
+      href: `/student/courses/${academicCourseId}/attendance`,
       label: 'Asistencia',
       icon: Users,
-      roles: ['student', 'teacher'],
-    },
-    {
-      href: `/courses/${academicCourseId}/manage-grades`,
-      label: 'Gestionar Notas',
-      icon: SquarePen,
-      roles: ['teacher'],
     },
   ];
-
-  const visibleTabs = $derived(
-    allTabs.filter((tab) => tab.roles.includes(userRole)),
-  );
 
   const activePath = $derived(page.url.pathname);
 </script>
@@ -87,7 +59,7 @@
 
   <nav class="mb-8">
     <ul class="flex border-b space-x-1 -mb-px">
-      {#each visibleTabs as tab (tab.href)}
+      {#each tabs as tab (tab.href)}
         {@const Icon = tab.icon}
         {@const isActive =
           activePath === tab.href ||

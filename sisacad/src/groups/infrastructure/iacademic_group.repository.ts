@@ -10,6 +10,11 @@ export interface IAcademicGroupRepository {
   findByIdAcademicCourse(
     courseAcademicId: string,
   ): Promise<AcademicGroup[] | null>;
+  findByCourseCodeTypeName(
+    courseCode: string,
+    type: GroupType,
+    name: string,
+  ): Promise<AcademicGroup | null>;
   save(group: AcademicGroup): Promise<AcademicGroup>;
   save(groups: AcademicGroup[]): Promise<AcademicGroup[]>;
   create(

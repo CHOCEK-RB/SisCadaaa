@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import { CheckCircle, XCircle, Percent } from 'lucide-svelte'; // Iconos
+  import { CircleCheckBig, CircleX, Percent } from 'lucide-svelte';
 
   export let data: PageData;
   const attendanceData = data.attendanceData ?? [];
@@ -126,9 +126,9 @@
                         )}"
                       >
                         {#if record.status === 'present'}
-                          <CheckCircle class="w-3 h-3 mr-1" />
+                          <CircleCheckBig class="w-3 h-3 mr-1" />
                         {:else if record.status === 'absent'}
-                          <XCircle class="w-3 h-3 mr-1" />
+                          <CircleX class="w-3 h-3 mr-1" />
                         {/if}
                         {capitalize(record.status)}
                       </span>
@@ -146,7 +146,6 @@
       </div>
     {/each}
   {:else}
-    <!-- Mostrar si no hay error pero tampoco hay datos -->
     <div class="bg-white p-6 rounded-lg shadow-md border text-center">
       <p class="text-gray-600">
         No se encontraron datos de asistencia para este curso o aún no se han

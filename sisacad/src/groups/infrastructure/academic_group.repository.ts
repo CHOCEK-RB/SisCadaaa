@@ -34,6 +34,26 @@ export class AcademicGroupRepository implements IAcademicGroupRepository {
     });
   }
 
+  async findByCourseCodeTypeName(
+    courseCode: string,
+    type: GroupType,
+    name: string,
+  ): Promise<AcademicGroup | null> {
+    console.log(courseCode, type, name);
+    return this.typeormRepo.findOne({
+      where: {
+        type: type,
+        name: name,
+        academicCourse: { course: { code: courseCode } },
+      },
+      relations: {
+        academicCourse: {
+          course: true,
+        },
+      },
+    });
+  }
+
   save(group: AcademicGroup): Promise<AcademicGroup>;
   save(groups: AcademicGroup[]): Promise<AcademicGroup[]>;
   async save(

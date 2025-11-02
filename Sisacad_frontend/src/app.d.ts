@@ -7,6 +7,11 @@ declare global {
     interface Locals {
       user: UserSession | null;
     }
+
+    interface PageData {
+      user?: UserSession | null;
+    }
+
     // interface Error {}
     // interface Locals {}
     // interface PageData {}

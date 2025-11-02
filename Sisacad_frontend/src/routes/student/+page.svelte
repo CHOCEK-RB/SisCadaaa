@@ -1,31 +1,14 @@
 <script lang="ts">
-  import type { PageData } from '../$types';
   import backgroundHome from '$lib/assets/background_home.webp';
   import defaultAvatar from '$lib/assets/default_avatar.webp';
+  import type { LayoutData } from '../$types.js';
 
-  export let data: PageData;
+  export let data: LayoutData;
 
-  const userProfile = data.userProfile;
-  const avatarUrl = userProfile?.iconURL || defaultAvatar;
+  $: userProfile = data.profile;
 
-  let userRoleMessage: string;
-
-  switch (userProfile?.role || '') {
-    case 'student':
-      userRoleMessage = '¡Bienvenido, estudiante!';
-      break;
-    case 'teacher':
-      userRoleMessage = '¡Bienvenido, profesor!';
-      break;
-    case 'admin':
-      userRoleMessage = '¡Bienvenido, administrador!';
-      break;
-    case 'secretary':
-      userRoleMessage = '¡Bienvenido, secretario/a!';
-      break;
-    default:
-      userRoleMessage = '¡Bienvenido!';
-  }
+  console.log(userProfile);
+  $: avatarUrl = userProfile?.iconURL || defaultAvatar;
 </script>
 
 <svelte:head>
@@ -65,10 +48,11 @@
             ¡Hola, {userProfile?.firstName}!
           </h1>
           <p class="text-base sm:text-lg opacity-90 mt-1">
-            {userRoleMessage}
+            Bienvenido al Sistema Académico
           </p>
         </div>
       </div>
     </div>
   </div>
 </div>
+}
