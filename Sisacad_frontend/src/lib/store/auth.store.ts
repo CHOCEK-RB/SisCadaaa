@@ -1,116 +1,203 @@
-import { writable } from 'svelte/store';
+import { writable, derived, get } from 'svelte/store';
+import { goto } from '$app/navigation';
 import { browser } from '$app/environment';
-import type { UserSession } from '$lib/types/auth.types';
+
+interface User {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: 'student' | 'teacher' | 'secretary' | 'admin' | 'unknown';
+  isActive: boolean;
+  cui?: string;
+  semester?: number;
+}
+
+interface AuthState {
+  token: string | null;
+  user: User | null;
+  isLoading: boolean;
+  isInitialized: boolean;
+}
+
+const initialState: AuthState = {
+  token: null,
+  user: null,
+  isLoading: false,
+  isInitialized: false,
+};
 
 function createAuthStore() {
-  const { subscribe, set, update } = writable<UserSession | null>(null);
+  const { subscribe, set, update } = writable<AuthState>(initialState);
 
-  function decodeJWT(token: string): UserSession | null {
+  function initialize() {
+    if (!browser) return;
+
+    const token = localStorage.getItem('token');
+    if (token) {
+      update((state) => ({
+        ...state,
+        token,
+        isLoading: true,
+      }));
+
+      loadUserProfile(token).finally(() => {
+        update((state) => ({ ...state, isInitialized: true }));
+      });
+    } else {
+      update((state) => ({ ...state, isInitialized: true }));
+    }
+  }
+
+  async function loadUserProfile(token?: string) {
+    const currentToken = token || get({ subscribe }).token;
+
+    if (!currentToken) {
+      console.warn('No token available to load profile');
+      return;
+    }
+
+    update((state) => ({ ...state, isLoading: true }));
+
     try {
-      const payloadBase64 = token.split('.')[1];
-      if (!payloadBase64) {
-        throw new Error('Invalid JWT format');
+      const response = await fetch(
+        'http://sisacad.local.io:3000/user/profile',
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${currentToken}`,
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        },
+      );
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          logout();
+          throw new Error('Token inválido');
+        }
+        throw new Error('Error al cargar perfil');
       }
-      const decodedPayload = atob(payloadBase64);
-      const user = JSON.parse(decodedPayload) as UserSession;
-      return user;
-    } catch (e) {
-      console.error('Failed to parse JWT:', e);
-      return null;
+
+      const userData = await response.json();
+
+      update((state) => ({
+        ...state,
+        user: userData,
+        isLoading: false,
+      }));
+
+      console.log('Perfil cargado:', userData);
+      return userData;
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+      update((state) => ({
+        ...state,
+        isLoading: false,
+        user: null,
+      }));
+      throw error;
     }
   }
 
-  function isTokenExpired(user: UserSession): boolean {
-    return Date.now() >= user.exp * 1000;
+  async function loginWithGoogle(idToken: string) {
+    update((state) => ({ ...state, isLoading: true }));
+
+    try {
+      const response = await fetch(
+        'http://sisacad.local.io:3000/auth/google/login',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({ token: idToken }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error en login');
+      }
+
+      const { accessToken } = await response.json();
+
+      if (browser) {
+        localStorage.setItem('token', accessToken);
+      }
+
+      update((state) => ({
+        ...state,
+        token: accessToken,
+        isLoading: true,
+      }));
+
+      await loadUserProfile(accessToken);
+
+      return accessToken;
+    } catch (error) {
+      console.error('Login error:', error);
+      update((state) => ({
+        ...state,
+        isLoading: false,
+        token: null,
+        user: null,
+      }));
+      throw error;
+    }
   }
 
-  function getStoredToken(): string | null {
-    if (!browser) return null;
-    return localStorage.getItem('jwt_token');
-  }
-
-  function saveToken(token: string): void {
-    if (!browser) return;
-    localStorage.setItem('jwt_token', token);
-  }
-
-  function removeToken(): void {
-    if (!browser) return;
-    localStorage.removeItem('jwt_token');
-  }
-
-  function initialize(): void {
-    if (!browser) return;
-
-    const token = getStoredToken();
-    if (!token) {
-      set(null);
-      return;
+  function logout() {
+    if (browser) {
+      localStorage.removeItem('token');
     }
 
-    const user = decodeJWT(token);
-    if (!user) {
-      logout();
-      return;
+    set({
+      token: null,
+      user: null,
+      isLoading: false,
+      isInitialized: true,
+    });
+
+    goto('/login', { replaceState: true });
+  }
+
+  async function refreshProfile() {
+    const currentState = get({ subscribe });
+    if (currentState.token) {
+      await loadUserProfile(currentState.token);
     }
-
-    if (isTokenExpired(user)) {
-      console.log('Token expired, logging out');
-      logout();
-      return;
-    }
-
-    set(user);
   }
-
-  function login(token: string): boolean {
-    if (!browser) return false;
-
-    const user = decodeJWT(token);
-    if (!user) {
-      return false;
-    }
-
-    if (isTokenExpired(user)) {
-      console.error('Cannot login with expired token');
-      return false;
-    }
-
-    saveToken(token);
-    set(user);
-    return true;
-  }
-
-  function logout(): void {
-    if (!browser) return;
-    removeToken();
-    set(null);
-  }
-
-  function isAuthenticated(): boolean {
-    const token = getStoredToken();
-    if (!token) return false;
-
-    const user = decodeJWT(token);
-    if (!user) return false;
-
-    return !isTokenExpired(user);
-  }
-
-  function getToken(): string | null {
-    return getStoredToken();
-  }
-
-  initialize();
 
   return {
     subscribe,
-    login,
-    logout,
     initialize,
-    isAuthenticated,
-    getToken,
+    loginWithGoogle,
+    logout,
+    loadUserProfile,
+    refreshProfile,
+    getToken: () => get({ subscribe }).token,
+    getUser: () => get({ subscribe }).user,
+    isAuthenticated: () => !!get({ subscribe }).token,
   };
 }
 
 export const authStore = createAuthStore();
+
+export const isAuthenticated = derived(
+  authStore,
+  ($auth) => !!$auth.token && !!$auth.user,
+);
+
+export const currentUser = derived(authStore, ($auth) => $auth.user);
+
+export const userRole = derived(
+  authStore,
+  ($auth) => $auth.user?.role || 'unknown',
+);
+
+export const isLoading = derived(authStore, ($auth) => $auth.isLoading);
+
+export const isInitialized = derived(authStore, ($auth) => $auth.isInitialized);
