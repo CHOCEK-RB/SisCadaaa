@@ -175,7 +175,7 @@ export class AcademicGroupRepository implements IAcademicGroupRepository {
   async getScheduleById(id: string): Promise<AcademicGroup | null> {
     return this.typeormRepo.findOne({
       where: { id },
-      relations: { schedule: { classroom: true } },
+      relations: { schedule: { classroom: true }, teacher: true },
     });
   }
 

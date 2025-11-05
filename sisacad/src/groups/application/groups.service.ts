@@ -284,12 +284,10 @@ export class GroupsService {
       throw new NotFoundException(`Group with ID ${groupId} not found.`);
     }
 
-    // Verificar que el profesor es el asignado
     if (!group.teacher || group.teacher.id !== teacherProfile.id) {
       throw new ForbiddenException('You are not assigned to teach this group.');
     }
 
-    // Solo se pueden editar notas en grupos de teoría
     if (group.type !== GroupType.THEORY) {
       throw new BadRequestException(
         'Grades can only be edited for theory groups.',
@@ -305,7 +303,6 @@ export class GroupsService {
       );
     }
 
-    // Validar que las notas estén en el rango válido (0-20) o sean -1
     const validateGrade = (grade: number | undefined): boolean => {
       if (grade === undefined) return true;
       return grade === -1 || (grade >= 0 && grade <= 20);
@@ -325,7 +322,6 @@ export class GroupsService {
       );
     }
 
-    // Actualizar las notas
     enrollment.grades = {
       ...enrollment.grades,
       ...updateGradeDto.grades,

@@ -110,4 +110,16 @@ export const groupsService = {
   ): Promise<void> {
     await api.patch(`/groups/${groupId}/grades/bulk`, { updates }, { token });
   },
+
+  async getAcademicCourse(id: string, token: string) {
+    const response = await api.get<AcademicGroupDTO>(`/groups/course/${id}`, {
+      token: token,
+    });
+
+    if (!response) {
+      throw new Error("No se recibieron datos del servidor, cursos");
+    }
+
+    return response;
+  },
 };
