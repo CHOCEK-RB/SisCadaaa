@@ -33,7 +33,9 @@ export class GroupsService {
     }
   }
 
-  async getAllGroupsForTeacher(authenticatedUser: JwtPayload) {
+  async getAllGroupsForTeacher(
+    authenticatedUser: JwtPayload,
+  ): Promise<GroupsForPeriods> {
     if (authenticatedUser.role !== 'teacher') {
       throw new ForbiddenException('Only teachers can access this route');
     }
@@ -74,6 +76,8 @@ export class GroupsService {
             id: group.academicCourse.course.id,
             code: group.academicCourse.course.code,
             name: group.academicCourse.course.name,
+            semester: group.academicCourse.course.semester,
+            credits: group.academicCourse.course.credits,
           },
         },
       };

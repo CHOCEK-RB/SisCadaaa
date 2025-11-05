@@ -13,16 +13,24 @@ import { IScheduleSlotRepository } from './infrastructure/ischedule.repository';
 
 import { AcademicGroupRepository } from './infrastructure/academic_group.repository';
 import { ScheduleSlotRepository } from './infrastructure/schedule.repository';
+import { GroupsController } from './presentation/groups.controller';
+import { GroupsService } from './application/groups.service';
+
+import { UserModule } from 'src/users/users.module';
 
 @Module({
+  controllers: [GroupsController],
+
   imports: [
     TypeOrmModule.forFeature([AcademicGroup, ScheduleSlot]),
     forwardRef(() => CourseModule),
     forwardRef(() => AttendanceModule),
     forwardRef(() => EnrollmentModule),
+    forwardRef(() => UserModule),
   ],
 
   providers: [
+    GroupsService,
     {
       provide: IAcademicGroupRepository,
       useClass: AcademicGroupRepository,
