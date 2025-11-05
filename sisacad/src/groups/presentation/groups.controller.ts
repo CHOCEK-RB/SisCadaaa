@@ -36,6 +36,14 @@ export class GroupsController {
     return await this.groupsService.getAllGroupsForTeacher(user);
   }
 
+  @Get('/teacher/my-schedule')
+  @UseGuards(AuthGuard('jwt'))
+  async getTeacherSchedule(
+    @GetUser() user: JwtPayload,
+  ): Promise<AcademicGroupDTO[]> {
+    return await this.groupsService.getTeacherSchedule(user);
+  }
+
   @Get('/schedule/:id')
   @UseGuards(AuthGuard('jwt'))
   async getSchedule(

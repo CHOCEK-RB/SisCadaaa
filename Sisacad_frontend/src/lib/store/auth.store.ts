@@ -1,16 +1,16 @@
-import { writable, derived, get } from 'svelte/store';
-import { goto } from '$app/navigation';
-import { browser } from '$app/environment';
-import { userService } from '$lib/services/user.service';
-import { authService } from '$lib/services/auth.service';
-import { resolve } from '$app/paths';
+import { writable, derived, get } from "svelte/store";
+import { goto } from "$app/navigation";
+import { browser } from "$app/environment";
+import { userService } from "$lib/services/user.service";
+import { authService } from "$lib/services/auth.service";
+import { resolve } from "$app/paths";
 
 interface User {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
-  role: 'student' | 'teacher' | 'secretary' | 'admin' | 'unknown';
+  role: "student" | "teacher" | "secretary" | "admin" | "unknown";
   isActive: boolean;
   cui?: string;
   semester?: number;
@@ -36,7 +36,7 @@ function createAuthStore() {
   function initialize() {
     if (!browser) return;
 
-    const token = localStorage.getItem('jwt_token');
+    const token = localStorage.getItem("jwt_token");
     if (token) {
       update((state) => ({
         ...state,
@@ -56,7 +56,7 @@ function createAuthStore() {
     const currentToken = token || get({ subscribe }).token;
 
     if (!currentToken) {
-      console.warn('No token available to load profile');
+      console.warn("No token available to load profile");
       return;
     }
 
@@ -73,10 +73,10 @@ function createAuthStore() {
         isLoading: false,
       }));
 
-      console.log('Perfil cargado:', userData);
+      console.log("Perfil cargado:", userData);
       return userData;
     } catch (error) {
-      console.error('Error loading user profile:', error);
+      console.error("Error loading user profile:", error);
       update((state) => ({
         ...state,
         isLoading: false,
@@ -95,7 +95,7 @@ function createAuthStore() {
       const { accessToken } = await response;
 
       if (browser) {
-        localStorage.setItem('jwt_token', accessToken);
+        localStorage.setItem("jwt_token", accessToken);
       }
 
       update((state) => ({
@@ -108,7 +108,7 @@ function createAuthStore() {
 
       return accessToken;
     } catch (error) {
-      console.error('Login error:', error);
+      console.error("Login error:", error);
       update((state) => ({
         ...state,
         isLoading: false,
@@ -121,7 +121,7 @@ function createAuthStore() {
 
   function logout() {
     if (browser) {
-      localStorage.removeItem('jwt-token');
+      localStorage.removeItem("jwt-token");
     }
 
     set({
@@ -131,7 +131,7 @@ function createAuthStore() {
       isInitialized: true,
     });
 
-    goto(resolve('/login'), { replaceState: true });
+    goto(resolve("/login"), { replaceState: true });
   }
 
   async function refreshProfile() {
@@ -165,7 +165,7 @@ export const currentUser = derived(authStore, ($auth) => $auth.user);
 
 export const userRole = derived(
   authStore,
-  ($auth) => $auth.user?.role || 'unknown',
+  ($auth) => $auth.user?.role || "unknown",
 );
 
 export const isLoading = derived(authStore, ($auth) => $auth.isLoading);

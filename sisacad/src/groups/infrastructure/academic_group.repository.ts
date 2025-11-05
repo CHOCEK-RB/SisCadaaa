@@ -196,6 +196,19 @@ export class AcademicGroupRepository implements IAcademicGroupRepository {
     });
   }
 
+  async findWithScheduleByTeacherId(
+    teacherId: string,
+  ): Promise<AcademicGroup[] | null> {
+    return this.typeormRepo.find({
+      where: { teacher: { id: teacherId } },
+      relations: {
+        academicCourse: { course: true },
+        schedule: { classroom: true },
+        teacher: true,
+      },
+    });
+  }
+
   save(group: AcademicGroup): Promise<AcademicGroup>;
   save(groups: AcademicGroup[]): Promise<AcademicGroup[]>;
   async save(

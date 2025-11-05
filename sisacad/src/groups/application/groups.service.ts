@@ -19,6 +19,7 @@ import {
   Grades,
 } from 'src/enrollment/aggregates/enrollment.entity';
 import { GroupType } from '../aggregates/academic_group.entity';
+import { ScheduleSlotDTO } from './schedule.dto';
 
 export interface GroupsForPeriods {
   [period: string]: AcademicGroupDTO[];
@@ -383,5 +384,96 @@ export class GroupsService {
     if (enrollmentsToUpdate.length > 0) {
       await this.enrollmentRepository.save(enrollmentsToUpdate);
     }
+  }
+
+  async getTeacherSchedule(
+    authenticatedUser: JwtPayload,
+  ): Promise<AcademicGroupDTO[]> {
+    if (authenticatedUser.role !== 'teacher') {
+      throw new ForbiddenException('Only teachers can view their schedule.');
+    }
+
+    const teacherProfile = await this.teacherRepository.findByUserId(
+      authenticatedUser.sub,
+    );
+    if (!teacherProfile) {
+      throw new NotFoundException(
+        `Teacher profile not found for user ID ${authenticatedUser.sub}.`,
+      );
+    }
+
+    const allGroups =
+      await this.academicGroupRepository.findWithScheduleByTeacherId(
+        teacherProfile.id,
+      );
+
+    if (!allGroups || allGroups.length === 0) {
+      return [];
+    }
+
+    const allPeriods = [
+      ...new Set(
+        allGroups.map((g) =>
+          this.getAcademicPeriodLabel(g.academicCourse.creationDate),
+        ),
+      ),
+    ].sort();
+
+    if (allPeriods.length === 0) {
+      return [];
+    }
+
+    const latestPeriod = allPeriods[allPeriods.length - 1];
+
+    const groupsWithSchedule = allGroups.filter(
+      (g) =>
+        this.getAcademicPeriodLabel(g.academicCourse.creationDate) ===
+        latestPeriod,
+    );
+
+    const groupsMap = new Map<string, AcademicGroupDTO>();
+
+    for (const group of groupsWithSchedule) {
+      if (!groupsMap.has(group.id)) {
+        const schedules: ScheduleSlotDTO[] = group.schedule.map((schedule) => ({
+          id: schedule.id,
+          day: schedule.day,
+          start: schedule.startTime,
+          end: schedule.endTime,
+          classroom: {
+            id: schedule.classroom.id,
+            name: schedule.classroom.name,
+            type: schedule.classroom.type,
+          },
+        }));
+
+        const groupDto: AcademicGroupDTO = {
+          id: group.id,
+          name: group.name,
+          type: group.type,
+          course: {
+            id: group.academicCourse.id,
+            course: {
+              id: group.academicCourse.course.id,
+              name: group.academicCourse.course.name,
+              code: group.academicCourse.course.code,
+            },
+          },
+          teacher: {
+            id: teacherProfile.id,
+            email: authenticatedUser.email,
+            firstName: teacherProfile.name,
+            lastName:
+              `${teacherProfile.firstLastName} ${teacherProfile.secondLastName}`.trim(),
+            role: 'teacher',
+          },
+          schedule: schedules,
+        };
+
+        groupsMap.set(group.id, groupDto);
+      }
+    }
+
+    return Array.from(groupsMap.values());
   }
 }

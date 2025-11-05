@@ -38,6 +38,10 @@ export interface IAcademicGroupRepository {
   getScheduleById(id: string): Promise<AcademicGroup | null>;
   getAcademicCourse(id: string): Promise<AcademicGroup | null>;
 
+  findWithScheduleByTeacherId(
+    teacherId: string,
+  ): Promise<AcademicGroup[] | null>;
+
   save(group: AcademicGroup): Promise<AcademicGroup>;
   save(groups: AcademicGroup[]): Promise<AcademicGroup[]>;
   create(

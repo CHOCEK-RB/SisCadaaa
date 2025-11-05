@@ -1,15 +1,15 @@
 <script lang="ts">
-  import * as Sidebar from '$lib/components/ui/sidebar';
-  import SunIcon from '@lucide/svelte/icons/sun';
-  import MoonIcon from '@lucide/svelte/icons/moon';
-  import LogoIcon from '@lucide/svelte/icons/book-open-text';
-  import LogOutIcon from '@lucide/svelte/icons/log-out';
-  import { toggleMode } from 'mode-watcher';
-  import { Button } from '$lib/components/ui/button/index.js';
-  import { authStore, currentUser } from '$lib/store/auth.store';
-  import type { ComponentProps } from 'svelte';
+  import * as Sidebar from "$lib/components/ui/sidebar";
+  import SunIcon from "@lucide/svelte/icons/sun";
+  import MoonIcon from "@lucide/svelte/icons/moon";
+  import LogoIcon from "@lucide/svelte/icons/book-open-text";
+  import LogOutIcon from "@lucide/svelte/icons/log-out";
+  import { toggleMode } from "mode-watcher";
+  import { Button } from "$lib/components/ui/button/index.js";
+  import { authStore, currentUser } from "$lib/store/auth.store";
+  import type { ComponentProps } from "svelte";
 
-  import { navigationLinks, type NavLink } from '$lib/config/navigation';
+  import { navigationLinks, type NavLink } from "$lib/config/navigation";
   let {
     ref = $bindable(null),
     ...restProps
@@ -68,9 +68,6 @@
               </div>
               <div class="truncate text-xs text-muted-foreground">
                 {$currentUser?.email}
-              </div>
-              <div class="truncate text-xs text-foreground">
-                cui: {$currentUser?.cui}
               </div>
             </div>
           </a>

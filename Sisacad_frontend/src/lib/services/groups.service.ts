@@ -122,4 +122,21 @@ export const groupsService = {
 
     return response;
   },
+
+  async getTeacherSchedule(token: string): Promise<AcademicGroupDTO[]> {
+    const response = await api.get<AcademicGroupDTO[]>(
+      "/groups/teacher/my-schedule",
+      {
+        token: token,
+      },
+    );
+
+    if (!response) {
+      throw new Error(
+        "No se recibieron datos del servidor, horario del profesor",
+      );
+    }
+
+    return response;
+  },
 };

@@ -16,7 +16,7 @@
 </script>
 
 {#if $isAuthenticated && $currentUser}
-  <Sidebar.Provider style="--sidebar-width: 10rem;">
+  <Sidebar.Provider style="--sidebar-width: 20rem;">
     <AppSidebar />
     <Sidebar.Inset>
       <header
