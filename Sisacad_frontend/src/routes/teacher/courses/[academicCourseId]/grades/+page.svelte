@@ -5,7 +5,15 @@
     StudentGradeInfo,
   } from "$lib/services/groups.service";
   import { authStore } from "$lib/store/auth.store";
-  import { AlertCircle, Save, BarChart3, Download } from "lucide-svelte";
+  import {
+    AlertCircle,
+    Save,
+    BarChart3,
+    Download,
+    TrendingUp,
+    TrendingDown,
+    Baseline,
+  } from "lucide-svelte"; // Importé los nuevos iconos
   import TeacherGradesChart from "$lib/components/TeacherGradesChart.svelte";
   import { onMount } from "svelte";
   import { SvelteMap } from "svelte/reactivity";
@@ -118,20 +126,24 @@
     const grades = student.grades;
     const scheme = groupData.gradingScheme;
 
-    let total = 0;
-    let count = 0;
+    let totalWeight = 0;
+    let weightedSum = 0;
 
     Object.entries(gradeLabels).forEach(([key]) => {
       const grade = grades[key as keyof typeof grades];
-      const weight = scheme[key as keyof typeof scheme];
+      const weight = scheme[key as keyof typeof scheme] || 0;
 
-      if (grade !== null && grade !== undefined && grade >= 0 && weight) {
-        total += (grade * weight) / 100;
-        count++;
+      if (grade !== null && grade !== undefined && grade >= 0 && weight > 0) {
+        weightedSum += grade * weight;
+        totalWeight += weight;
       }
     });
 
-    return count > 0 ? Math.round(total * 10) / 10 : 0;
+    if (totalWeight === 0) return 0;
+
+    // Calcular el promedio ponderado y redondear
+    const average = weightedSum / totalWeight;
+    return Math.round(average * 10) / 10;
   }
 
   function getGradeColor(grade: number): string {
@@ -188,6 +200,33 @@
     link.click();
     document.body.removeChild(link);
   }
+
+  // --- NUEVA LÓGICA PARA ESTADÍSTICAS ---
+  const allStudentAverages = $derived((): number[] => {
+    if (!groupData) return [];
+    return groupData.students
+      .map(calculateWeightedAverage)
+      .filter((avg) => avg > 0); // Filtramos promedios de 0 (alumnos sin notas)
+  });
+
+  const gradeStatistics = $derived(() => {
+    const averages = allStudentAverages();
+    if (averages.length === 0) {
+      return { average: 0, max: 0, min: 0 };
+    }
+
+    const sum = averages.reduce((a, b) => a + b, 0);
+    const avg = sum / averages.length;
+    const max = Math.max(...averages);
+    const min = Math.min(...averages);
+
+    return {
+      average: parseFloat(avg.toFixed(1)),
+      max: parseFloat(max.toFixed(1)),
+      min: parseFloat(min.toFixed(1)),
+    };
+  });
+  // --- FIN DE LA NUEVA LÓGICA ---
 </script>
 
 <svelte:head>
@@ -211,7 +250,7 @@
     </div>
   {:else if groupData}
     <div class="mb-6">
-      <div class="mb-4 flex items-center justify-between">
+      <div class="mb-4 flex flex-col items-start justify-between sm:flex-row">
         <div>
           <h1 class="text-3xl font-bold text-gray-800">
             Notas - Grupo {groupData.groupName}
@@ -220,7 +259,7 @@
             {groupData.courseName} ({groupData.courseCode}) - {groupData.groupType}
           </p>
         </div>
-        <div class="flex gap-2">
+        <div class="mt-4 flex gap-2 sm:mt-0">
           <button
             onclick={exportToCSV}
             class="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700"
@@ -265,6 +304,61 @@
         </div>
       {/if}
     </div>
+
+    <!-- --- INICIO DE LOS 3 RECUADROS DE ESTADÍSTICAS --- -->
+    <div class="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+      <!-- Tarjeta Promedio General -->
+      <div
+        class="flex items-center rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
+      >
+        <div
+          class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-blue-100"
+        >
+          <Baseline class="h-6 w-6 text-blue-600" />
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-gray-500">Promedio General</p>
+          <p class="text-2xl font-bold text-gray-900">
+            {gradeStatistics().average.toFixed(1)}
+          </p>
+        </div>
+      </div>
+
+      <!-- Tarjeta Nota Más Alta -->
+      <div
+        class="flex items-center rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
+      >
+        <div
+          class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-green-100"
+        >
+          <TrendingUp class="h-6 w-6 text-green-600" />
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-gray-500">Nota Más Alta</p>
+          <p class="text-2xl font-bold text-green-600">
+            {gradeStatistics().max.toFixed(1)}
+          </p>
+        </div>
+      </div>
+
+      <!-- Tarjeta Nota Más Baja -->
+      <div
+        class="flex items-center rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
+      >
+        <div
+          class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100"
+        >
+          <TrendingDown class="h-6 w-6 text-red-600" />
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-gray-500">Nota Más Baja</p>
+          <p class="text-2xl font-bold text-red-600">
+            {gradeStatistics().min.toFixed(1)}
+          </p>
+        </div>
+      </div>
+    </div>
+    <!-- --- FIN DE LOS 3 RECUADROS DE ESTADÍSTICAS --- -->
 
     <!-- Gráfico -->
     <div class="mb-8">
@@ -382,7 +476,7 @@
             <span class="font-medium">{label}:</span>
             {groupData.gradingScheme[
               key as keyof typeof groupData.gradingScheme
-            ]}%
+            ] || 0}%
           </div>
         {/each}
       </div>
