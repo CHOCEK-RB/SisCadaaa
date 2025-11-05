@@ -34,6 +34,10 @@ export interface IAcademicGroupRepository {
     type: GroupType,
     name: string,
   ): Promise<AcademicGroup | null>;
+
+  getScheduleById(id: string): Promise<AcademicGroup | null>;
+  getAcademicCourse(id: string): Promise<AcademicGroup | null>;
+
   save(group: AcademicGroup): Promise<AcademicGroup>;
   save(groups: AcademicGroup[]): Promise<AcademicGroup[]>;
   create(

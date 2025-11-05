@@ -39,7 +39,7 @@
         <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {#each groupsForPeriods[period] as group (group.id)}
             <a
-              href={`/teacher/courses/${group.course.id}`}
+              href={`/teacher/courses/${group.id}`}
               class="focus:ring-opacity-50 group block overflow-hidden rounded-lg border border-gray-200 bg-white shadow-md transition-shadow duration-200 hover:shadow-lg focus:shadow-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
               aria-label={`Ver detalles del curso ${group.course.course.name}`}
             >

@@ -3,20 +3,20 @@
     currentUser,
     isAuthenticated,
     userRole,
-  } from '$lib/store/auth.store';
+  } from "$lib/store/auth.store";
 
-  import * as Sidebar from '$lib/components/ui/sidebar/index.js';
-  import AppSidebar from '$lib/components/app-sidebar.svelte';
+  import * as Sidebar from "$lib/components/ui/sidebar/index.js";
+  import AppSidebar from "$lib/components/app-sidebar.svelte";
 
   let { children } = $props();
 
-  if ($userRole !== 'teacher') {
-    window.location.href = '/';
+  if ($userRole !== "teacher") {
+    window.location.href = "/";
   }
 </script>
 
 {#if $isAuthenticated && $currentUser}
-  <Sidebar.Provider>
+  <Sidebar.Provider style="--sidebar-width: 20rem;">
     <AppSidebar />
     <Sidebar.Inset>
       <header

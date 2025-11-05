@@ -6,6 +6,7 @@ import { ITeacherRepository } from 'src/users/infrastructure/iteacher.repository
 
 import { JwtPayload } from 'src/auth/interface/jwt-payload.interface';
 import { AcademicGroupDTO } from './academic_group.dto';
+import { AcademicCourseDTO } from 'src/courses/application/dto/academic_course.dto';
 
 export interface GroupsForPeriods {
   [period: string]: AcademicGroupDTO[];
@@ -85,5 +86,66 @@ export class GroupsService {
       groupsForPeriods[period].push(groupDTO);
     }
     return groupsForPeriods;
+  }
+
+  async getAcademicCourse(id: string): Promise<AcademicCourseDTO> {
+    const group = await this.academicGroupRepository.getAcademicCourse(id);
+
+    if (!group) {
+      throw new ForbiddenException('Group not found');
+    }
+
+    const course: AcademicCourseDTO = {
+      id: group.academicCourse.id,
+      creationDate: group.academicCourse.creationDate,
+      urlSyllabus: group.academicCourse.urlSyllabus,
+      course: {
+        id: group.academicCourse.course.id,
+        code: group.academicCourse.course.code,
+        name: group.academicCourse.course.name,
+        semester: group.academicCourse.course.semester,
+        credits: group.academicCourse.course.credits,
+      },
+      topics: group.academicCourse.topics.map((topic) => ({
+        id: topic.id,
+        order: topic.topicOrder,
+        topic: topic.topic,
+      })),
+    };
+
+    return course;
+  }
+
+  async getSchedule(id: string): Promise<AcademicGroupDTO[]> {
+    const group = await this.academicGroupRepository.getScheduleById(id);
+
+    console.log(id);
+
+    if (!group) {
+      throw new ForbiddenException('Group not found');
+    }
+
+    const groupDTO: AcademicGroupDTO = {
+      id: group.id,
+      name: group.name,
+      type: group.type,
+      schedule: group.schedule.map((s) => ({
+        id: s.id,
+        day: s.day,
+        start: s.startTime,
+        end: s.endTime,
+        classroom: {
+          id: s.classroom.id,
+          name: s.classroom.name,
+          type: s.classroom.type,
+        },
+      })),
+    };
+
+    const groups: AcademicGroupDTO[] = [];
+
+    groups.push(groupDTO);
+
+    return groups;
   }
 }
