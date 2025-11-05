@@ -16,7 +16,14 @@ export class AcademicGroupRepository implements IAcademicGroupRepository {
   ) {}
 
   async findById(id: string): Promise<AcademicGroup | null> {
-    return this.typeormRepo.findOne({ where: { id } });
+    return this.typeormRepo.findOne({
+      where: { id },
+      relations: {
+        enrollments: { student: true },
+        teacher: true,
+        academicCourse: { course: true },
+      },
+    });
   }
 
   async findByIdAndType(

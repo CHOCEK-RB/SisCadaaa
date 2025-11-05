@@ -5,6 +5,52 @@ export interface GroupsForPeriods {
   [period: string]: AcademicGroupDTO[];
 }
 
+export interface StudentGradeInfo {
+  enrollmentId: string;
+  studentId: string;
+  cui: string;
+  firstName: string;
+  lastName: string;
+  grades: {
+    firstContinue: number;
+    secondContinue: number;
+    thirdContinue: number;
+    firstPartial: number;
+    secondPartial: number;
+    thirdPartial: number;
+  };
+}
+
+export interface GroupGradesResponse {
+  groupId: string;
+  groupName: string;
+  groupType: string;
+  courseName: string;
+  courseCode: string;
+  canEdit: boolean;
+  students: StudentGradeInfo[];
+  gradingScheme: {
+    firstContinue: number;
+    secondContinue: number;
+    thirdContinue: number;
+    firstPartial: number;
+    secondPartial: number;
+    thirdPartial: number;
+  };
+}
+
+export interface UpdateGradeDto {
+  enrollmentId: string;
+  grades: Partial<{
+    firstContinue: number;
+    secondContinue: number;
+    thirdContinue: number;
+    firstPartial: number;
+    secondPartial: number;
+    thirdPartial: number;
+  }>;
+}
+
 export const groupsService = {
   async getGroups(token: string): Promise<GroupsForPeriods> {
     const response = await api.get<GroupsForPeriods>("/groups/teacher", {
@@ -31,5 +77,37 @@ export const groupsService = {
     }
 
     return response;
+  },
+
+  async getGroupGrades(
+    groupId: string,
+    token: string,
+  ): Promise<GroupGradesResponse> {
+    const response = await api.get<GroupGradesResponse>(
+      `/groups/${groupId}/grades`,
+      { token },
+    );
+
+    if (!response) {
+      throw new Error("No se recibieron datos del servidor, notas del grupo");
+    }
+
+    return response;
+  },
+
+  async updateStudentGrade(
+    groupId: string,
+    updateDto: UpdateGradeDto,
+    token: string,
+  ): Promise<void> {
+    await api.patch(`/groups/${groupId}/grades`, updateDto, { token });
+  },
+
+  async updateMultipleGrades(
+    groupId: string,
+    updates: UpdateGradeDto[],
+    token: string,
+  ): Promise<void> {
+    await api.patch(`/groups/${groupId}/grades/bulk`, { updates }, { token });
   },
 };

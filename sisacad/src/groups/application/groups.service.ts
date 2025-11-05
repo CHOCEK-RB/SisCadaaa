@@ -1,15 +1,59 @@
-import { Injectable, Inject, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  ForbiddenException,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 
 import { IAcademicGroupRepository } from '../infrastructure/iacademic_group.repository';
 import { IStudentRepository } from 'src/users/infrastructure/istudent.repository';
 import { ITeacherRepository } from 'src/users/infrastructure/iteacher.repository';
+import { IEnrollmentRepository } from 'src/enrollment/infrastructure/ienrollment.repository';
 
 import { JwtPayload } from 'src/auth/interface/jwt-payload.interface';
 import { AcademicGroupDTO } from './academic_group.dto';
 import { AcademicCourseDTO } from 'src/courses/application/dto/academic_course.dto';
+import {
+  Enrollment,
+  Grades,
+} from 'src/enrollment/aggregates/enrollment.entity';
+import { GroupType } from '../aggregates/academic_group.entity';
 
 export interface GroupsForPeriods {
   [period: string]: AcademicGroupDTO[];
+}
+
+export interface StudentGradeInfo {
+  enrollmentId: string;
+  studentId: string;
+  cui: string;
+  firstName: string;
+  lastName: string;
+  grades: Grades;
+}
+
+export interface GroupGradesResponse {
+  groupId: string;
+  groupName: string;
+  groupType: GroupType;
+  courseName: string;
+  courseCode: string;
+  canEdit: boolean;
+  students: StudentGradeInfo[];
+  gradingScheme: {
+    firstContinue: number;
+    secondContinue: number;
+    thirdContinue: number;
+    firstPartial: number;
+    secondPartial: number;
+    thirdPartial: number;
+  };
+}
+
+export interface UpdateGradeDto {
+  enrollmentId: string;
+  grades: Partial<Grades>;
 }
 
 @Injectable()
@@ -21,6 +65,8 @@ export class GroupsService {
     private readonly studentRepository: IStudentRepository,
     @Inject(ITeacherRepository)
     private readonly teacherRepository: ITeacherRepository,
+    @Inject(IEnrollmentRepository)
+    private readonly enrollmentRepository: IEnrollmentRepository,
   ) {}
 
   private getAcademicPeriodLabel(date: Date): string {
@@ -147,5 +193,199 @@ export class GroupsService {
     groups.push(groupDTO);
 
     return groups;
+  }
+
+  async getGroupGrades(
+    groupId: string,
+    authenticatedUser: JwtPayload,
+  ): Promise<GroupGradesResponse> {
+    if (authenticatedUser.role !== 'teacher') {
+      throw new ForbiddenException('Only teachers can access group grades.');
+    }
+
+    const teacherProfile = await this.teacherRepository.findByUserId(
+      authenticatedUser.sub,
+    );
+    if (!teacherProfile) {
+      throw new NotFoundException('Teacher profile not found.');
+    }
+
+    console.log(teacherProfile);
+
+    const group = await this.academicGroupRepository.findById(groupId);
+    if (!group) {
+      throw new NotFoundException(`Group with ID ${groupId} not found.`);
+    }
+
+    console.log(group);
+
+    if (!group.teacher || group.teacher.id !== teacherProfile.id) {
+      throw new ForbiddenException('You are not assigned to teach this group.');
+    }
+
+    const allEnrollments = group.enrollments;
+
+    const students: StudentGradeInfo[] = allEnrollments.map((enrollment) => ({
+      enrollmentId: enrollment.id,
+      studentId: enrollment.student.id,
+      cui: enrollment.student.cui,
+      firstName: enrollment.student.name,
+      lastName:
+        `${enrollment.student.firstLastName} ${enrollment.student.secondLastName}`.trim(),
+      grades: enrollment.grades || {
+        firstContinue: -1,
+        secondContinue: -1,
+        thirdContinue: -1,
+        firstPartial: -1,
+        secondPartial: -1,
+        thirdPartial: -1,
+      },
+    }));
+
+    students.sort((a, b) => a.lastName.localeCompare(b.lastName));
+
+    return {
+      groupId: group.id,
+      groupName: group.name,
+      groupType: group.type,
+      courseName: group.academicCourse.course.name,
+      courseCode: group.academicCourse.course.code,
+      canEdit: group.type === GroupType.THEORY,
+      students,
+      gradingScheme: group.academicCourse.grades || {
+        firstContinue: 0,
+        secondContinue: 0,
+        thirdContinue: 0,
+        firstPartial: 0,
+        secondPartial: 0,
+        thirdPartial: 0,
+      },
+    };
+  }
+
+  async updateStudentGrades(
+    groupId: string,
+    updateGradeDto: UpdateGradeDto,
+    authenticatedUser: JwtPayload,
+  ): Promise<void> {
+    if (authenticatedUser.role !== 'teacher') {
+      throw new ForbiddenException('Only teachers can update grades.');
+    }
+
+    const teacherProfile = await this.teacherRepository.findByUserId(
+      authenticatedUser.sub,
+    );
+    if (!teacherProfile) {
+      throw new NotFoundException('Teacher profile not found.');
+    }
+
+    const group = await this.academicGroupRepository.findById(groupId);
+    if (!group) {
+      throw new NotFoundException(`Group with ID ${groupId} not found.`);
+    }
+
+    // Verificar que el profesor es el asignado
+    if (!group.teacher || group.teacher.id !== teacherProfile.id) {
+      throw new ForbiddenException('You are not assigned to teach this group.');
+    }
+
+    // Solo se pueden editar notas en grupos de teoría
+    if (group.type !== GroupType.THEORY) {
+      throw new BadRequestException(
+        'Grades can only be edited for theory groups.',
+      );
+    }
+
+    const enrollment = await this.enrollmentRepository.findById(
+      updateGradeDto.enrollmentId,
+    );
+    if (!enrollment) {
+      throw new NotFoundException(
+        `Enrollment with ID ${updateGradeDto.enrollmentId} not found.`,
+      );
+    }
+
+    // Validar que las notas estén en el rango válido (0-20) o sean -1
+    const validateGrade = (grade: number | undefined): boolean => {
+      if (grade === undefined) return true;
+      return grade === -1 || (grade >= 0 && grade <= 20);
+    };
+
+    const grades = updateGradeDto.grades;
+    if (
+      !validateGrade(grades.firstContinue) ||
+      !validateGrade(grades.secondContinue) ||
+      !validateGrade(grades.thirdContinue) ||
+      !validateGrade(grades.firstPartial) ||
+      !validateGrade(grades.secondPartial) ||
+      !validateGrade(grades.thirdPartial)
+    ) {
+      throw new BadRequestException(
+        'Grades must be between 0 and 20, or -1 for not set.',
+      );
+    }
+
+    // Actualizar las notas
+    enrollment.grades = {
+      ...enrollment.grades,
+      ...updateGradeDto.grades,
+    };
+
+    await this.enrollmentRepository.save(enrollment);
+  }
+
+  async updateMultipleGrades(
+    groupId: string,
+    updates: UpdateGradeDto[],
+    authenticatedUser: JwtPayload,
+  ): Promise<void> {
+    if (authenticatedUser.role !== 'teacher') {
+      throw new ForbiddenException('Only teachers can update grades.');
+    }
+
+    const teacherProfile = await this.teacherRepository.findByUserId(
+      authenticatedUser.sub,
+    );
+    if (!teacherProfile) {
+      throw new NotFoundException('Teacher profile not found.');
+    }
+
+    const group = await this.academicGroupRepository.findById(groupId);
+    if (!group) {
+      throw new NotFoundException(`Group with ID ${groupId} not found.`);
+    }
+
+    if (!group.teacher || group.teacher.id !== teacherProfile.id) {
+      throw new ForbiddenException('You are not assigned to teach this group.');
+    }
+
+    if (group.type !== GroupType.THEORY) {
+      throw new BadRequestException(
+        'Grades can only be edited for theory groups.',
+      );
+    }
+
+    const enrollmentsToUpdate: Enrollment[] = [];
+
+    for (const update of updates) {
+      const enrollment: Enrollment | null =
+        await this.enrollmentRepository.findById(update.enrollmentId);
+      if (!enrollment) {
+        console.warn(
+          `Enrollment ${update.enrollmentId} not found, skipping...`,
+        );
+        continue;
+      }
+
+      enrollment.grades = {
+        ...enrollment.grades,
+        ...update.grades,
+      };
+      enrollmentsToUpdate.push(enrollment);
+    }
+
+    if (enrollmentsToUpdate.length > 0) {
+      await this.enrollmentRepository.save(enrollmentsToUpdate);
+    }
   }
 }

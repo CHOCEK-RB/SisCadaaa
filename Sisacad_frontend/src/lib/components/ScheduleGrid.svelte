@@ -6,8 +6,6 @@
     showCourseName?: boolean;
   }>();
 
-  console.log("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", groups);
-
   const days = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
   const dayMap: Record<string, string> = {
     monday: "Lunes",
