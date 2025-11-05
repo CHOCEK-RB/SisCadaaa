@@ -6,8 +6,6 @@
     showCourseName?: boolean;
   }>();
 
-  console.log('aaaaaaaaaaa', groups);
-
   const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
   const dayMap: Record<string, string> = {
     monday: 'Lunes',
@@ -157,13 +155,13 @@
     <thead>
       <tr class="bg-gray-50">
         <th
-          class="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700 sticky left-0 bg-gray-50 z-10 w-28"
+          class="sticky left-0 z-10 w-28 border border-gray-200 bg-gray-50 px-4 py-3 text-left text-sm font-semibold text-gray-700"
         >
           Hora
         </th>
         {#each days as day (day)}
           <th
-            class="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700 min-w-[180px]"
+            class="min-w-[180px] border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700"
           >
             {day}
           </th>
@@ -174,7 +172,7 @@
       {#each timeSlots as slot (slot.start)}
         <tr class="hover:bg-gray-50">
           <td
-            class="border border-gray-200 px-2 py-3 text-xs font-medium text-gray-600 bg-gray-50 sticky left-0 z-10 text-center"
+            class="sticky left-0 z-10 border border-gray-200 bg-gray-50 px-2 py-3 text-center text-xs font-medium text-gray-600"
           >
             {slot.start}
             <br />
@@ -187,25 +185,25 @@
             {#if cell}
               <td class="border border-gray-200 p-2 align-top">
                 <div
-                  class="rounded-lg border-2 p-3 h-full {getTypeColor(
+                  class="h-full rounded-lg border-2 p-3 {getTypeColor(
                     cell.group.type,
                   )} transition-all hover:shadow-md"
                 >
                   {#if showCourseName && cell.group.course?.course?.name}
                     <p
-                      class="font-bold text-sm mb-1 line-clamp-2"
+                      class="mb-1 line-clamp-2 text-sm font-bold"
                       title={cell.group.course.course.name}
                     >
                       {cell.group.course.course.name}
                     </p>
                   {/if}
-                  <p class="font-semibold text-sm mb-1">
+                  <p class="mb-1 text-sm font-semibold">
                     {cell.group.name}
                   </p>
-                  <p class="text-xs mb-1 opacity-80">
+                  <p class="mb-1 text-xs opacity-80">
                     {getTypeLabel(cell.group.type)}
                   </p>
-                  <p class="text-xs mb-1 font-medium">
+                  <p class="mb-1 text-xs font-medium">
                     ⏰ {cell.schedule.start} - {cell.schedule.end}
                   </p>
                   {#if cell.schedule.classroom}
@@ -214,7 +212,7 @@
                     </p>
                   {/if}
                   {#if cell.group.teacher}
-                    <p class="text-xs mt-1 opacity-70">
+                    <p class="mt-1 text-xs opacity-70">
                       👤 {cell.group.teacher.firstName}
                       {cell.group.teacher.lastName}
                     </p>

@@ -13,6 +13,8 @@ export interface AcademicCourseDTO {
   groups?: AcademicGroupDTO[];
   topics?: CourseTopicDTO[];
   enrollments?: EnrollmentDetailDTO[];
+
+  currentlyEnrolledLabGroupId?: string | null;
 }
 
 export interface GradingScheme {

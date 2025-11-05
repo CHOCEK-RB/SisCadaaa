@@ -16,4 +16,6 @@ export class AcademicCourseDTO {
   groups?: AcademicGroupDTO[];
   topics?: CourseTopicDTO[];
   enrollments?: EnrollmentDetailDTO[];
+
+  currentlyEnrolledLabGroupId?: string | null;
 }

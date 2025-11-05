@@ -4,12 +4,14 @@ import {
   Column,
   OneToMany,
   ManyToOne,
+  ManyToMany,
 } from 'typeorm';
 
 import { ScheduleSlot } from './schedule.entity';
 import { AcademicCourse } from 'src/courses/aggregates/academic_course.entity';
 import { Teacher } from 'src/users/aggregates/teacher.entity';
 import { Attendance } from 'src/attendance/aggregates/attendance.entity';
+import { Enrollment } from 'src/enrollment/aggregates/enrollment.entity';
 
 export enum GroupType {
   LABORATORY = 'laboratory',
@@ -45,4 +47,7 @@ export class AcademicGroup {
 
   @OneToMany(() => Attendance, (record) => record.academicGroup)
   attendances: Promise<Attendance[]>;
+
+  @ManyToMany(() => Enrollment, (enrollment) => enrollment.groups)
+  enrollments: Enrollment[];
 }

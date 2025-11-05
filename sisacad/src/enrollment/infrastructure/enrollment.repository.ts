@@ -61,15 +61,34 @@ export class EnrollmentRepository implements IEnrollmentRepository {
         status: EnrollmentStatus.ACTIVE,
       },
       relations: {
+        course: { course: true },
         student: true,
         groups: {
           schedule: { classroom: true },
           academicCourse: { course: true },
+          enrollments: { student: true },
         },
       },
       order: {
         course: { course: { id: 'ASC' } },
         groups: { schedule: { startTime: 'ASC' } },
+      },
+    });
+  }
+
+  async findByStudentAndCourseActive(
+    studentId: string,
+    courseId: string,
+  ): Promise<Enrollment | null> {
+    return this.typeormRepo.findOne({
+      where: {
+        student: { id: studentId },
+        course: { id: courseId },
+        status: EnrollmentStatus.ACTIVE,
+      },
+      relations: { student: true, groups: true, course: true },
+      order: {
+        groups: { name: 'ASC' },
       },
     });
   }

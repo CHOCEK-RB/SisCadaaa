@@ -2,12 +2,13 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { authStore, isLoading } from '$lib/store/auth.store';
+  import { resolve } from '$app/paths';
 
   onMount(async () => {
     const token = authStore.getToken();
 
     if (!token) {
-      goto('/login', { replaceState: true });
+      goto(resolve('/login'), { replaceState: true });
       return;
     }
 
@@ -19,7 +20,7 @@
         redirectBasedOnRole();
       } catch (error) {
         console.error('Error loading profile:', error);
-        goto('/login', { replaceState: true });
+        goto(resolve('/login'), { replaceState: true });
       }
     } else {
       redirectBasedOnRole();
@@ -31,10 +32,10 @@
 
     switch (role) {
       case 'student':
-        goto('/student', { replaceState: true });
+        goto(resolve('/student'), { replaceState: true });
         break;
       case 'teacher':
-        goto('/teacher', { replaceState: true });
+        goto(resolve('/teacher'), { replaceState: true });
         break;
       case 'secretary':
         goto('/secretary', { replaceState: true });
@@ -43,7 +44,7 @@
         goto('/admin', { replaceState: true });
         break;
       default:
-        goto('/login', { replaceState: true });
+        goto(resolve('/login'), { replaceState: true });
     }
   }
 </script>

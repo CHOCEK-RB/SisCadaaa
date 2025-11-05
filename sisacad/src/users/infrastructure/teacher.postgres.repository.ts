@@ -11,6 +11,14 @@ export class TeacherPostgresRepository implements ITeacherRepository {
     @InjectRepository(Teacher)
     private readonly typeormRepo: Repository<Teacher>,
   ) {}
+  async getIdForUserId(userId: string): Promise<string | null> {
+    const teacher = await this.typeormRepo.findOne({
+      select: { id: true },
+      where: { user: { id: userId } },
+      relations: { user: true },
+    });
+    return teacher?.id ?? null;
+  }
 
   async findById(id: string): Promise<Teacher | null> {
     return this.typeormRepo.findOne({ where: { id }, relations: ['user'] });

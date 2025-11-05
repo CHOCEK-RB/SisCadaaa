@@ -36,7 +36,7 @@ function createAuthStore() {
   function initialize() {
     if (!browser) return;
 
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('jwt_token');
     if (token) {
       update((state) => ({
         ...state,
@@ -95,7 +95,7 @@ function createAuthStore() {
       const { accessToken } = await response;
 
       if (browser) {
-        localStorage.setItem('token', accessToken);
+        localStorage.setItem('jwt_token', accessToken);
       }
 
       update((state) => ({
@@ -121,7 +121,7 @@ function createAuthStore() {
 
   function logout() {
     if (browser) {
-      localStorage.removeItem('token');
+      localStorage.removeItem('jwt-token');
     }
 
     set({

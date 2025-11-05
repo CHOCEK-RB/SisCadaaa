@@ -16,6 +16,10 @@ import {
   LocationStatus,
   AttendanceStatus,
 } from 'src/attendance/aggregates/attendance.entity';
+import {
+  EnrollmentPeriod,
+  PeriodType,
+} from 'src/enrollment/aggregates/enrollment_period.entity';
 
 import { ISeederServiceAcademic } from './iseeder_academic.service';
 
@@ -26,6 +30,7 @@ import { ITeacherRepository } from 'src/users/infrastructure/iteacher.repository
 import { IStudentRepository } from 'src/users/infrastructure/istudent.repository';
 import { IEnrollmentRepository } from 'src/enrollment/infrastructure/ienrollment.repository';
 import { IAttendanceRepository } from 'src/attendance/infrastructure/iattendance.repository';
+import { IEnrollmentPeriodRepository } from 'src/enrollment/infrastructure/ienrollment_period.repository';
 
 @Injectable()
 export class SeeederServiceAcademic implements ISeederServiceAcademic {
@@ -44,6 +49,8 @@ export class SeeederServiceAcademic implements ISeederServiceAcademic {
     private readonly enrollmentRepository: IEnrollmentRepository,
     @Inject(IAttendanceRepository)
     private readonly attendanceRepository: IAttendanceRepository,
+    @Inject(IEnrollmentPeriodRepository)
+    private readonly enrollmentPeriodRepository: IEnrollmentPeriodRepository,
   ) {}
 
   async seedAcademicCourses(): Promise<void> {
@@ -274,9 +281,9 @@ export class SeeederServiceAcademic implements ISeederServiceAcademic {
           const availablePracticeGroups = groups.filter(
             (g) => g.type === GroupType.PRACTICE,
           );
-          const availableLabGroups = groups.filter(
-            (g) => g.type === GroupType.LABORATORY,
-          );
+          //         const availableLabGroups = groups.filter(
+          //            (g) => g.type === GroupType.LABORATORY,
+          //         );
 
           const theoryGroup =
             availableTheoryGroups.find((g) => g.name === groupName) ||
@@ -284,14 +291,14 @@ export class SeeederServiceAcademic implements ISeederServiceAcademic {
           const practiceGroup =
             availablePracticeGroups.find((g) => g.name === groupName) ||
             availablePracticeGroups[0];
-          const labGroup =
-            availableLabGroups.find((g) => g.name === groupName) ||
-            availableLabGroups[0];
+          //       const labGroup =
+          //       availableLabGroups.find((g) => g.name === groupName) ||
+          //     availableLabGroups[0];
 
           const assignedGroupIds: { id: string }[] = [];
           if (theoryGroup) assignedGroupIds.push({ id: theoryGroup.id });
           if (practiceGroup) assignedGroupIds.push({ id: practiceGroup.id });
-          if (labGroup) assignedGroupIds.push({ id: labGroup.id });
+          // if (labGroup) assignedGroupIds.push({ id: labGroup.id });
 
           if (assignedGroupIds.length === 0) {
             console.warn(
@@ -501,6 +508,16 @@ export class SeeederServiceAcademic implements ISeederServiceAcademic {
     await this.seedAcademicGroups();
     await this.seedEnrollment();
     await this.seedAttendance();
+
+    console.log('Activate Enrollment for Academic Courses ');
+    const enrollmentPeriod = new EnrollmentPeriod();
+    enrollmentPeriod.type = PeriodType.LABORATORY;
+    enrollmentPeriod.name = 'Laboratorio 2025-B';
+    enrollmentPeriod.isActive = true;
+    enrollmentPeriod.startDate = new Date('2025-11-01T00:00:00Z');
+    enrollmentPeriod.endDate = new Date('2025-12-20T00:00:00Z');
+
+    await this.enrollmentPeriodRepository.save(enrollmentPeriod);
     return;
   }
 }

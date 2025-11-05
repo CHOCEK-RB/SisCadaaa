@@ -10,6 +10,7 @@ export interface AcademicGroupDTO {
   schedule?: ScheduleSlotDTO[];
   course: AcademicCourseDTO;
   teacher?: TeacherProfileDTO;
+  enrolledCount?: number;
 }
 
 export interface ScheduleSlotDTO {

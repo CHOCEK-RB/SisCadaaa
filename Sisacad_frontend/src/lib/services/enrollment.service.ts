@@ -10,6 +10,10 @@ export interface GradesAndPercent {
   percent: GradingScheme;
 }
 
+export interface EnrollLabGroupPayload {
+  labGroupIds: string[];
+}
+
 export const enrollmentService = {
   async getEnrollments(token: string) {
     const response = await api.get('/enrollments/my-courses', { token: token });
@@ -79,5 +83,46 @@ export const enrollmentService = {
     }
 
     return response;
+  },
+
+  async getAvailableLabGroups(
+    token: string,
+  ): Promise<AcademicCourseDTO[] | null> {
+    const response = await api.get<AcademicCourseDTO[]>(
+      '/enrollments/available-labs',
+      {
+        token: token,
+      },
+    );
+    return response;
+  },
+
+  async enrollInLabGroups(token: string, labGroupIds: string[]): Promise<any> {
+    const payload: EnrollLabGroupPayload = { labGroupIds };
+
+    console.log(payload, token);
+
+    const response = await api.post<any>('/enrollments/enroll-labs', payload, {
+      token: token,
+    });
+
+    if (!response) {
+      throw new Error('No se recibió respuesta del servidor al matricular.');
+    }
+
+    return response;
+  },
+
+  async getLabEnrollmentStatus(token: string): Promise<{ isActive: boolean }> {
+    try {
+      const response = await api.get<{ isActive: boolean }>(
+        '/enrollments/periods/status/laboratory',
+        { token: token },
+      );
+      return response || { isActive: false };
+    } catch (error) {
+      console.error('Error fetching enrollment status:', error);
+      return { isActive: false }; // Por seguridad, si falla, se asume cerrado.
+    }
   },
 };

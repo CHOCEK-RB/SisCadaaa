@@ -5,11 +5,13 @@ import {
   Settings,
   LogOut,
   type Icon as IconType,
+  SquareCheck,
+  Calendar,
 } from 'lucide-svelte';
 
 export interface NavLink {
-  href: string;
-  label: string;
+  url: string;
+  title: string;
   icon: typeof IconType;
 }
 
@@ -22,36 +24,36 @@ export type UserRole =
 
 export const navigationLinks: Record<UserRole, NavLink[]> = {
   student: [
-    { href: '/student', label: 'Inicio', icon: House },
-    { href: '/student/courses', label: 'Mis Cursos', icon: BookOpen },
-    { href: '/student/grades', label: 'Mis Notas', icon: BookOpen },
-    { href: '/settings', label: 'Configuración', icon: Settings },
+    { url: '/student', title: 'Inicio', icon: House },
+    { url: '/student/courses', title: 'Mis Cursos', icon: BookOpen },
+    { url: '/student/grades', title: 'Mis Notas', icon: SquareCheck },
+    { url: '/student/schedule', title: 'Horario', icon: Calendar },
+    { url: '/student/enrollment', title: 'Matricularse', icon: Users },
   ],
   teacher: [
-    { href: '/home', label: 'Inicio', icon: House },
-    { href: '/assigned-courses', label: 'Cursos Asignados', icon: BookOpen },
-    { href: '/students', label: 'Estudiantes', icon: Users },
-    { href: '/settings', label: 'Configuración', icon: Settings },
+    { url: '/teacher', title: 'Inicio', icon: House },
+    { url: '/teacher/courses', title: 'Cursos Asignados', icon: BookOpen },
+    { url: '/teacher/schedule', title: 'Horario', icon: Calendar },
   ],
   secretary: [
-    { href: '/home', label: 'Inicio', icon: House },
-    { href: '/manage-enrollments', label: 'Gestionar Matrículas', icon: Users },
-    { href: '/manage-courses', label: 'Gestionar Cursos', icon: BookOpen },
-    { href: '/settings', label: 'Configuración', icon: Settings },
+    { url: '/home', title: 'Inicio', icon: House },
+    { url: '/manage-enrollments', title: 'Gestionar Matrículas', icon: Users },
+    { url: '/manage-courses', title: 'Gestionar Cursos', icon: BookOpen },
+    { url: '/settings', title: 'Configuración', icon: Settings },
   ],
   admin: [
-    { href: '/home', label: 'Inicio', icon: House },
-    { href: '/manage-users', label: 'Gestionar Usuarios', icon: Users },
-    { href: '/system-settings', label: 'Ajustes Sistema', icon: Settings },
+    { url: '/home', title: 'Inicio', icon: House },
+    { url: '/manage-users', title: 'Gestionar Usuarios', icon: Users },
+    { url: '/system-settings', title: 'Ajustes Sistema', icon: Settings },
   ],
   unknown: [
-    { href: '/home', label: 'Inicio', icon: House },
-    { href: '/settings', label: 'Configuración', icon: Settings },
+    { url: '/home', title: 'Inicio', icon: House },
+    { url: '/settings', title: 'Configuración', icon: Settings },
   ],
 };
 
 export const logoutLink: NavLink = {
-  href: '/logout',
-  label: 'Cerrar Sesión',
+  url: '/logout',
+  title: 'Cerrar Sesión',
   icon: LogOut,
 };

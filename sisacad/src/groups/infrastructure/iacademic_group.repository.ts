@@ -6,6 +6,19 @@ export const IAcademicGroupRepository = Symbol('IAcademicGroupRepository');
 export interface IAcademicGroupRepository {
   findById(id: string): Promise<AcademicGroup | null>;
   findAll(): Promise<AcademicGroup[]>;
+  findByIdAndType(id: string, type: GroupType): Promise<AcademicGroup | null>;
+  findByAcaCourseAndType(
+    id: string,
+    type: GroupType,
+  ): Promise<AcademicGroup[] | null>;
+  findAllByCoursesAndType(
+    academicCourseIds: string[],
+    type: GroupType,
+  ): Promise<AcademicGroup[] | null>;
+  findAllById(
+    academicCourseIds: string[],
+    type: GroupType,
+  ): Promise<AcademicGroup[] | null>;
   findByIdTeacher(teacherId: string): Promise<AcademicGroup[] | null>;
   findByIdAcademicCourse(
     courseAcademicId: string,

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { In } from 'typeorm';
 
 import { AcademicGroup, GroupType } from '../aggregates/academic_group.entity';
 import { AcademicCourse } from 'src/courses/aggregates/academic_course.entity';
@@ -18,12 +19,93 @@ export class AcademicGroupRepository implements IAcademicGroupRepository {
     return this.typeormRepo.findOne({ where: { id } });
   }
 
+  async findByIdAndType(
+    id: string,
+    type: GroupType,
+  ): Promise<AcademicGroup | null> {
+    return this.typeormRepo.findOne({
+      where: { id, type },
+      relations: { academicCourse: { course: true }, enrollments: true },
+    });
+  }
+
   async findAll(): Promise<AcademicGroup[]> {
     return this.typeormRepo.find();
   }
 
+  async findAllByCoursesAndType(
+    academicCourseIds: string[],
+    type: GroupType,
+  ): Promise<AcademicGroup[] | null> {
+    return await this.typeormRepo.find({
+      where: {
+        academicCourse: { id: In(academicCourseIds) },
+        type: type,
+      },
+      relations: {
+        academicCourse: { course: true },
+        schedule: { classroom: true },
+        enrollments: true,
+      },
+    });
+  }
+
+  async findAllById(
+    academicCourseIds: string[],
+    type: GroupType,
+  ): Promise<AcademicGroup[] | null> {
+    return await this.typeormRepo.find({
+      where: {
+        id: In(academicCourseIds),
+        type: type,
+      },
+      relations: {
+        academicCourse: { course: true },
+        schedule: { classroom: true },
+        enrollments: true,
+      },
+    });
+  }
+
+  async findByAcaCourseAndType(
+    id: string,
+    type: GroupType,
+  ): Promise<AcademicGroup[] | null> {
+    return this.typeormRepo.find({
+      where: { type: type, academicCourse: { id: id } },
+      relations: {
+        schedule: { classroom: true },
+        enrollments: true,
+      },
+    });
+  }
+
   async findByIdTeacher(teacherId: string): Promise<AcademicGroup[] | null> {
-    return this.typeormRepo.find({ where: { teacher: { id: teacherId } } });
+    return this.typeormRepo.find({
+      where: { teacher: { id: teacherId } },
+      relations: { academicCourse: { course: true } },
+    });
+  }
+
+  async getCourseInfo(id: string): Promise<AcademicGroup | null> {
+    return this.typeormRepo.findOne({
+      where: { id },
+      relations: { academicCourse: { course: true, topics: true } },
+    });
+  }
+
+  async getEnrollments(id: string): Promise<AcademicGroup | null> {
+    return this.typeormRepo.findOne({
+      where: { id },
+      relations: { enrollments: { student: true } },
+    });
+  }
+
+  async getAttendances(id: string): Promise<AcademicGroup | null> {
+    return this.typeormRepo.findOne({
+      where: { id },
+      relations: { attendances: true },
+    });
   }
 
   async findByIdAcademicCourse(

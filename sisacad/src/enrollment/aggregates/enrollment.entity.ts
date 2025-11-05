@@ -36,7 +36,7 @@ export class Enrollment {
   @ManyToOne(() => AcademicCourse, (course) => course.enrollments)
   course: AcademicCourse;
 
-  @ManyToMany(() => AcademicGroup)
+  @ManyToMany(() => AcademicGroup, (group) => group.enrollments)
   @JoinTable()
   groups: AcademicGroup[];
 

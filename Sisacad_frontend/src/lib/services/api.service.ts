@@ -91,10 +91,12 @@ class ApiService {
     try {
       const response = await fetch(`${this.baseURL}${endpoint}`, {
         method: 'POST',
-        headers: this.getHeaders(options.headers),
+        headers: this.getHeaders(options.headers, options.token),
         body: JSON.stringify(data),
         ...options,
       });
+
+      console.log('Response:', response);
 
       return await this.handleResponse<T>(response);
     } catch (error) {

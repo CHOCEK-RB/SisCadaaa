@@ -1,10 +1,10 @@
 <script lang="ts">
-  import type { PageData } from './$types';
-  import { SvelteMap } from 'svelte/reactivity';
-  import { AlertCircle, Calendar, Download } from 'lucide-svelte';
-  import ScheduleGrid from '$lib/components/ScheduleGrid.svelte';
-  import type { AcademicGroupDTO } from '$lib/types/group.types';
-  import type { CourseDTO } from '$lib/types/course.types';
+  import type { PageData } from "./$types";
+  import { SvelteMap } from "svelte/reactivity";
+  import { AlertCircle, Calendar, Download } from "lucide-svelte";
+  import ScheduleGrid from "$lib/components/ScheduleGrid.svelte";
+  import type { AcademicGroupDTO } from "$lib/types/group.types";
+  import type { CourseDTO } from "$lib/types/course.types";
 
   type CourseSummaryItem = {
     course: CourseDTO;
@@ -42,23 +42,23 @@
 </svelte:head>
 
 <div class="container mx-auto px-4 py-8">
-  <div class="flex justify-between items-center mb-6">
+  <div class="mb-6 flex items-center justify-between">
     <h1 class="text-3xl font-bold text-gray-800">Mi Horario</h1>
     <button
       onclick={handlePrint}
-      class="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors print:hidden"
+      class="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-white transition-colors hover:bg-indigo-700 print:hidden"
     >
-      <Download class="w-4 h-4" />
+      <Download class="h-4 w-4" />
       Imprimir
     </button>
   </div>
 
   {#if error}
     <div
-      class="flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 border border-red-200"
+      class="mb-4 flex items-center rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800"
       role="alert"
     >
-      <AlertCircle class="w-5 h-5 mr-3 flex-shrink-0" />
+      <AlertCircle class="mr-3 h-5 w-5 flex-shrink-0" />
       <div>
         <span class="font-medium">Error:</span>
         {error}
@@ -66,19 +66,19 @@
     </div>
   {:else if allScheduleGroups && allScheduleGroups.length > 0}
     <div
-      class="bg-white p-6 rounded-lg shadow-md border mb-6 print:break-inside-avoid"
+      class="mb-6 rounded-lg border bg-white p-6 shadow-md print:break-inside-avoid"
     >
       <h2
-        class="text-xl font-semibold mb-4 text-gray-700 flex items-center gap-2"
+        class="mb-4 flex items-center gap-2 text-xl font-semibold text-gray-700"
       >
-        <Calendar class="w-5 h-5" />
+        <Calendar class="h-5 w-5" />
         Resumen de Cursos
       </h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {#each coursesSummary() as { course, groups } (course.id)}
-          <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <p class="font-bold text-gray-800 mb-2">{course.name}</p>
-            <p class="text-sm text-gray-600 mb-2">{course.code}</p>
+          <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+            <p class="mb-2 font-bold text-gray-800">{course.name}</p>
+            <p class="mb-2 text-sm text-gray-600">{course.code}</p>
             <div class="space-y-1">
               {#each groups as group (group.id)}
                 <p class="text-xs text-gray-500">
@@ -91,19 +91,19 @@
       </div>
     </div>
 
-    <div class="bg-white p-6 rounded-lg shadow-md border print:shadow-none">
-      <h2 class="text-xl font-semibold mb-6 text-gray-700">
+    <div class="rounded-lg border bg-white p-6 shadow-md print:shadow-none">
+      <h2 class="mb-6 text-xl font-semibold text-gray-700">
         Horario Semanal Completo
       </h2>
       <ScheduleGrid groups={allScheduleGroups} showCourseName={true} />
     </div>
   {:else}
-    <div class="bg-white p-6 rounded-lg shadow-md border text-center">
-      <Calendar class="w-16 h-16 mx-auto text-gray-400 mb-4" />
-      <p class="text-gray-600 text-lg">
+    <div class="rounded-lg border bg-white p-6 text-center shadow-md">
+      <Calendar class="mx-auto mb-4 h-16 w-16 text-gray-400" />
+      <p class="text-lg text-gray-600">
         No tienes horarios registrados actualmente.
       </p>
-      <p class="text-gray-500 text-sm mt-2">
+      <p class="mt-2 text-sm text-gray-500">
         Los horarios aparecerán aquí una vez que estés matriculado en cursos.
       </p>
     </div>

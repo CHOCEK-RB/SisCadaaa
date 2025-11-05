@@ -8,6 +8,10 @@ export interface IEnrollmentRepository {
   findById(id: string): Promise<Enrollment | null>;
   findAll(): Promise<Enrollment[]>;
   findAllWithGradesByStudent(studentId: string): Promise<Enrollment[]>;
+  findByStudentAndCourseActive(
+    studentId: string,
+    courseId: string,
+  ): Promise<Enrollment | null>;
   findByStudentId(studentId: string): Promise<Enrollment[]>;
   findByStudentIdAndActives(studentId: string): Promise<Enrollment[] | null>;
   findByStudentAndCourse(
