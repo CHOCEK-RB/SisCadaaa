@@ -1,10 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
-import { Attendance, LocationStatus } from '../aggregates/attendance.entity';
-import { IAttendanceRepository } from './iattendance.repository';
-import { AcademicGroup } from 'src/groups/aggregates/academic_group.entity';
-import { Teacher } from 'src/users/aggregates/teacher.entity';
+import { Attendance } from '../domain/aggregates/attendance.entity';
+import { IAttendanceRepository } from '../domain/repositories/iattendance.repository';
 
 @Injectable()
 export class AttendanceRepository implements IAttendanceRepository {
@@ -60,20 +58,7 @@ export class AttendanceRepository implements IAttendanceRepository {
     });
   }
 
-  async create(
-    teacher: Teacher,
-    ipAddress: string,
-    location: LocationStatus,
-    group: AcademicGroup,
-  ): Promise<Attendance> {
-    const newAttendance = this.typeormRepo.create({
-      teacher: teacher,
-      ipAddress: ipAddress,
-      location: location,
-      academicGroup: group,
-      classDate: new Date(),
-      studentStatuses: {},
-    });
-    return this.typeormRepo.save(newAttendance);
+  async add(attendance: Attendance): Promise<Attendance> {
+    return this.typeormRepo.save(attendance);
   }
 }

@@ -1,25 +1,28 @@
 <script lang="ts">
   import type { PageData } from "./$types";
-  import { SvelteMap } from "svelte/reactivity";
   import { AlertCircle, Calendar, Download } from "lucide-svelte";
-  import ScheduleGrid from "$lib/components/ScheduleGrid.svelte";
+  import * as Card from "$lib/components/ui/card";
+  import ScheduleTable from "$lib/components/ScheduleTable.svelte";
+  import { Button } from "$lib/components/ui/button";
   import type { AcademicGroupDTO } from "$lib/types/group.types";
   import type { CourseDTO } from "$lib/types/course.types";
+  import { SvelteMap } from "svelte/reactivity";
 
   type CourseSummaryItem = {
     course: CourseDTO;
     groups: AcademicGroupDTO[];
   };
 
-  const { data } = $props<{ data: PageData }>();
+  let { data } = $props<{ data: PageData }>();
   const allScheduleGroups = $derived(data.allScheduleGroups);
   const error = data.error;
 
-  const coursesSummary = $derived((): CourseSummaryItem[] => {
+  const coursesSummary = $derived(() => {
+    if (!allScheduleGroups) return [];
     const coursesMap = new SvelteMap<string, CourseSummaryItem>();
     allScheduleGroups.forEach((group: AcademicGroupDTO) => {
       if (group.course?.course) {
-        const courseId = group.course.id;
+        const courseId = group.course.course.id;
         if (!coursesMap.has(courseId)) {
           coursesMap.set(courseId, {
             course: group.course.course,
@@ -29,7 +32,9 @@
         coursesMap.get(courseId)!.groups.push(group);
       }
     });
-    return Array.from(coursesMap.values());
+    return Array.from(coursesMap.values()).sort((a, b) =>
+      a.course.name.localeCompare(b.course.name),
+    );
   });
 
   function handlePrint() {
@@ -41,21 +46,18 @@
   <title>Mi Horario - Sisacad</title>
 </svelte:head>
 
-<div class="container mx-auto px-4 py-8">
-  <div class="mb-6 flex items-center justify-between">
-    <h1 class="text-3xl font-bold text-gray-800">Mi Horario</h1>
-    <button
-      onclick={handlePrint}
-      class="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-white transition-colors hover:bg-indigo-700 print:hidden"
-    >
-      <Download class="h-4 w-4" />
+<div class="container mx-auto space-y-8 px-4 py-8">
+  <div class="flex items-center justify-between">
+    <h1 class="text-3xl font-bold">Mi Horario</h1>
+    <Button onclick={handlePrint} class="print:hidden">
+      <Download class="mr-2 h-4 w-4" />
       Imprimir
-    </button>
+    </Button>
   </div>
 
   {#if error}
     <div
-      class="mb-4 flex items-center rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800"
+      class="text-destructive-foreground flex items-center rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm"
       role="alert"
     >
       <AlertCircle class="mr-3 h-5 w-5 flex-shrink-0" />
@@ -65,47 +67,50 @@
       </div>
     </div>
   {:else if allScheduleGroups && allScheduleGroups.length > 0}
-    <div
-      class="mb-6 rounded-lg border bg-white p-6 shadow-md print:break-inside-avoid"
-    >
-      <h2
-        class="mb-4 flex items-center gap-2 text-xl font-semibold text-gray-700"
-      >
-        <Calendar class="h-5 w-5" />
+    <div>
+      <h2 class="mb-4 flex items-center gap-2 text-2xl font-semibold">
+        <Calendar class="h-6 w-6" />
         Resumen de Cursos
       </h2>
-      <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div
+        class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+      >
         {#each coursesSummary() as { course, groups } (course.id)}
-          <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
-            <p class="mb-2 font-bold text-gray-800">{course.name}</p>
-            <p class="mb-2 text-sm text-gray-600">{course.code}</p>
-            <div class="space-y-1">
-              {#each groups as group (group.id)}
-                <p class="text-xs text-gray-500">
-                  • {group.name} ({group.type})
-                </p>
-              {/each}
-            </div>
-          </div>
+          <Card.Root>
+            <Card.Header>
+              <Card.Title class="truncate">{course.name}</Card.Title>
+              <Card.Description>{course.code}</Card.Description>
+            </Card.Header>
+            <Card.Content>
+              <div class="space-y-1">
+                {#each groups as group (group.id)}
+                  <p class="text-sm text-muted-foreground">
+                    &bull; Grupo: {group.name} ({group.type})
+                  </p>
+                {/each}
+              </div>
+            </Card.Content>
+          </Card.Root>
         {/each}
       </div>
     </div>
 
-    <div class="rounded-lg border bg-white p-6 shadow-md print:shadow-none">
-      <h2 class="mb-6 text-xl font-semibold text-gray-700">
-        Horario Semanal Completo
-      </h2>
-      <ScheduleGrid groups={allScheduleGroups} showCourseName={true} />
+    <div class="print:shadow-none">
+      <h2 class="mb-4 text-2xl font-semibold">Horario Semanal Completo</h2>
+      <!-- Placeholder for the new ScheduleTable component -->
+      <ScheduleTable groups={allScheduleGroups} showCourseName={true} />
     </div>
   {:else}
-    <div class="rounded-lg border bg-white p-6 text-center shadow-md">
-      <Calendar class="mx-auto mb-4 h-16 w-16 text-gray-400" />
-      <p class="text-lg text-gray-600">
-        No tienes horarios registrados actualmente.
-      </p>
-      <p class="mt-2 text-sm text-gray-500">
-        Los horarios aparecerán aquí una vez que estés matriculado en cursos.
-      </p>
-    </div>
+    <Card.Root class="text-center">
+      <Card.Content class="p-6">
+        <Calendar class="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
+        <p class="text-lg text-foreground">
+          No tienes horarios registrados actualmente.
+        </p>
+        <p class="mt-2 text-sm text-muted-foreground">
+          Los horarios aparecerán aquí una vez que estés matriculado en cursos.
+        </p>
+      </Card.Content>
+    </Card.Root>
   {/if}
 </div>

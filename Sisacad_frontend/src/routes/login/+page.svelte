@@ -51,6 +51,7 @@
       console.error('Login failed:', err);
       error =
         err.message || 'Error al iniciar sesión. Por favor intenta de nuevo.';
+    } finally {
       isLoading = false;
     }
   }

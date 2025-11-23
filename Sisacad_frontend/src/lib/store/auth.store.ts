@@ -1,5 +1,5 @@
 import { writable, derived, get } from "svelte/store";
-import { goto } from "$app/navigation";
+import { goto, invalidateAll } from "$app/navigation";
 import { browser } from "$app/environment";
 import { userService } from "$lib/services/user.service";
 import { authService } from "$lib/services/auth.service";
@@ -23,6 +23,8 @@ interface AuthState {
   isInitialized: boolean;
 }
 
+let isInitializing = false;
+
 const initialState: AuthState = {
   token: null,
   user: null,
@@ -34,42 +36,47 @@ function createAuthStore() {
   const { subscribe, set, update } = writable<AuthState>(initialState);
 
   function initialize() {
-    if (!browser) return;
+    if (!browser || isInitializing) return;
 
-    const token = localStorage.getItem("jwt_token");
-    if (token) {
-      update((state) => ({
-        ...state,
-        token,
-        isLoading: true,
-      }));
+    console.log("Inicializando store de autenticación...");
+    isInitializing = true;
 
-      loadUserProfile(token).finally(() => {
+    loadUserProfile()
+      .then(() => {
+        console.log("Perfil cargado correctamente en initialize");
+      })
+      .catch((error) => {
+        console.log("Error al cargar perfil en initialize:", error);
+      })
+      .finally(() => {
+        console.log("Finalizando inicialización del store");
         update((state) => ({ ...state, isInitialized: true }));
+        console.log("isInitialized actualizado a true");
+        isInitializing = false;
       });
-    } else {
-      update((state) => ({ ...state, isInitialized: true }));
-    }
   }
 
   async function loadUserProfile(token?: string) {
-    const currentToken = token || get({ subscribe }).token;
+    console.log("loadUserProfile llamado con token:", token);
 
-    if (!currentToken) {
-      console.warn("No token available to load profile");
-      return;
-    }
+    const currentToken =
+      token && token !== "cookie_auth" ? token : get({ subscribe }).token;
+    console.log("currentToken usado:", currentToken);
 
     update((state) => ({ ...state, isLoading: true }));
 
     try {
-      const response = await userService.getProfile(currentToken);
+      console.log("Llamando a userService.getProfile...");
+      const response = await userService.getProfile();
+      console.log("Respuesta de userService.getProfile recibida:", response);
 
       const userData = response;
 
       update((state) => ({
         ...state,
         user: userData,
+        token:
+          currentToken && currentToken !== "cookie_auth" ? currentToken : null,
         isLoading: false,
       }));
 
@@ -81,8 +88,9 @@ function createAuthStore() {
         ...state,
         isLoading: false,
         user: null,
+        token: null,
       }));
-      throw error;
+      return null;
     }
   }
 
@@ -90,36 +98,36 @@ function createAuthStore() {
     update((state) => ({ ...state, isLoading: true }));
 
     try {
-      const response = await authService.login(idToken);
+      await authService.login(idToken);
 
-      const { accessToken } = await response;
+      await loadUserProfile();
 
-      if (browser) {
-        localStorage.setItem("jwt_token", accessToken);
-      }
+      invalidateAll();
 
-      update((state) => ({
-        ...state,
-        token: accessToken,
-        isLoading: true,
-      }));
+      update((state) => ({ ...state, isInitialized: true }));
 
-      await loadUserProfile(accessToken);
-
-      return accessToken;
+      console.log("Usuario logueado exitosamente");
+      return true;
     } catch (error) {
       console.error("Login error:", error);
       update((state) => ({
         ...state,
-        isLoading: false,
         token: null,
         user: null,
       }));
       throw error;
+    } finally {
+      update((state) => ({ ...state, isLoading: false }));
     }
   }
 
-  function logout() {
+  async function logout() {
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error("Error during logout:", error);
+    }
+
     if (browser) {
       localStorage.removeItem("jwt-token");
     }
@@ -135,10 +143,7 @@ function createAuthStore() {
   }
 
   async function refreshProfile() {
-    const currentState = get({ subscribe });
-    if (currentState.token) {
-      await loadUserProfile(currentState.token);
-    }
+    await loadUserProfile();
   }
 
   return {
@@ -150,16 +155,13 @@ function createAuthStore() {
     refreshProfile,
     getToken: () => get({ subscribe }).token,
     getUser: () => get({ subscribe }).user,
-    isAuthenticated: () => !!get({ subscribe }).token,
+    isAuthenticated: () => !!get({ subscribe }).user,
   };
 }
 
 export const authStore = createAuthStore();
 
-export const isAuthenticated = derived(
-  authStore,
-  ($auth) => !!$auth.token && !!$auth.user,
-);
+export const isAuthenticated = derived(authStore, ($auth) => !!$auth.user);
 
 export const currentUser = derived(authStore, ($auth) => $auth.user);
 

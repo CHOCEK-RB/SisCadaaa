@@ -1,6 +1,6 @@
-import type { TeacherProfileDTO } from './user.types';
-import type { AcademicGroupDTO } from './group.types';
-import type { EnrollmentDetailDTO } from './enrollment.types';
+import type { TeacherProfileDTO } from "./user.types";
+import type { AcademicGroupDTO } from "./group.types";
+import type { EnrollmentDetailDTO } from "./enrollment.types";
 
 export interface AcademicCourseDTO {
   id: string;
@@ -9,12 +9,14 @@ export interface AcademicCourseDTO {
   course: CourseDTO;
   grades?: GradingScheme;
 
+  progress?: TopicProgressDTO[];
+
   coordinator?: TeacherProfileDTO;
   groups?: AcademicGroupDTO[];
   topics?: CourseTopicDTO[];
   enrollments?: EnrollmentDetailDTO[];
 
-  currentlyEnrolledLabGroupId?: string | null;
+  currentlyEnrolledLabGroupId?: string;
 }
 
 export interface GradingScheme {
@@ -40,4 +42,10 @@ export interface CourseTopicDTO {
   id: string;
   order: number;
   topic: string;
+}
+
+export interface TopicProgressDTO {
+  id: string;
+  groupName: string;
+  completedTopics: CourseTopicDTO[];
 }

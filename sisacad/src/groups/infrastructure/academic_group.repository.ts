@@ -3,10 +3,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { In } from 'typeorm';
 
-import { AcademicGroup, GroupType } from '../aggregates/academic_group.entity';
-import { AcademicCourse } from 'src/courses/aggregates/academic_course.entity';
+import {
+  AcademicGroup,
+  GroupType,
+} from '../domain/aggregates/academic_group.entity';
 
-import { IAcademicGroupRepository } from './iacademic_group.repository';
+import { IAcademicGroupRepository } from '../domain/repositories/iacademic_group.repository';
 
 @Injectable()
 export class AcademicGroupRepository implements IAcademicGroupRepository {
@@ -57,13 +59,17 @@ export class AcademicGroupRepository implements IAcademicGroupRepository {
     });
   }
 
-  async findAllById(
-    academicCourseIds: string[],
+  async add(group: AcademicGroup): Promise<AcademicGroup> {
+    return this.typeormRepo.save(group);
+  }
+
+  async findByGroupIds(
+    groupIds: string[],
     type: GroupType,
   ): Promise<AcademicGroup[] | null> {
     return await this.typeormRepo.find({
       where: {
-        id: In(academicCourseIds),
+        id: In(groupIds),
         type: type,
       },
       relations: {
@@ -129,7 +135,6 @@ export class AcademicGroupRepository implements IAcademicGroupRepository {
     type: GroupType,
     name: string,
   ): Promise<AcademicGroup[] | null> {
-    console.log(courseCode, type, name);
     return this.typeormRepo.find({
       where: {
         type: type,
@@ -183,7 +188,11 @@ export class AcademicGroupRepository implements IAcademicGroupRepository {
     return this.typeormRepo.findOne({
       where: { id },
       relations: {
-        academicCourse: { course: true, coordinator: true, topics: true },
+        academicCourse: {
+          course: true,
+          coordinator: true,
+          topics: true,
+        },
       },
 
       order: {
@@ -219,21 +228,5 @@ export class AcademicGroupRepository implements IAcademicGroupRepository {
     } else {
       return this.typeormRepo.save(groupOrGroups);
     }
-  }
-
-  async create(
-    name: string,
-    capacity: number,
-    type: GroupType,
-    course: AcademicCourse,
-  ): Promise<AcademicGroup> {
-    const newGroup = this.typeormRepo.create({
-      name: name,
-      capacity: capacity,
-      type: type,
-      academicCourse: course,
-    });
-
-    return this.typeormRepo.save(newGroup);
   }
 }

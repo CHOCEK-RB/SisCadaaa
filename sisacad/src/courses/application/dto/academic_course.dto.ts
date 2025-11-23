@@ -1,9 +1,10 @@
 import { CourseDTO } from './course.dto';
 import { CourseTopicDTO } from './course_topic.dto';
 import { TeacherProfileDTO } from 'src/users/application/dto/teacher.dto';
-import { AcademicGroupDTO } from 'src/groups/application/academic_group.dto';
-import { GradingScheme } from 'src/courses/aggregates/academic_course.entity';
+import { AcademicGroupDTO } from 'src/groups/application/dto/academic_group.dto';
+import { GradingScheme } from 'src/courses/domain/aggregates/academic_course.entity';
 import { EnrollmentDetailDTO } from 'src/enrollment/application/dto/enrollment.dto';
+import { TopicProgressDTO } from './topic_progress.dto';
 
 export class AcademicCourseDTO {
   id: string;
@@ -15,6 +16,7 @@ export class AcademicCourseDTO {
   coordinator?: TeacherProfileDTO;
   groups?: AcademicGroupDTO[];
   topics?: CourseTopicDTO[];
+  progress?: TopicProgressDTO[];
   enrollments?: EnrollmentDetailDTO[];
 
   currentlyEnrolledLabGroupId?: string | null;

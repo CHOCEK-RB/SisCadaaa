@@ -1,7 +1,7 @@
 import { IsArray, IsUUID } from 'class-validator';
 
 import { AcademicCourseDTO } from 'src/courses/application/dto/academic_course.dto';
-import { Grades } from '../../aggregates/enrollment.entity';
+import { Grades } from '../../domain/aggregates/enrollment.entity';
 import { StudentProfileDTO } from 'src/users/application/dto/student.dto';
 
 export class EnrollLabGroupDto {

@@ -1,30 +1,30 @@
-import { redirect } from "@sveltejs/kit";
-import type { PageServerLoad } from "./$types";
+import { redirect } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
+import { groupsService } from '$lib/services/groups.service';
 
-import { groupsService } from "$lib/services/groups.service";
-
-export const load: PageServerLoad = async ({ locals, cookies, params }) => {
-  if (locals.user.role !== "teacher") {
-    throw redirect(303, "/");
+export const load: PageServerLoad = async ({ params, locals, fetch }) => {
+  if (locals.user?.role !== 'teacher') {
+    throw redirect(303, '/');
   }
 
-  const token = cookies.get("jwt_token");
-
-  if (!token) {
-    throw redirect(303, "/login?redirectTo=/teacher/courses");
-  }
-
-  const academicCourseId = params.academicCourseId;
+  const { academicCourseId } = params;
 
   try {
-    const group = await groupsService.getScheduleForGroup(
+    const scheduleGroups = await groupsService.getScheduleForGroup(
       academicCourseId,
-      token,
+      fetch,
     );
+
     return {
-      group,
+      scheduleGroups,
     };
   } catch (err) {
-    console.error("Error loading teacher courses page:", err);
+    console.error('Error loading course schedule page:', err);
+
+    return {
+      scheduleGroups: [],
+      error:
+        'Error al cargar el horario del curso. Intenta de nuevo más tarde.',
+    };
   }
 };

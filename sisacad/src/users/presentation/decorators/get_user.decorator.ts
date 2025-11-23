@@ -1,24 +1,23 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { Request } from 'express';
-import { JwtPayload } from 'src/auth/interface/jwt-payload.interface';
-
-interface RequestWithUser extends Request {
-  user: JwtPayload;
-}
+import { JwtPayload } from 'src/auth/domain/interfaces/jwt-payload.interface';
 
 export const GetUser = createParamDecorator(
-  (_data: unknown, ctx: ExecutionContext): JwtPayload => {
-    const request = ctx.switchToHttp().getRequest<RequestWithUser>();
-
-    const user = request.user;
+  (
+    data: keyof JwtPayload | undefined,
+    ctx: ExecutionContext,
+  ): JwtPayload | JwtPayload[keyof JwtPayload] | null => {
+    const request = ctx.switchToHttp().getRequest();
+    const user = request.user as JwtPayload;
 
     if (!user) {
-      console.error(
-        'GetUser decorator called on a request without a user object. Ensure AuthGuard ran successfully.',
-      );
-      return null as unknown as JwtPayload;
+      return null;
+    }
+
+    if (data) {
+      return user[data];
     }
 
     return user;
   },
 );
+

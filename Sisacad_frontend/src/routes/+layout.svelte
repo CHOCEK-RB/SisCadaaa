@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { authStore, isInitialized } from '$lib/store/auth.store';
-  import '../app.css';
-  import { ModeWatcher } from 'mode-watcher';
+  import { onMount } from "svelte";
+  import { authStore, isInitialized } from "$lib/store/auth.store";
+  import "../app.css";
+  import { ModeWatcher } from "mode-watcher";
   let { children } = $props();
 
   onMount(() => {

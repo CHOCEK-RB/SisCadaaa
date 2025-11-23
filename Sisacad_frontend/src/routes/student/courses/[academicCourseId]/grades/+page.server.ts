@@ -1,45 +1,27 @@
-import { redirect } from '@sveltejs/kit';
-import type { PageServerLoad } from './$types';
+import { redirect } from "@sveltejs/kit";
+import type { PageServerLoad } from "./$types";
+import { enrollmentService } from "$lib/services/enrollment.service";
 
-import { enrollmentService } from '$lib/services/enrollment.service';
-
-import type { Grades } from '$lib/types/enrollment.types';
-
-type LoadReturn =
-  | { grades: Grades | null; error?: null }
-  | { grades?: null; error: string };
-
-export const load: PageServerLoad = async ({
-  locals,
-  params,
-  cookies,
-}): Promise<LoadReturn> => {
-  if (locals.user.role !== 'student') {
-    throw redirect(303, '/');
+export const load: PageServerLoad = async ({ locals, params, fetch }) => {
+  if (locals.user?.role !== "student") {
+    throw redirect(303, "/");
   }
 
-  const token = cookies.get('jwt_token');
-
-  if (!token) {
-    throw redirect(303, '/login?redirectTo=/student/courses');
-  }
-
-  const academicCourseId = params.academicCourseId;
+  const { academicCourseId } = params;
 
   try {
-    const response = await enrollmentService.getGradeById(
+    const grades = await enrollmentService.getGradeById(
       academicCourseId,
-      token,
+      fetch,
     );
-
-    const grades: Grades = response;
-
     return { grades };
   } catch (err) {
-    console.error('Error loading grades page:', err);
+    console.error("Error loading grades page:", err);
     return {
+      grades: null,
       error:
-        'Error de conexión: No se pudo cargar la información. Intenta de nuevo más tarde.',
+        "Error de conexión: No se pudo cargar la información. Intenta de nuevo más tarde.",
     };
   }
 };
+

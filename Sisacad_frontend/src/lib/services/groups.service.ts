@@ -52,9 +52,9 @@ export interface UpdateGradeDto {
 }
 
 export const groupsService = {
-  async getGroups(token: string): Promise<GroupsForPeriods> {
+  async getGroups(fetcher?: typeof fetch): Promise<GroupsForPeriods> {
     const response = await api.get<GroupsForPeriods>("/groups/teacher", {
-      token: token,
+      fetch: fetcher,
     });
 
     if (!response) {
@@ -64,11 +64,11 @@ export const groupsService = {
     return response;
   },
 
-  async getScheduleForGroup(groupID: string, token: string) {
+  async getScheduleForGroup(groupID: string, fetcher?: typeof fetch) {
     const response = await api.get<AcademicGroupDTO[]>(
       `/groups/schedule/${groupID}`,
       {
-        token: token,
+        fetch: fetcher,
       },
     );
 
@@ -81,11 +81,11 @@ export const groupsService = {
 
   async getGroupGrades(
     groupId: string,
-    token: string,
+    fetcher?: typeof fetch,
   ): Promise<GroupGradesResponse> {
     const response = await api.get<GroupGradesResponse>(
       `/groups/${groupId}/grades`,
-      { token },
+      { fetch: fetcher },
     );
 
     if (!response) {
@@ -111,9 +111,9 @@ export const groupsService = {
     await api.patch(`/groups/${groupId}/grades/bulk`, { updates }, { token });
   },
 
-  async getAcademicCourse(id: string, token: string) {
+  async getAcademicCourse(id: string, fetcher?: typeof fetch) {
     const response = await api.get<AcademicGroupDTO>(`/groups/course/${id}`, {
-      token: token,
+      fetch: fetcher,
     });
 
     if (!response) {
@@ -123,11 +123,13 @@ export const groupsService = {
     return response;
   },
 
-  async getTeacherSchedule(token: string): Promise<AcademicGroupDTO[]> {
+  async getTeacherSchedule(
+    fetcher?: typeof fetch,
+  ): Promise<AcademicGroupDTO[]> {
     const response = await api.get<AcademicGroupDTO[]>(
-      "/groups/teacher/my-schedule",
+      '/groups/teacher/my-schedule',
       {
-        token: token,
+        fetch: fetcher,
       },
     );
 

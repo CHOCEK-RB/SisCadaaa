@@ -1,4 +1,4 @@
-import { ScheduleSlotDTO } from 'src/groups/application/schedule.dto';
+import { ScheduleSlotDTO } from 'src/groups/application/dto/schedule.dto';
 
 export class ClassroomDTO {
   id: string;

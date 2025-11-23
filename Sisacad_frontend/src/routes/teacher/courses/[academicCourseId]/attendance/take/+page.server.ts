@@ -2,20 +2,15 @@ import { redirect } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 import { groupsService } from "$lib/services/groups.service";
 
-export const load: PageServerLoad = async ({ locals, params, cookies }) => {
+export const load: PageServerLoad = async ({ locals, params, fetch }) => {
   if (locals.user?.role !== "teacher") {
     throw redirect(303, "/");
-  }
-
-  const token = cookies.get("jwt_token");
-  if (!token) {
-    throw redirect(303, "/login?redirectTo=/teacher/courses");
   }
 
   const groupId = params.academicCourseId;
 
   try {
-    const groupInfo = await groupsService.getAcademicCourse(groupId, token);
+    const groupInfo = await groupsService.getAcademicCourse(groupId, fetch);
 
     return {
       groupId,
@@ -28,6 +23,8 @@ export const load: PageServerLoad = async ({ locals, params, cookies }) => {
       groupId,
       courseCode: "N/A",
       groupName: "Grupo",
+      error: "No se pudo cargar la información del grupo.",
     };
   }
 };
+

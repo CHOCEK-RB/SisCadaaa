@@ -1,5 +1,5 @@
-import type { AcademicCourseDTO } from './course.types';
-import type { StudentProfileDTO } from './user.types';
+import type { AcademicCourseDTO } from "./course.types";
+import type { StudentProfileDTO } from "./user.types";
 
 export interface Grades {
   firstContinue: number;
@@ -16,4 +16,8 @@ export interface EnrollmentDetailDTO {
   date: string;
   grades?: Grades;
   academicCourse: AcademicCourseDTO;
+}
+
+export interface GroupedEnrollments {
+  [period: string]: EnrollmentDetailDTO[];
 }

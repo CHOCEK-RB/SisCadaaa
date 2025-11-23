@@ -4,17 +4,19 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CourseModule } from 'src/courses/course.module';
 import { AttendanceModule } from 'src/attendance/attendance.module';
 import { EnrollmentModule } from 'src/enrollment/enrollment.module';
+import { EventsModule } from 'src/events/events.module';
 
-import { AcademicGroup } from './aggregates/academic_group.entity';
-import { ScheduleSlot } from './aggregates/schedule.entity';
+import { AcademicGroup } from './domain/aggregates/academic_group.entity';
+import { ScheduleSlot } from './domain/aggregates/schedule.entity';
 
-import { IAcademicGroupRepository } from './infrastructure/iacademic_group.repository';
-import { IScheduleSlotRepository } from './infrastructure/ischedule.repository';
+import { IAcademicGroupRepository } from './domain/repositories/iacademic_group.repository';
+import { IScheduleSlotRepository } from './domain/repositories/ischedule.repository';
 
 import { AcademicGroupRepository } from './infrastructure/academic_group.repository';
 import { ScheduleSlotRepository } from './infrastructure/schedule.repository';
-import { GroupsController } from './presentation/groups.controller';
-import { GroupsService } from './application/groups.service';
+import { GroupsController } from './presentation/controllers/groups.controller';
+import { GroupsService } from './application/services/groups.service';
+import { GradingPeriodActiveGuard } from 'src/enrollment/presentation/guards/grading-period-active.guard';
 
 import { UserModule } from 'src/users/users.module';
 
@@ -27,10 +29,12 @@ import { UserModule } from 'src/users/users.module';
     forwardRef(() => AttendanceModule),
     forwardRef(() => EnrollmentModule),
     forwardRef(() => UserModule),
+    EventsModule,
   ],
 
   providers: [
     GroupsService,
+    GradingPeriodActiveGuard,
     {
       provide: IAcademicGroupRepository,
       useClass: AcademicGroupRepository,
@@ -44,3 +48,4 @@ import { UserModule } from 'src/users/users.module';
   exports: [IAcademicGroupRepository, IScheduleSlotRepository],
 })
 export class GroupsModule {}
+

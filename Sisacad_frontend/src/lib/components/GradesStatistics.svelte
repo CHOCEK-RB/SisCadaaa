@@ -1,6 +1,8 @@
 <script lang="ts">
-  import type { GradesAndPercent } from '$lib/services/enrollment.service';
-  import { Target, Award, AlertCircle } from 'lucide-svelte';
+  import type { GradesAndPercent } from "$lib/services/enrollment.service";
+  import { Target, Award, AlertCircle, BookCopy } from "lucide-svelte";
+  import * as Card from "$lib/components/ui/card";
+  import { Badge } from "$lib/components/ui/badge";
 
   export interface CourseAverage {
     name: string;
@@ -11,81 +13,68 @@
     gradesData: GradesAndPercent[];
   }>();
 
-  const gradeLabels: { [key: string]: string } = {
-    firstContinue: 'C1',
-    secondContinue: 'C2',
-    thirdContinue: 'C3',
-    firstPartial: 'P1',
-    secondPartial: 'P2',
-    thirdPartial: 'P3',
-  };
-
-  function calculateWeightedAverage(grades: any, percent: any): number {
-    let total = 0;
-    let count = 0;
-
-    Object.entries(gradeLabels).forEach(([key]) => {
-      const grade = grades[key];
-      const weight = percent[key];
-
-      if (grade !== null && grade !== undefined && weight) {
-        total += (grade * weight) / 100;
-        count++;
-      }
-    });
-
-    return count > 0 ? Math.round(total * 10) / 10 : 0;
-  }
-
   const statistics = $derived(() => {
-    const averages = gradesData
-      .map((item: GradesAndPercent) =>
-        calculateWeightedAverage(item.grades, item.percent),
-      )
-      .filter((avg: number) => avg > 0);
+    const coursesWithAvg = gradesData
+      .map((item: GradesAndPercent) => {
+        if (!item.grades || !item.percent) return null;
 
-    if (averages.length === 0) {
+        let total = 0;
+        for (const key in item.grades) {
+          if (Object.prototype.hasOwnProperty.call(item.grades, key)) {
+            const grade = item.grades[key as keyof typeof item.grades] ?? 0;
+            const weight =
+              (item.percent[key as keyof typeof item.percent] ?? 0) / 100;
+            total += grade * weight;
+          }
+        }
+        return {
+          name: item.course.course?.name || "Sin nombre",
+          average: total,
+        };
+      })
+      .filter(
+        (c: CourseAverage): c is CourseAverage => c !== null && c.average > 0,
+      );
+
+    if (coursesWithAvg.length === 0) {
       return {
         generalAverage: 0,
         highestGrade: 0,
         lowestGrade: 0,
-        highestCourse: '',
-        lowestCourse: '',
+        highestCourse: "",
+        lowestCourse: "",
         approvedCount: 0,
         failedCount: 0,
-        pendingCount: 0,
+        pendingCount: gradesData.length,
       };
     }
-
-    const coursesWithAvg = gradesData
-      .map((item: GradesAndPercent) => ({
-        name: item.course.course?.name || 'Sin nombre',
-        average: calculateWeightedAverage(item.grades, item.percent),
-      }))
-      .filter((c: CourseAverage) => c.average > 0);
 
     const highest = coursesWithAvg.reduce(
       (max: CourseAverage, course: CourseAverage) =>
         course.average > max.average ? course : max,
+      coursesWithAvg[0],
     );
 
     const lowest = coursesWithAvg.reduce(
       (min: CourseAverage, course: CourseAverage) =>
         course.average < min.average ? course : min,
+      coursesWithAvg[0],
     );
 
     const generalAverage =
-      averages.reduce((sum: number, avg: number) => sum + avg, 0) /
-      averages.length;
+      coursesWithAvg.reduce(
+        (sum: number, c: CourseAverage) => sum + c.average,
+        0,
+      ) / coursesWithAvg.length;
 
-    const approvedCount = averages.filter((avg: number) => avg >= 10.5).length;
-    const failedCount = averages.filter(
-      (avg: number) => avg < 10.5 && avg > 0,
+    const approvedCount = coursesWithAvg.filter(
+      (c: CourseAverage) => c.average >= 10.5,
     ).length;
-    const pendingCount = gradesData.length - averages.length;
+    const failedCount = coursesWithAvg.length - approvedCount;
+    const pendingCount = gradesData.length - coursesWithAvg.length;
 
     return {
-      generalAverage: Math.round(generalAverage * 10) / 10,
+      generalAverage: generalAverage,
       highestGrade: highest.average,
       lowestGrade: lowest.average,
       highestCourse: highest.name,
@@ -97,82 +86,81 @@
   });
 </script>
 
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-  <div
-    class="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-lg p-6 shadow-sm"
-  >
-    <div class="flex items-center justify-between mb-2">
-      <Target class="w-8 h-8 text-blue-600" />
-      <span class="text-3xl font-bold text-blue-900">
-        {statistics().generalAverage.toFixed(1)}
-      </span>
-    </div>
-    <p class="text-sm font-medium text-blue-700">Promedio General</p>
-  </div>
+<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+  <Card.Root>
+    <Card.Header
+      class="flex flex-row items-center justify-between space-y-0 pb-2"
+    >
+      <Card.Title class="text-sm font-medium">Promedio General</Card.Title>
+      <Target class="h-4 w-4 text-muted-foreground" />
+    </Card.Header>
+    <Card.Content>
+      <div class="text-2xl font-bold text-primary">
+        {statistics().generalAverage.toFixed(2)}
+      </div>
+    </Card.Content>
+  </Card.Root>
 
-  <div
-    class="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200 rounded-lg p-6 shadow-sm"
-  >
-    <div class="flex items-center justify-between mb-2">
-      <Award class="w-8 h-8 text-green-600" />
-      <span class="text-3xl font-bold text-green-900">
-        {statistics().highestGrade.toFixed(1)}
-      </span>
-    </div>
-    <p class="text-sm font-medium text-green-700">Nota Más Alta</p>
-    {#if statistics().highestCourse}
-      <p
-        class="text-xs text-green-600 mt-1 truncate"
-        title={statistics().highestCourse}
-      >
+  <Card.Root>
+    <Card.Header
+      class="flex flex-row items-center justify-between space-y-0 pb-2"
+    >
+      <Card.Title class="text-sm font-medium">Nota Más Alta</Card.Title>
+      <Award class="h-4 w-4 text-green-500" />
+    </Card.Header>
+    <Card.Content>
+      <div class="text-2xl font-bold text-green-500">
+        {statistics().highestGrade.toFixed(2)}
+      </div>
+      <p class="truncate text-xs text-muted-foreground">
         {statistics().highestCourse}
       </p>
-    {/if}
-  </div>
+    </Card.Content>
+  </Card.Root>
 
-  <div
-    class="bg-gradient-to-br from-red-50 to-red-100 border-2 border-red-200 rounded-lg p-6 shadow-sm"
-  >
-    <div class="flex items-center justify-between mb-2">
-      <AlertCircle class="w-8 h-8 text-red-600" />
-      <span class="text-3xl font-bold text-red-900">
-        {statistics().lowestGrade.toFixed(1)}
-      </span>
-    </div>
-    <p class="text-sm font-medium text-red-700">Nota Más Baja</p>
-    {#if statistics().lowestCourse}
-      <p
-        class="text-xs text-red-600 mt-1 truncate"
-        title={statistics().lowestCourse}
-      >
+  <Card.Root>
+    <Card.Header
+      class="flex flex-row items-center justify-between space-y-0 pb-2"
+    >
+      <Card.Title class="text-sm font-medium">Nota Más Baja</Card.Title>
+      <AlertCircle class="h-4 w-4 text-red-500" />
+    </Card.Header>
+    <Card.Content>
+      <div class="text-2xl font-bold text-red-500">
+        {statistics().lowestGrade.toFixed(2)}
+      </div>
+      <p class="truncate text-xs text-muted-foreground">
         {statistics().lowestCourse}
       </p>
-    {/if}
-  </div>
+    </Card.Content>
+  </Card.Root>
 
-  <!-- Estado de Cursos -->
-  <div
-    class="bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-200 rounded-lg p-6 shadow-sm"
-  >
-    <div class="space-y-2">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-medium text-purple-700">Aprobados</span>
-        <span class="text-sm font-bold text-green-700"
-          >{statistics().approvedCount}</span
+  <Card.Root>
+    <Card.Header
+      class="flex flex-row items-center justify-between space-y-0 pb-2"
+    >
+      <Card.Title class="text-sm font-medium">Estado de Cursos</Card.Title>
+      <BookCopy class="h-4 w-4 text-muted-foreground" />
+    </Card.Header>
+    <Card.Content class="flex justify-around">
+      <div class="text-center">
+        <Badge variant="default" class="text-lg"
+          >{statistics().approvedCount}</Badge
         >
+        <p class="text-xs text-muted-foreground">Aprob.</p>
       </div>
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-medium text-purple-700">Reprobados</span>
-        <span class="text-sm font-bold text-red-700"
-          >{statistics().failedCount}</span
+      <div class="text-center">
+        <Badge variant="destructive" class="text-lg"
+          >{statistics().failedCount}</Badge
         >
+        <p class="text-xs text-muted-foreground">Reprob.</p>
       </div>
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-medium text-purple-700">Pendientes</span>
-        <span class="text-sm font-bold text-gray-700"
-          >{statistics().pendingCount}</span
+      <div class="text-center">
+        <Badge variant="secondary" class="text-lg"
+          >{statistics().pendingCount}</Badge
         >
+        <p class="text-xs text-muted-foreground">Pend.</p>
       </div>
-    </div>
-  </div>
+    </Card.Content>
+  </Card.Root>
 </div>

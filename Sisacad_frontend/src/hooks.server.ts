@@ -1,11 +1,11 @@
-import { redirect, type Handle } from '@sveltejs/kit';
-import { JWT_SECRET } from '$env/static/private';
-import jwt from 'jsonwebtoken';
-import type { UserSession } from '$lib/types/auth.types';
+import { redirect, type Handle } from "@sveltejs/kit";
+import { JWT_SECRET } from "$env/static/private";
+import jwt from "jsonwebtoken";
+import type { UserSession } from "$lib/types/auth.types";
 
-const protectedRoutes = ['/student', '/student/courses'];
+const protectedRoutes = ["/student", "/student/courses"];
 
-const publicRoutes = ['/login'];
+const publicRoutes = ["/login"];
 
 function verifyToken(token: string): UserSession | null {
   try {
@@ -22,13 +22,17 @@ function verifyToken(token: string): UserSession | null {
 
     return user;
   } catch (error) {
-    console.error('Token verification failed:', error);
+    console.error("Token verification failed:", error);
     return null;
   }
 }
 
 export const handle: Handle = async ({ event, resolve }) => {
-  const token = event.cookies.get('jwt_token');
+  let token = event.cookies.get("auth_token");
+
+  if (!token) {
+    token = event.cookies.get("jwt_token");
+  }
 
   if (token) {
     const user = verifyToken(token);
@@ -37,7 +41,8 @@ export const handle: Handle = async ({ event, resolve }) => {
       event.locals.user = user;
     } else {
       event.locals.user = null;
-      event.cookies.delete('jwt_token', { path: '/' });
+      event.cookies.delete("auth_token", { path: "/" });
+      event.cookies.delete("jwt_token", { path: "/" });
     }
   } else {
     event.locals.user = null;
@@ -58,7 +63,7 @@ export const handle: Handle = async ({ event, resolve }) => {
   }
 
   if (isPublicRoute && event.locals.user) {
-    throw redirect(303, '/');
+    throw redirect(303, "/");
   }
 
   return resolve(event);

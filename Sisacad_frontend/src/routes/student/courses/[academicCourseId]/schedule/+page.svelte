@@ -1,59 +1,73 @@
 <script lang="ts">
-  import type { PageData } from './$types';
-  import type { LayoutData } from '../$types';
+  import type { PageData, LayoutData } from './$types';
   import { AlertCircle } from 'lucide-svelte';
-  import ScheduleGrid from '$lib/components/ScheduleGrid.svelte';
+  import ScheduleTable from '$lib/components/ScheduleTable.svelte';
+  import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+    CardDescription,
+  } from '$lib/components/ui/card';
 
-  export let data: PageData;
-  const fullData = data as LayoutData & PageData;
-  const scheduleGroups = fullData.scheduleGroups || [];
-  const error = fullData.error;
-  const courseName = fullData.courseDetails?.course?.name ?? 'Curso';
+  let { data }: { data: PageData & LayoutData } = $props();
+
+  const scheduleGroups = data.scheduleGroups || [];
+  const error = data.error;
+  const courseName = data.courseDetails?.course?.name ?? 'Curso';
 </script>
 
 <svelte:head>
   <title>Horario: {courseName} - Sisacad</title>
 </svelte:head>
 
-<div class="bg-white p-6 rounded-lg shadow-md border">
-  <h2 class="text-xl font-semibold mb-6 text-gray-700">Horario del Curso</h2>
-
+<div class="space-y-6">
   {#if error}
     <div
-      class="flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 border border-red-200"
+      class="flex items-center rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive-foreground"
       role="alert"
     >
-      <AlertCircle class="w-5 h-5 mr-3 flex-shrink-0" />
+      <AlertCircle class="mr-3 h-5 w-5 flex-shrink-0" />
       <div>
         <span class="font-medium">Error:</span>
         {error}
       </div>
     </div>
   {:else if scheduleGroups && scheduleGroups.length > 0}
-    <div class="mb-6">
-      <h3 class="text-lg font-medium text-gray-800 mb-4">
-        Grupos Matriculados
-      </h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+    <div>
+      <h3 class="mb-4 text-xl font-semibold">Grupos Matriculados</h3>
+      <div
+        class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+      >
         {#each scheduleGroups as group (group.id)}
-          <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <p class="font-semibold text-gray-800">{group.name}</p>
-            <p class="text-sm text-gray-600 capitalize">{group.type}</p>
+          <Card.Root>
+            <Card.Header class="p-4">
+              <Card.Title>Grupo {group.name}</Card.Title>
+              <Card.Description class="capitalize"
+                >{group.type}</Card.Description
+              >
+            </Card.Header>
             {#if group.teacher}
-              <p class="text-xs text-gray-500 mt-1">
-                {group.teacher.firstName}
-                {group.teacher.lastName}
-              </p>
+              <Card.Content class="p-4 pt-0">
+                <p class="text-xs text-muted-foreground">
+                  {group.teacher.firstName}
+                  {group.teacher.lastName}
+                </p>
+              </Card.Content>
             {/if}
-          </div>
+          </Card.Root>
         {/each}
       </div>
     </div>
 
-    <ScheduleGrid groups={scheduleGroups} />
+    <ScheduleTable groups={scheduleGroups} showCourseName={false} />
   {:else}
-    <div class="text-center py-6">
-      <p class="text-gray-500">No hay horarios registrados para este curso.</p>
-    </div>
+    <Card.Root class="text-center">
+      <Card.Content class="p-6">
+        <p class="text-muted-foreground">
+          No hay horarios registrados para este curso.
+        </p>
+      </Card.Content>
+    </Card.Root>
   {/if}
 </div>

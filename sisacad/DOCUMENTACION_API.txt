@@ -1,0 +1,291 @@
+# Rutas de la API SisCadaaa
+
+## Autenticación
+
+### POST /auth/google/login
+**Descripción:** Autenticación con Google OAuth
+- **Requiere:** Token de Google en el cuerpo
+- **Cuerpo:** `{ "token": "string" }`
+- **Retorna:** 
+  - Status 200: `{ "success": true }`
+  - Establece cookie `auth_token` con el JWT
+- **Errores posibles:** 401 (Unauthorized), 403 (Forbidden)
+- **Autenticación:** No requiere autenticación previa
+
+### POST /auth/logout
+**Descripción:** Cierra la sesión del usuario
+- **Requiere:** Cookie `auth_token`
+- **Retorna:** 
+  - Status 200: `{ "success": true, "message": "Logged out successfully" }`
+- **Errores posibles:** 401 (Unauthorized)
+- **Autenticación:** Requiere autenticación (cookie)
+
+## Usuarios
+
+### GET /user/profile
+**Descripción:** Obtiene el perfil del usuario autenticado
+- **Requiere:** Cookie `auth_token` o header Authorization
+- **Retorna:** 
+  - Status 200: Objeto con la información del perfil del usuario
+- **Errores posibles:** 401 (Unauthorized)
+- **Autenticación:** JWT (cookie o header)
+
+### POST /user/pre-register
+**Descripción:** Pre-registra un nuevo usuario
+- **Requiere:** Datos de pre-registro en el cuerpo
+- **Cuerpo:** DTO de pre-registro
+- **Retorna:** 
+  - Status 201: Resultado del pre-registro
+- **Errores posibles:** 400 (Bad Request), 409 (Conflict)
+- **Autenticación:** No requiere autenticación previa
+
+### PATCH /user/:id/activate
+**Descripción:** Activa un usuario previamente registrado
+- **Parámetros:** `id` (string) - ID del usuario a activar
+- **Retorna:** 
+  - Status 200: Resultado de la activación
+- **Errores posibles:** 400 (Bad Request), 404 (Not Found)
+- **Autenticación:** No requiere autenticación previa
+
+## Asistencia
+
+### GET /attendance/my-attendance/:academicCourseId
+**Descripción:** Obtiene la asistencia del estudiante para un curso académico específico
+- **Parámetros:** `academicCourseId` (UUID) - ID del curso académico
+- **Requiere:** Cookie `auth_token` o header Authorization
+- **Retorna:** 
+  - Status 200: DTO de asistencia del estudiante para el curso
+- **Errores posibles:** 401 (Unauthorized), 403 (Forbidden), 404 (Not Found)
+- **Autenticación:** JWT (cookie o header)
+
+### GET /attendance/group/:groupId/history
+**Descripción:** Obtiene el historial de asistencia de un grupo
+- **Parámetros:** `groupId` (UUID) - ID del grupo académico
+- **Requiere:** Cookie `auth_token` o header Authorization
+- **Retorna:** 
+  - Status 200: Arreglo con el historial de asistencias
+- **Errores posibles:** 401 (Unauthorized), 403 (Forbidden), 404 (Not Found)
+- **Autenticación:** JWT (cookie o header)
+
+### POST /attendance/group/:groupId/take
+**Descripción:** Toma asistencia para un grupo
+- **Parámetros:** `groupId` (UUID) - ID del grupo académico
+- **Requiere:** Cookie `auth_token` o header Authorization
+- **Cuerpo:** DTO con estados de asistencia de estudiantes
+- **Retorna:** 
+  - Status 200 o 201 dependiendo de la operación
+- **Errores posibles:** 401 (Unauthorized), 403 (Forbidden), 404 (Not Found)
+- **Autenticación:** JWT (cookie o header)
+
+### GET /attendance/group/:groupId/check
+**Descripción:** Verifica si se puede tomar asistencia para un grupo
+- **Parámetros:** `groupId` (UUID) - ID del grupo académico
+- **Requiere:** Cookie `auth_token` o header Authorization
+- **Retorna:** 
+  - Status 200: DTO con información sobre si se puede tomar asistencia
+- **Errores posibles:** 401 (Unauthorized), 403 (Forbidden), 404 (Not Found)
+- **Autenticación:** JWT (cookie o header)
+
+## Matrículas
+
+### GET /enrollments/my-courses
+**Descripción:** Obtiene los cursos del estudiante agrupados por periodo
+- **Requiere:** Cookie `auth_token` o header Authorization
+- **Retorna:** 
+  - Status 200: DTO con cursos agrupados por periodo académico
+- **Errores posibles:** 401 (Unauthorized), 403 (Forbidden)
+- **Autenticación:** JWT (cookie o header)
+
+### GET /enrollments/my-grades/:academicCourseId
+**Descripción:** Obtiene las calificaciones del estudiante para un curso específico
+- **Parámetros:** `academicCourseId` (UUID) - ID del curso académico
+- **Requiere:** Cookie `auth_token` o header Authorization
+- **Retorna:** 
+  - Status 200: Objeto con las calificaciones del estudiante
+- **Errores posibles:** 401 (Unauthorized), 403 (Forbidden), 404 (Not Found)
+- **Autenticación:** JWT (cookie o header)
+
+### GET /enrollments/my-grades
+**Descripción:** Obtiene todas las calificaciones del estudiante
+- **Requiere:** Cookie `auth_token` o header Authorization
+- **Retorna:** 
+  - Status 200: Arreglo con todas las calificaciones del estudiante
+- **Errores posibles:** 401 (Unauthorized), 403 (Forbidden)
+- **Autenticación:** JWT (cookie o header)
+
+### GET /enrollments/my-schedule/:academicCourseId
+**Descripción:** Obtiene el horario del estudiante para un curso específico
+- **Parámetros:** `academicCourseId` (UUID) - ID del curso académico
+- **Requiere:** Cookie `auth_token` o header Authorization
+- **Retorna:** 
+  - Status 200: DTO con el horario del estudiante
+- **Errores posibles:** 401 (Unauthorized), 403 (Forbidden), 404 (Not Found)
+- **Autenticación:** JWT (cookie o header)
+
+### GET /enrollments/my-schedule
+**Descripción:** Obtiene el horario completo del estudiante
+- **Requiere:** Cookie `auth_token` o header Authorization
+- **Retorna:** 
+  - Status 200: DTO con el horario completo del estudiante
+- **Errores posibles:** 401 (Unauthorized), 403 (Forbidden)
+- **Autenticación:** JWT (cookie o header)
+
+### GET /enrollments/available-labs
+**Descripción:** Obtiene los grupos de laboratorio disponibles para el estudiante
+- **Requiere:** Cookie `auth_token` o header Authorization
+- **Retorna:** 
+  - Status 200: Arreglo de DTOs con cursos que tienen grupos de laboratorio disponibles
+- **Errores posibles:** 401 (Unauthorized), 403 (Forbidden)
+- **Autenticación:** JWT (cookie o header)
+
+### POST /enrollments/enroll-labs
+**Descripción:** Matricula al estudiante en grupos de laboratorio
+- **Requiere:** Cookie `auth_token` o header Authorization
+- **Cuerpo:** DTO con la información de matrícula en laboratorios
+- **Retorna:** 
+  - Status 200: Arreglo de objetos de matrícula
+- **Errores posibles:** 401 (Unauthorized), 403 (Forbidden), 400 (Bad Request)
+- **Autenticación:** JWT (cookie o header)
+
+### GET /enrollments/periods/status/laboratory
+**Descripción:** Verifica si el periodo de matrículas de laboratorio está activo
+- **Retorna:** 
+  - Status 200: `{ "isActive": boolean }`
+- **Errores posibles:** 500 (Internal Server Error)
+- **Autenticación:** No requiere autenticación previa
+
+## Cursos Académicos
+
+### GET /academic-courses/:id
+**Descripción:** Obtiene los detalles de un curso académico
+- **Parámetros:** `id` (UUID) - ID del curso académico
+- **Requiere:** Cookie `auth_token` o header Authorization
+- **Retorna:** 
+  - Status 200: DTO con los detalles del curso académico
+- **Errores posibles:** 401 (Unauthorized), 403 (Forbidden), 404 (Not Found)
+- **Autenticación:** JWT (cookie o header)
+
+## Grupos
+
+### GET /groups/teacher
+**Descripción:** Obtiene todos los grupos asignados al profesor autenticado
+- **Requiere:** Cookie `auth_token` o header Authorization
+- **Retorna:** 
+  - Status 200: DTO con grupos agrupados por periodo académico
+- **Errores posibles:** 401 (Unauthorized), 403 (Forbidden), 404 (Not Found)
+- **Autenticación:** JWT (cookie o header)
+
+### GET /groups/teacher/my-schedule
+**Descripción:** Obtiene el horario del profesor
+- **Requiere:** Cookie `auth_token` o header Authorization
+- **Retorna:** 
+  - Status 200: Arreglo de DTOs de grupos con horario
+- **Errores posibles:** 401 (Unauthorized), 403 (Forbidden), 404 (Not Found)
+- **Autenticación:** JWT (cookie o header)
+
+### GET /groups/schedule/:id
+**Descripción:** Obtiene el horario de un grupo específico
+- **Parámetros:** `id` (UUID) - ID del grupo
+- **Requiere:** Cookie `auth_token` o header Authorization
+- **Retorna:** 
+  - Status 200: Arreglo de DTOs de grupos con horario
+- **Errores posibles:** 401 (Unauthorized), 403 (Forbidden), 404 (Not Found)
+- **Autenticación:** JWT (cookie o header)
+
+### GET /groups/course/:id
+**Descripción:** Obtiene información del curso académico de un grupo
+- **Parámetros:** `id` (UUID) - ID del grupo
+- **Requiere:** Cookie `auth_token` o header Authorization
+- **Retorna:** 
+  - Status 200: DTO con información del curso académico
+- **Errores posibles:** 401 (Unauthorized), 403 (Forbidden), 404 (Not Found)
+- **Autenticación:** JWT (cookie o header)
+
+### GET /groups/:id/grades
+**Descripción:** Obtiene las calificaciones de los estudiantes de un grupo
+- **Parámetros:** `id` (UUID) - ID del grupo
+- **Requiere:** Cookie `auth_token` o header Authorization
+- **Retorna:** 
+  - Status 200: DTO con información de calificaciones del grupo
+- **Errores posibles:** 401 (Unauthorized), 403 (Forbidden), 404 (Not Found)
+- **Autenticación:** JWT (cookie o header)
+
+### PATCH /groups/:id/grades
+**Descripción:** Actualiza las calificaciones de un estudiante en un grupo
+- **Parámetros:** `id` (UUID) - ID del grupo
+- **Requiere:** Cookie `auth_token` o header Authorization
+- **Cuerpo:** DTO con las calificaciones a actualizar
+- **Retorna:** 
+  - Status 200: Actualización exitosa
+- **Errores posibles:** 401 (Unauthorized), 403 (Forbidden), 400 (Bad Request), 404 (Not Found)
+- **Autenticación:** JWT (cookie o header)
+
+## Rutas de Estudiante (Nueva estructura)
+
+### GET /student/attendance/course/:academicCourseId
+**Descripción:** Obtiene la asistencia del estudiante para un curso académico específico
+- **Parámetros:** `academicCourseId` (UUID) - ID del curso académico
+- **Requiere:** Cookie `auth_token` o header Authorization
+- **Retorna:** 
+  - Status 200: DTO de asistencia del estudiante para el curso
+- **Errores posibles:** 401 (Unauthorized), 403 (Forbidden), 404 (Not Found)
+- **Autenticación:** JWT (cookie o header)
+
+### GET /student/enrollments/courses
+**Descripción:** Obtiene los cursos del estudiante agrupados por periodo
+- **Requiere:** Cookie `auth_token` o header Authorization
+- **Retorna:** 
+  - Status 200: DTO con cursos agrupados por periodo académico
+- **Errores posibles:** 401 (Unauthorized), 403 (Forbidden)
+- **Autenticación:** JWT (cookie o header)
+
+### GET /student/enrollments/grades/:academicCourseId
+**Descripción:** Obtiene las calificaciones del estudiante para un curso específico
+- **Parámetros:** `academicCourseId` (UUID) - ID del curso académico
+- **Requiere:** Cookie `auth_token` o header Authorization
+- **Retorna:** 
+  - Status 200: Objeto con las calificaciones del estudiante
+- **Errores posibles:** 401 (Unauthorized), 403 (Forbidden), 404 (Not Found)
+- **Autenticación:** JWT (cookie o header)
+
+### GET /student/enrollments/grades
+**Descripción:** Obtiene todas las calificaciones del estudiante
+- **Requiere:** Cookie `auth_token` o header Authorization
+- **Retorna:** 
+  - Status 200: Arreglo con todas las calificaciones del estudiante
+- **Errores posibles:** 401 (Unauthorized), 403 (Forbidden)
+- **Autenticación:** JWT (cookie o header)
+
+### GET /student/enrollments/schedule/:academicCourseId
+**Descripción:** Obtiene el horario del estudiante para un curso específico
+- **Parámetros:** `academicCourseId` (UUID) - ID del curso académico
+- **Requiere:** Cookie `auth_token` o header Authorization
+- **Retorna:** 
+  - Status 200: DTO con el horario del estudiante
+- **Errores posibles:** 401 (Unauthorized), 403 (Forbidden), 404 (Not Found)
+- **Autenticación:** JWT (cookie o header)
+
+### GET /student/enrollments/schedule
+**Descripción:** Obtiene el horario completo del estudiante
+- **Requiere:** Cookie `auth_token` o header Authorization
+- **Retorna:** 
+  - Status 200: DTO con el horario completo del estudiante
+- **Errores posibles:** 401 (Unauthorized), 403 (Forbidden)
+- **Autenticación:** JWT (cookie o header)
+
+### GET /student/enrollments/available-labs
+**Descripción:** Obtiene los grupos de laboratorio disponibles para el estudiante
+- **Requiere:** Cookie `auth_token` o header Authorization
+- **Retorna:** 
+  - Status 200: Arreglo de DTOs con cursos que tienen grupos de laboratorio disponibles
+- **Errores posibles:** 401 (Unauthorized), 403 (Forbidden)
+- **Autenticación:** JWT (cookie o header)
+
+### POST /student/enrollments/enroll-labs
+**Descripción:** Matricula al estudiante en grupos de laboratorio
+- **Requiere:** Cookie `auth_token` o header Authorization
+- **Cuerpo:** DTO con la información de matrícula en laboratorios
+- **Retorna:** 
+  - Status 200: Arreglo de objetos de matrícula
+- **Errores posibles:** 401 (Unauthorized), 403 (Forbidden), 400 (Bad Request)
+- **Autenticación:** JWT (cookie o header)

@@ -2,10 +2,10 @@ import { api } from "./api.service";
 import type { AcademicCourseDTO } from "$lib/types/course.types";
 
 export const academicCourseService = {
-  async getCourse(id: string, token: string) {
+  async getCourse(id: string, fetcher?: typeof fetch) {
     const response = await api.get<AcademicCourseDTO>(
       `/academic-courses/${id}`,
-      { token: token },
+      { fetch: fetcher },
     );
 
     if (!response) {

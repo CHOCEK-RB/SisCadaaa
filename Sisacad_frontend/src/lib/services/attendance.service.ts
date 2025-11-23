@@ -35,10 +35,10 @@ export interface UpdateAttendanceDto {
 }
 
 export const attendanceService = {
-  async getGroupAttendance(groupID: string, token: string) {
+  async getGroupAttendance(groupID: string, fetcher?: typeof fetch) {
     const response = await api.get<GroupAttendanceDTO[]>(
       `/attendance/my-attendance/${groupID}`,
-      { token: token },
+      { fetch: fetcher },
     );
 
     if (!response) {

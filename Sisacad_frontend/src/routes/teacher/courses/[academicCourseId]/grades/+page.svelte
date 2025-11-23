@@ -13,7 +13,7 @@
     TrendingUp,
     TrendingDown,
     Baseline,
-  } from "lucide-svelte"; // Importé los nuevos iconos
+  } from "lucide-svelte";
   import TeacherGradesChart from "$lib/components/TeacherGradesChart.svelte";
   import { onMount } from "svelte";
   import { SvelteMap } from "svelte/reactivity";
@@ -51,7 +51,7 @@
         throw new Error("No se encontró token de autenticación");
       }
 
-      groupData = await groupsService.getGroupGrades(groupId, token);
+      groupData = await groupsService.getGroupGrades(groupId);
     } catch (err: any) {
       error = err.message || "Error al cargar las notas";
     } finally {
@@ -141,7 +141,6 @@
 
     if (totalWeight === 0) return 0;
 
-    // Calcular el promedio ponderado y redondear
     const average = weightedSum / totalWeight;
     return Math.round(average * 10) / 10;
   }
@@ -201,12 +200,11 @@
     document.body.removeChild(link);
   }
 
-  // --- NUEVA LÓGICA PARA ESTADÍSTICAS ---
   const allStudentAverages = $derived((): number[] => {
     if (!groupData) return [];
     return groupData.students
       .map(calculateWeightedAverage)
-      .filter((avg) => avg > 0); // Filtramos promedios de 0 (alumnos sin notas)
+      .filter((avg) => avg > 0);
   });
 
   const gradeStatistics = $derived(() => {
@@ -226,7 +224,6 @@
       min: parseFloat(min.toFixed(1)),
     };
   });
-  // --- FIN DE LA NUEVA LÓGICA ---
 </script>
 
 <svelte:head>

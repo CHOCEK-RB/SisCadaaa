@@ -1,33 +1,30 @@
-import { redirect } from "@sveltejs/kit";
-import type { PageServerLoad } from "./$types";
-import { groupsService } from "$lib/services/groups.service";
+import { redirect } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
+import { groupsService } from '$lib/services/groups.service';
 
-export const load: PageServerLoad = async ({ locals, params, cookies }) => {
-  if (locals.user?.role !== "teacher") {
-    throw redirect(303, "/");
+export const load: PageServerLoad = async ({ locals, params, fetch }) => {
+  if (locals.user?.role !== 'teacher') {
+    throw redirect(303, '/');
   }
 
-  const token = cookies.get("jwt_token");
-  if (!token) {
-    throw redirect(303, "/login?redirectTo=/teacher/courses");
-  }
-
-  const groupId = params.academicCourseId;
+  const { academicCourseId } = params;
 
   try {
-    const groupInfo = await groupsService.getAcademicCourse(groupId, token);
+    const groupGrades = await groupsService.getGroupGrades(
+      academicCourseId,
+      fetch,
+    );
 
     return {
-      groupId,
-      courseCode: groupInfo.course.course.code || "N/A",
-      groupName: "Grupo",
+      groupGrades,
     };
-  } catch (error) {
-    console.error("Error loading group info:", error);
+  } catch (err) {
+    console.error('Error loading group grades for attendance:', err);
+
     return {
-      groupId,
-      courseCode: "N/A",
-      groupName: "Grupo",
+      groupGrades: null,
+      error:
+        'Error de red al cargar las notas del grupo. Intenta de nuevo más tarde.',
     };
   }
 };

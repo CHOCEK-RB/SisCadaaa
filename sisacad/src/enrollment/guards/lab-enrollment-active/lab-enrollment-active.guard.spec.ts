@@ -1,4 +1,4 @@
-import { LabEnrollmentActiveGuard } from './lab-enrollment-active.guard';
+import { LabEnrollmentActiveGuard } from '../../presentation/guards/lab-enrollment-active.guard';
 
 describe('LabEnrollmentActiveGuard', () => {
   it('should be defined', () => {

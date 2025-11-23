@@ -1,8 +1,8 @@
-import { api } from './api.service';
-import type { Grades } from '$lib/types/enrollment.types';
-import type { AcademicGroupDTO } from '$lib/types/group.types';
-import type { AcademicCourseDTO } from '$lib/types/course.types';
-import type { GradingScheme } from '$lib/types/course.types';
+import { api } from "./api.service";
+import type { Grades } from "$lib/types/enrollment.types";
+import type { AcademicGroupDTO } from "$lib/types/group.types";
+import type { AcademicCourseDTO } from "$lib/types/course.types";
+import type { GradingScheme } from "$lib/types/course.types";
 
 export interface GradesAndPercent {
   course: AcademicCourseDTO;
@@ -15,109 +15,112 @@ export interface EnrollLabGroupPayload {
 }
 
 export const enrollmentService = {
-  async getEnrollments(token: string) {
-    const response = await api.get('/enrollments/my-courses', { token: token });
+  async getEnrollments(fetcher?: typeof fetch) {
+    const response = await api.get("/enrollments/my-courses", {
+      fetch: fetcher,
+    });
 
     if (!response) {
-      throw new Error('No se recibieron datos del servidor, inscripciones');
+      throw new Error("No se recibieron datos del servidor, inscripciones");
     }
 
     return response;
   },
 
-  async getGradeById(academicCourseId: string, token: string) {
+  async getGradeById(academicCourseId: string, fetcher?: typeof fetch) {
     const response = await api.get<Grades>(
       `/enrollments/my-grades/${academicCourseId}`,
       {
-        token: token,
+        fetch: fetcher,
       },
     );
 
     if (!response) {
-      throw new Error('No se recibieron datos del servidor, calificaciones');
+      throw new Error("No se recibieron datos del servidor, calificaciones");
     }
 
     return response;
   },
 
-  async getScheduleForCourse(academicCourseId: string, token: string) {
+  async getScheduleForCourse(academicCourseId: string, fetcher?: typeof fetch) {
     const response = await api.get<AcademicGroupDTO[]>(
       `/enrollments/my-schedule/${academicCourseId}`,
       {
-        token: token,
+        fetch: fetcher,
       },
     );
 
     if (!response) {
-      throw new Error('No se recibieron datos del servidor, horario del curso');
+      throw new Error("No se recibieron datos del servidor, horario del curso");
     }
 
     return response;
   },
 
-  async getMySchedule(token: string) {
+  async getMySchedule(fetcher?: typeof fetch) {
     const response = await api.get<AcademicGroupDTO[]>(
       `/enrollments/my-schedule`,
       {
-        token: token,
+        fetch: fetcher,
       },
     );
 
     if (!response) {
-      throw new Error('No se recibieron datos del servidor, horario completo');
+      throw new Error("No se recibieron datos del servidor, horario completo");
     }
 
     return response;
   },
 
-  async getAllMyGrades(token: string) {
+  async getAllMyGrades(fetcher?: typeof fetch) {
     const response = await api.get<GradesAndPercent[]>(
       '/enrollments/my-grades',
-      {
-        token: token,
-      },
+      { fetch: fetcher },
     );
 
     if (!response) {
-      throw new Error('No se recibieron datos del servidor, calificaciones');
+      throw new Error("No se recibieron datos del servidor, calificaciones");
     }
 
     return response;
   },
 
   async getAvailableLabGroups(
-    token: string,
+    fetcher?: typeof fetch,
   ): Promise<AcademicCourseDTO[] | null> {
     const response = await api.get<AcademicCourseDTO[]>(
       '/enrollments/available-labs',
       {
-        token: token,
+        fetch: fetcher,
       },
     );
     return response;
   },
 
-  async enrollInLabGroups(token: string, labGroupIds: string[]): Promise<any> {
+  async enrollInLabGroups(
+    labGroupIds: string[],
+    fetcher?: typeof fetch,
+  ): Promise<any> {
     const payload: EnrollLabGroupPayload = { labGroupIds };
 
-    console.log(payload, token);
-
-    const response = await api.post<any>('/enrollments/enroll-labs', payload, {
-      token: token,
+    const response = await api.post<any>('/student/enrollments/enroll-labs', payload, {
+      fetch: fetcher,
     });
 
     if (!response) {
-      throw new Error('No se recibió respuesta del servidor al matricular.');
+      throw new Error("No se recibió respuesta del servidor al matricular.");
     }
 
     return response;
   },
 
-  async getLabEnrollmentStatus(token: string): Promise<{ isActive: boolean }> {
+  async getLabEnrollmentStatus(
+    fetcher?: typeof fetch,
+  ): Promise<{ isActive: boolean }> {
     try {
       const response = await api.get<{ isActive: boolean }>(
-        '/enrollments/periods/status/laboratory',
-        { token: token },
+        '/events/status/lab_enrollment',
+        { fetch: fetcher },
       );
       return response || { isActive: false };
     } catch (error) {

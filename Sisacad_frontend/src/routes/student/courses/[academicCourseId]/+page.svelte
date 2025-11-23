@@ -1,66 +1,53 @@
 <script lang="ts">
-  import type { LayoutData } from './$types';
+  import { Card, CardContent } from "$lib/components/ui/card";
+  import type { LayoutData } from "./$types";
+  import CourseHeader from "$lib/components/course/CourseHeader.svelte";
+  import CourseProgressBar from "$lib/components/course/CourseProgressBar.svelte";
+  import TopicsList from "$lib/components/course/TopicsList.svelte";
 
-  export let data: LayoutData;
+  let { data } = $props<{ data: LayoutData }>();
   const { courseDetails } = data;
+
+  const sortedTopics = $derived(
+    [...(courseDetails?.topics ?? [])].sort(
+      (a, b) => a.topicOrder - b.topicOrder,
+    ),
+  );
+
+  const progress = $derived(
+    courseDetails?.progress?.find((p) => p.groupName === "A"),
+  );
+
+  const completedTopicIds = $derived(
+    new Set(progress?.completedTopics.map((t) => t.id)),
+  );
+
+  const progressPercentage = $derived(
+    sortedTopics.length > 0
+      ? (completedTopicIds.size / sortedTopics.length) * 100
+      : 0,
+  );
 </script>
 
 <svelte:head>
-  <title>Info: {courseDetails?.course?.name || 'Curso'} - Sisacad</title>
+  <title>Info: {courseDetails?.course?.name ?? "Curso"} - Sisacad</title>
 </svelte:head>
 
-<div class="bg-white p-6 rounded-lg shadow-md border">
-  <h2 class="text-xl font-semibold mb-4 text-gray-700">Información General</h2>
-
-  {#if courseDetails}
-    <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-      <div>
-        <dt class="text-sm font-medium text-gray-500">Código</dt>
-        <dd class="mt-1 text-sm text-gray-900">
-          {courseDetails.course?.code || 'N/A'}
-        </dd>
-      </div>
-      <div>
-        <dt class="text-sm font-medium text-gray-500">Nombre</dt>
-        <dd class="mt-1 text-sm text-gray-900">
-          {courseDetails.course?.name || 'N/A'}
-        </dd>
-      </div>
-      <div>
-        <dt class="text-sm font-medium text-gray-500">Semestre</dt>
-        <dd class="mt-1 text-sm text-gray-900">
-          {courseDetails.course?.semester || 'N/A'}
-        </dd>
-      </div>
-      <div>
-        <dt class="text-sm font-medium text-gray-500">Créditos</dt>
-        <dd class="mt-1 text-sm text-gray-900">
-          {courseDetails.course?.credits || 'N/A'}
-        </dd>
-      </div>
-      <div>
-        <dt class="text-sm font-medium text-gray-500">Periodo Académico</dt>
-        <dd class="mt-1 text-sm text-gray-900">
-          {new Date(courseDetails.creationDate).toLocaleDateString()}
-        </dd>
-      </div>
-      {#if courseDetails.urlSyllabus}
-        <div class="md:col-span-2">
-          <dt class="text-sm font-medium text-gray-500">Syllabus</dt>
-          <dd class="mt-1 text-sm">
-            <a
-              href={courseDetails.urlSyllabus}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="text-blue-600 hover:underline"
-            >
-              Ver Syllabus (PDF/Link)
-            </a>
-          </dd>
-        </div>
-      {/if}
-    </dl>
-  {:else}
-    <p>Cargando detalles del curso...</p>
-  {/if}
-</div>
+{#if courseDetails}
+  <div class="space-y-6">
+    <Card>
+      <CourseHeader
+        course={courseDetails.course}
+        urlSyllabus={courseDetails.urlSyllabus}
+      />
+      <CardContent class="space-y-6 pt-6">
+        {#if progress && sortedTopics.length > 0}
+          <CourseProgressBar percentage={progressPercentage} />
+        {/if}
+        <TopicsList topics={sortedTopics} {completedTopicIds} />
+      </CardContent>
+    </Card>
+  </div>
+{:else}
+  <p>Cargando detalles del curso...</p>
+{/if}

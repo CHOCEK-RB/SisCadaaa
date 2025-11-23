@@ -9,18 +9,21 @@ import { AppService } from './app.service';
 
 import { UserModule } from './users/users.module';
 import { CourseModule } from './courses/course.module';
-import { ClassroomModule } from './classroom/classrom.module';
+import { ClassroomModule } from './classroom/classroom.module';
 import { GroupsModule } from './groups/groups.module';
 import { AttendanceModule } from './attendance/attendance.module';
 import { AuthModule } from './auth/auth.module';
 import { EnrollmentModule } from './enrollment/enrollment.module';
+import { SeedingModule } from './seed/seeding.module';
+import { StudentModule } from './student/student.module';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.db.env', '.env'] }),
 
     TypeOrmModule.forRootAsync(typeOrmConfig),
-
+    SeedingModule,
     UserModule,
     CourseModule,
     AuthModule,
@@ -28,6 +31,8 @@ import { EnrollmentModule } from './enrollment/enrollment.module';
     AttendanceModule,
     GroupsModule,
     EnrollmentModule,
+    StudentModule,
+    EventsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,182 +1,231 @@
 <script lang="ts">
-  import type { GradesAndPercent } from '$lib/services/enrollment.service';
-  import { TrendingUp, TrendingDown } from 'lucide-svelte';
+  import type { GradesAndPercent } from "$lib/services/enrollment.service";
+  import * as Table from "$lib/components/ui/table";
+  import { Input } from "$lib/components/ui/input";
+  import { createRawSnippet } from "svelte";
+  import {
+    createSvelteTable,
+    FlexRender,
+    renderComponent,
+    renderSnippet,
+  } from "$lib/components/ui/data-table";
+  import {
+    getCoreRowModel,
+    getFilteredRowModel,
+    getSortedRowModel,
+    type ColumnDef,
+    type SortingState,
+    type ColumnFiltersState,
+  } from "@tanstack/table-core";
+  import DataTableColumnHeader from "$lib/components/data-table/data-table-column-header.svelte";
 
-  let { gradesData = [] } = $props<{
+  type Props = {
     gradesData: GradesAndPercent[];
-  }>();
-
-  const gradeLabels: { [key: string]: string } = {
-    firstContinue: 'C1',
-    secondContinue: 'C2',
-    thirdContinue: 'C3',
-    firstPartial: 'P1',
-    secondPartial: 'P2',
-    thirdPartial: 'P3',
   };
+  let { gradesData = [] }: Props = $props();
 
-  interface CourseGrade {
+  interface GradeRow {
     courseName: string;
     courseCode: string;
-    grades: { [key: string]: number };
-    average: number;
-    status: 'approved' | 'failed' | 'pending';
+    period: string;
+    finalGrade: number;
+    status: "Aprobado" | "Reprobado" | "Pendiente";
   }
 
-  function calculateWeightedAverage(grades: any, percent: any): number {
-    let total = 0;
-    let count = 0;
+  function getAcademicPeriodLabel(date: unknown): string {
+    const d = date instanceof Date ? date : new Date(date as string | number);
 
-    Object.entries(gradeLabels).forEach(([key]) => {
-      const grade = grades[key];
-      const weight = percent[key];
+    if (!date || isNaN(d.getTime())) {
+      return "N/A";
+    }
 
-      if (grade !== null && grade !== undefined && weight) {
-        total += (grade * weight) / 100;
-        count++;
-      }
-    });
-
-    return count > 0 ? Math.round(total * 10) / 10 : 0;
+    const year = d.getFullYear();
+    const month = d.getUTCMonth();
+    return month >= 2 && month < 7 ? `${year}-A` : `${year}-B`;
   }
 
-  const processedGrades = $derived(() => {
-    return gradesData.map((item: GradesAndPercent) => {
-      const grades: { [key: string]: number } = {};
-
-      Object.entries(gradeLabels).forEach(([key]) => {
-        const value = item.grades[key as keyof typeof item.grades];
-        if (value !== null && value !== undefined) {
-          grades[key] = value;
-        }
-      });
-
-      const average = calculateWeightedAverage(item.grades, item.percent);
-
-      let status: 'approved' | 'failed' | 'pending' = 'pending';
-      if (Object.keys(grades).length > 0) {
-        status = average >= 10.5 ? 'approved' : 'failed';
+  const data: GradeRow[] = $derived(
+    gradesData.map((item) => {
+      let finalGrade = 0;
+      if (item.grades && item.percent) {
+        const g = item.grades;
+        const p = item.percent;
+        finalGrade =
+          ((g.firstContinue ?? 0) * (p.firstContinue ?? 0)) / 100 +
+          ((g.secondContinue ?? 0) * (p.secondContinue ?? 0)) / 100 +
+          ((g.thirdContinue ?? 0) * (p.thirdContinue ?? 0)) / 100 +
+          ((g.firstPartial ?? 0) * (p.firstPartial ?? 0)) / 100 +
+          ((g.secondPartial ?? 0) * (p.secondPartial ?? 0)) / 100 +
+          ((g.thirdPartial ?? 0) * (p.thirdPartial ?? 0)) / 100;
       }
-
+      let status: GradeRow["status"] = "Pendiente";
+      if (
+        finalGrade > 0 ||
+        (item.grades && Object.values(item.grades).some((g) => g !== null))
+      ) {
+        status = finalGrade >= 10.5 ? "Aprobado" : "Reprobado";
+      }
       return {
-        courseName: item.course.course?.name || 'Sin nombre',
-        courseCode: item.course.course?.code || 'N/A',
-        grades,
-        average,
-        status,
-      } as CourseGrade;
-    });
+        courseName: item.course.course?.name || "N/A",
+        courseCode: item.course.course?.code || "N/A",
+        period: getAcademicPeriodLabel(item.course.creationDate),
+        finalGrade: finalGrade,
+        status: status,
+      };
+    }),
+  );
+
+  const columns: ColumnDef<GradeRow>[] = [
+    {
+      accessorKey: "courseName",
+      header: ({ column }) =>
+        renderComponent(DataTableColumnHeader, {
+          column,
+          title: "Curso",
+        }),
+      cell: ({ row }) => row.original.courseName,
+    },
+    {
+      accessorKey: "courseCode",
+      header: ({ column }) =>
+        renderComponent(DataTableColumnHeader, {
+          column,
+          title: "Código",
+        }),
+      cell: ({ row }) => row.original.courseCode,
+    },
+    {
+      accessorKey: "period",
+      header: ({ column }) =>
+        renderComponent(DataTableColumnHeader, {
+          column,
+          title: "Periodo",
+        }),
+      cell: ({ row }) => row.original.period,
+    },
+    {
+      accessorKey: "finalGrade",
+      header: ({ column }) =>
+        renderComponent(DataTableColumnHeader, {
+          column,
+          title: "Promedio Final",
+        }),
+      cell: ({ row }) => {
+        const snippet = createRawSnippet(() => ({
+          render: () =>
+            `<div class="text-left font-medium">${row.original.finalGrade.toFixed(
+              2,
+            )}</div>`,
+        }));
+        return renderSnippet(snippet);
+      },
+    },
+    {
+      accessorKey: "status",
+      header: "Estado",
+      cell: ({ row }) => {
+        const statusText = row.original.status;
+        const statusSnippet = createRawSnippet<[{ status: string }]>(
+          (getStatus) => {
+            const { status } = getStatus();
+            const baseClasses =
+              "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2";
+            const variantClasses =
+              status === "Aprobado"
+                ? "border-transparent bg-primary text-primary-foreground"
+                : status === "Reprobado"
+                  ? "border-transparent bg-destructive text-destructive-foreground"
+                  : "border-transparent bg-secondary text-secondary-foreground";
+            return {
+              render: () =>
+                `<div class="${baseClasses} ${variantClasses}">${status}</div>`,
+            };
+          },
+        );
+        return renderSnippet(statusSnippet, { status: statusText });
+      },
+    },
+  ];
+
+  let sorting: SortingState = $state([{ id: "period", desc: true }]);
+  let columnFilters: ColumnFiltersState = $state([]);
+
+  const table = createSvelteTable({
+    get data() {
+      return data;
+    },
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onSortingChange: (updater) =>
+      (sorting = typeof updater === "function" ? updater(sorting) : updater),
+    onColumnFiltersChange: (updater) =>
+      (columnFilters =
+        typeof updater === "function" ? updater(columnFilters) : updater),
+    get state() {
+      return {
+        get sorting() {
+          return sorting;
+        },
+        get columnFilters() {
+          return columnFilters;
+        },
+      };
+    },
   });
-
-  function getStatusColor(status: string): string {
-    switch (status) {
-      case 'approved':
-        return 'text-green-600 bg-green-50';
-      case 'failed':
-        return 'text-red-600 bg-red-50';
-      default:
-        return 'text-gray-600 bg-gray-50';
-    }
-  }
-
-  function getStatusLabel(status: string): string {
-    switch (status) {
-      case 'approved':
-        return 'Aprobado';
-      case 'failed':
-        return 'Reprobado';
-      default:
-        return 'Pendiente';
-    }
-  }
 </script>
 
-<div class="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
-  <table class="min-w-full divide-y divide-gray-200">
-    <thead class="bg-gray-50">
-      <tr>
-        <th
-          class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10"
-        >
-          Curso
-        </th>
-        <th
-          class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
-        >
-          Código
-        </th>
-        {#each Object.values(gradeLabels) as label (label)}
-          <th
-            class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
-          >
-            {label}
-          </th>
-        {/each}
-        <th
-          class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50"
-        >
-          Promedio
-        </th>
-        <th
-          class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
-        >
-          Estado
-        </th>
-      </tr>
-    </thead>
-    <tbody class="bg-white divide-y divide-gray-200">
-      {#each processedGrades() as course (course.courseCode)}
-        <tr class="hover:bg-gray-50 transition-colors">
-          <td class="px-6 py-4 whitespace-nowrap sticky left-0 bg-white z-10">
-            <div class="text-sm font-medium text-gray-900">
-              {course.courseName}
-            </div>
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap text-center">
-            <div class="text-sm text-gray-500">{course.courseCode}</div>
-          </td>
-          {#each Object.keys(gradeLabels) as key (key)}
-            <td class="px-4 py-4 whitespace-nowrap text-center">
-              {#if course.grades[key] !== undefined}
-                <span class="text-sm font-semibold text-gray-900">
-                  {course.grades[key].toFixed(1)}
-                </span>
-              {:else}
-                <span class="text-sm text-gray-400">-</span>
-              {/if}
-            </td>
-          {/each}
-          <td class="px-6 py-4 whitespace-nowrap text-center bg-blue-50">
-            <div class="flex items-center justify-center gap-1">
-              <span class="text-sm font-bold text-blue-900">
-                {course.average.toFixed(1)}
-              </span>
-              {#if course.average >= 10.5}
-                <TrendingUp class="w-4 h-4 text-green-600" />
-              {:else if course.average > 0}
-                <TrendingDown class="w-4 h-4 text-red-600" />
-              {/if}
-            </div>
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap text-center">
-            <span
-              class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {getStatusColor(
-                course.status,
-              )}"
-            >
-              {getStatusLabel(course.status)}
-            </span>
-          </td>
-        </tr>
-      {/each}
-    </tbody>
-  </table>
-</div>
-
-{#if processedGrades().length === 0}
-  <div
-    class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-center"
-  >
-    <p class="text-yellow-800">No hay calificaciones registradas.</p>
+<div class="w-full space-y-4">
+  <div class="flex items-center">
+    <Input
+      placeholder="Filtrar por nombre de curso..."
+      value={(table.getColumn("courseName")?.getFilterValue() as string) ?? ""}
+      oninput={(e) =>
+        table.getColumn("courseName")?.setFilterValue(e.currentTarget.value)}
+      class="max-w-sm"
+    />
   </div>
-{/if}
+  <div class="rounded-md border">
+    <Table.Root>
+      <Table.Header>
+        {#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
+          <Table.Row>
+            {#each headerGroup.headers as header (header.id)}
+              <Table.Head>
+                {#if !header.isPlaceholder}
+                  <FlexRender
+                    content={header.column.columnDef.header}
+                    context={header.getContext()}
+                  />
+                {/if}
+              </Table.Head>
+            {/each}
+          </Table.Row>
+        {/each}
+      </Table.Header>
+      <Table.Body>
+        {#if table.getRowModel().rows.length > 0}
+          {#each table.getRowModel().rows as row (row.id)}
+            <Table.Row>
+              {#each row.getVisibleCells() as cell (cell.id)}
+                <Table.Cell>
+                  <FlexRender
+                    content={cell.column.columnDef.cell}
+                    context={cell.getContext()}
+                  />
+                </Table.Cell>
+              {/each}
+            </Table.Row>
+          {/each}
+        {:else}
+          <Table.Row>
+            <Table.Cell colspan={columns.length} class="h-24 text-center">
+              No se encontraron resultados.
+            </Table.Cell>
+          </Table.Row>
+        {/if}
+      </Table.Body>
+    </Table.Root>
+  </div>
+</div>

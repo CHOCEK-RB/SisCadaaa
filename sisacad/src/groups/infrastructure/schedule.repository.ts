@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { AcademicGroup } from '../aggregates/academic_group.entity';
-import { ScheduleSlot, DayOfWeek } from '../aggregates/schedule.entity';
-import { Classroom } from 'src/classroom/aggregates/classrom.entity';
+import { AcademicGroup } from '../domain/aggregates/academic_group.entity';
+import { ScheduleSlot, DayOfWeek } from '../domain/aggregates/schedule.entity';
+import { Classroom } from 'src/classroom/domain/aggregates/classroom.entity';
 
-import { IScheduleSlotRepository } from './ischedule.repository';
+import { IScheduleSlotRepository } from '../domain/repositories/ischedule.repository';
 
 @Injectable()
 export class ScheduleSlotRepository implements IScheduleSlotRepository {

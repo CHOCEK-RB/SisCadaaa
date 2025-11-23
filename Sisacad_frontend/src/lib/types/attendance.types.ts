@@ -1,12 +1,12 @@
 export enum GroupType {
-  LABORATORY = 'laboratory',
-  THEORY = 'theory',
-  PRACTICE = 'practice',
+  LABORATORY = "laboratory",
+  THEORY = "theory",
+  PRACTICE = "practice",
 }
 
 export enum AttendanceStatus {
-  PRESENT = 'present',
-  ABSENT = 'absent',
+  PRESENT = "present",
+  ABSENT = "absent",
 }
 
 export interface StudentAttendanceRecordDTO {
