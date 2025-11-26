@@ -8,7 +8,7 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
   }
 
   try {
-    const allGrades = await enrollmentService.getAllMyGrades(fetch);
+    const allGrades = await enrollmentService.getAllMyGrades({ fetch });
     return {
       allGrades,
     };
@@ -20,4 +20,3 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
     };
   }
 };
-

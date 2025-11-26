@@ -4,19 +4,21 @@
     GroupGradesResponse,
     StudentGradeInfo,
   } from "$lib/services/groups.service";
-  import { authStore } from "$lib/store/auth.store";
   import {
-    AlertCircle,
+    TriangleAlert,
     Save,
-    BarChart3,
+    BarChart,
     Download,
     TrendingUp,
     TrendingDown,
     Baseline,
   } from "lucide-svelte";
   import TeacherGradesChart from "$lib/components/TeacherGradesChart.svelte";
+  import TeacherGradesTable from "$lib/components/grades/TeacherGradesTable.svelte";
+  import StudentCourseGradesChart from "$lib/components/grades/StudentCourseGradesChart.svelte";
   import { onMount } from "svelte";
   import { SvelteMap } from "svelte/reactivity";
+  import { Button } from "$lib/components/ui/button";
 
   let { data } = $props<{ data: any }>();
   const groupId = data.groupId;
@@ -28,56 +30,40 @@
   let successMessage = $state("");
 
   let pendingChanges = $state(new Map<string, Partial<any>>());
-
-  const gradeLabels = {
-    firstContinue: "C1",
-    secondContinue: "C2",
-    thirdContinue: "C3",
-    firstPartial: "P1",
-    secondPartial: "P2",
-    thirdPartial: "P3",
-  };
+  let selectedStudent: StudentGradeInfo | null = $state(null);
 
   onMount(async () => {
-    await loadGroupGrades();
+    loading = false;
+    if (data.groupGrades) {
+      groupData = data.groupGrades;
+    } else if (data.error) {
+      error = data.error;
+    }
   });
 
   async function loadGroupGrades() {
-    loading = true;
     error = "";
     try {
-      const token = authStore.getToken();
-      if (!token) {
-        throw new Error("No se encontró token de autenticación");
-      }
-
-      groupData = await groupsService.getGroupGrades(groupId);
+      const refreshedGroupData = await groupsService.getGroupGrades(groupId);
+      groupData = refreshedGroupData;
     } catch (err: any) {
-      error = err.message || "Error al cargar las notas";
-    } finally {
-      loading = false;
+      error = err.message || "Error al recargar las notas";
     }
   }
 
   function handleGradeChange(
     enrollmentId: string,
     gradeKey: string,
-    value: string,
+    value: number | null,
   ) {
-    const numValue = value === "" ? -1 : parseFloat(value);
-
-    if (numValue !== -1 && (numValue < 0 || numValue > 20)) {
-      return;
-    }
-
     if (!pendingChanges.has(enrollmentId)) {
       pendingChanges.set(enrollmentId, {});
     }
 
     const changes = pendingChanges.get(enrollmentId)!;
-    changes[gradeKey] = numValue;
+    changes[gradeKey] = value;
     pendingChanges.set(enrollmentId, changes);
-    pendingChanges = new SvelteMap(pendingChanges);
+    pendingChanges = new SvelteMap(pendingChanges); // Trigger reactivity
   }
 
   async function saveChanges() {
@@ -90,11 +76,6 @@
     successMessage = "";
 
     try {
-      const token = authStore.getToken();
-      if (!token) {
-        throw new Error("No se encontró token de autenticación");
-      }
-
       const updates = Array.from(pendingChanges.entries()).map(
         ([enrollmentId, grades]) => ({
           enrollmentId,
@@ -102,7 +83,7 @@
         }),
       );
 
-      await groupsService.updateMultipleGrades(groupId, updates, token);
+      await groupsService.updateMultipleGrades(groupId, updates);
 
       successMessage = `Se guardaron ${updates.length} cambio(s) exitosamente`;
       pendingChanges.clear();
@@ -120,16 +101,24 @@
     }
   }
 
-  function calculateWeightedAverage(student: StudentGradeInfo): number {
-    if (!groupData) return 0;
-
+  function calculateWeightedAverageForStudent(
+    student: StudentGradeInfo,
+    scheme: GroupGradesResponse["gradingScheme"],
+  ): number {
     const grades = student.grades;
-    const scheme = groupData.gradingScheme;
-
     let totalWeight = 0;
     let weightedSum = 0;
 
-    Object.entries(gradeLabels).forEach(([key]) => {
+    const gradeKeys = [
+      "firstContinue",
+      "secondContinue",
+      "thirdContinue",
+      "firstPartial",
+      "secondPartial",
+      "thirdPartial",
+    ];
+
+    gradeKeys.forEach((key) => {
       const grade = grades[key as keyof typeof grades];
       const weight = scheme[key as keyof typeof scheme] || 0;
 
@@ -140,15 +129,8 @@
     });
 
     if (totalWeight === 0) return 0;
-
     const average = weightedSum / totalWeight;
     return Math.round(average * 10) / 10;
-  }
-
-  function getGradeColor(grade: number): string {
-    if (grade < 0) return "text-gray-400";
-    if (grade >= 10.5) return "text-green-600 font-semibold";
-    return "text-red-600 font-semibold";
   }
 
   function exportToCSV() {
@@ -167,7 +149,10 @@
       "Promedio",
     ];
     const rows = groupData.students.map((student) => {
-      const avg = calculateWeightedAverage(student);
+      const avg = calculateWeightedAverageForStudent(
+        student,
+        groupData!.gradingScheme,
+      );
       return [
         student.cui,
         student.lastName,
@@ -203,7 +188,9 @@
   const allStudentAverages = $derived((): number[] => {
     if (!groupData) return [];
     return groupData.students
-      .map(calculateWeightedAverage)
+      .map((student) =>
+        calculateWeightedAverageForStudent(student, groupData!.gradingScheme),
+      )
       .filter((avg) => avg > 0);
   });
 
@@ -224,6 +211,14 @@
       min: parseFloat(min.toFixed(1)),
     };
   });
+  const gradeLabelsForDisplay = {
+    firstContinue: "C1",
+    secondContinue: "C2",
+    thirdContinue: "C3",
+    firstPartial: "P1",
+    secondPartial: "P2",
+    thirdPartial: "P3",
+  };
 </script>
 
 <svelte:head>
@@ -242,7 +237,7 @@
       class="mb-4 flex items-center rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800"
       role="alert"
     >
-      <AlertCircle class="mr-3 h-5 w-5 flex-shrink-0" />
+      <TriangleAlert class="mr-3 h-5 w-5 flex-shrink-0" />
       <div><span class="font-medium">Error:</span> {error}</div>
     </div>
   {:else if groupData}
@@ -257,18 +252,19 @@
           </p>
         </div>
         <div class="mt-4 flex gap-2 sm:mt-0">
-          <button
+          <Button
+            variant="outline"
             onclick={exportToCSV}
-            class="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700"
+            class="flex items-center gap-2"
           >
             <Download class="h-4 w-4" />
             Exportar CSV
-          </button>
+          </Button>
           {#if groupData.canEdit && pendingChanges.size > 0}
-            <button
+            <Button
               onclick={saveChanges}
               disabled={saving}
-              class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+              class="flex items-center gap-2"
             >
               {#if saving}
                 <div
@@ -278,7 +274,7 @@
                 <Save class="h-4 w-4" />
               {/if}
               Guardar ({pendingChanges.size})
-            </button>
+            </Button>
           {/if}
         </div>
       </div>
@@ -287,7 +283,7 @@
         <div
           class="mb-4 rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800"
         >
-          <AlertCircle class="mr-2 inline h-4 w-4" />
+          <TriangleAlert class="mr-2 inline h-4 w-4" />
           Las notas solo pueden editarse en grupos de teoría. Este grupo es de tipo:
           {groupData.groupType}
         </div>
@@ -302,9 +298,7 @@
       {/if}
     </div>
 
-    <!-- --- INICIO DE LOS 3 RECUADROS DE ESTADÍSTICAS --- -->
     <div class="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
-      <!-- Tarjeta Promedio General -->
       <div
         class="flex items-center rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
       >
@@ -321,7 +315,6 @@
         </div>
       </div>
 
-      <!-- Tarjeta Nota Más Alta -->
       <div
         class="flex items-center rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
       >
@@ -338,7 +331,6 @@
         </div>
       </div>
 
-      <!-- Tarjeta Nota Más Baja -->
       <div
         class="flex items-center rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
       >
@@ -355,14 +347,11 @@
         </div>
       </div>
     </div>
-    <!-- --- FIN DE LOS 3 RECUADROS DE ESTADÍSTICAS --- -->
-
-    <!-- Gráfico -->
     <div class="mb-8">
       <div class="mb-4 flex items-center gap-2">
-        <BarChart3 class="h-5 w-5 text-blue-600" />
+        <BarChart class="h-5 w-5 text-blue-600" />
         <h2 class="text-xl font-semibold text-gray-800">
-          Análisis de Rendimiento
+          Rendimiento General del Grupo
         </h2>
       </div>
       <TeacherGradesChart
@@ -371,104 +360,43 @@
       />
     </div>
 
-    <!-- Tabla de notas -->
-    <div class="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-          <tr>
-            <th
-              class="sticky left-0 z-10 bg-gray-50 px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
-            >
-              CUI
-            </th>
-            <th
-              class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
-            >
-              Apellidos
-            </th>
-            <th
-              class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
-            >
-              Nombres
-            </th>
-            {#each Object.values(gradeLabels) as label (label)}
-              <th
-                class="px-4 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase"
-              >
-                {label}
-              </th>
-            {/each}
-            <th
-              class="bg-blue-50 px-6 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase"
-            >
-              Promedio
-            </th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-200 bg-white">
-          {#each groupData.students as student (student.enrollmentId)}
-            {@const average = calculateWeightedAverage(student)}
-            <tr class="transition-colors hover:bg-gray-50">
-              <td
-                class="sticky left-0 z-10 bg-white px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900"
-              >
-                {student.cui}
-              </td>
-              <td class="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
-                {student.lastName}
-              </td>
-              <td class="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
-                {student.firstName}
-              </td>
-              {#each Object.keys(gradeLabels) as key (key)}
-                {@const grade =
-                  student.grades[key as keyof typeof student.grades]}
-                <td class="px-4 py-4 text-center whitespace-nowrap">
-                  {#if groupData.canEdit}
-                    <input
-                      type="number"
-                      min="0"
-                      max="20"
-                      step="0.1"
-                      value={grade >= 0 ? grade : ""}
-                      onchange={(e) =>
-                        handleGradeChange(
-                          student.enrollmentId,
-                          key,
-                          e.currentTarget.value,
-                        )}
-                      class="w-16 rounded border px-2 py-1 text-center text-sm {getGradeColor(
-                        grade,
-                      )}"
-                      placeholder="-"
-                    />
-                  {:else}
-                    <span class="text-sm {getGradeColor(grade)}">
-                      {grade >= 0 ? grade.toFixed(1) : "-"}
-                    </span>
-                  {/if}
-                </td>
-              {/each}
-              <td
-                class="bg-blue-50 px-6 py-4 text-center font-bold whitespace-nowrap {average >=
-                10.5
-                  ? 'text-green-600'
-                  : 'text-red-600'}"
-              >
-                {average > 0 ? average.toFixed(1) : "-"}
-              </td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
+    <div class="mb-8">
+      <h2 class="mb-4 text-xl font-semibold text-gray-800">
+        Calificaciones Detalladas del Grupo
+      </h2>
+      <TeacherGradesTable
+        groupGradesData={groupData}
+        onSelectStudent={(student) => (selectedStudent = student)}
+        onGradeChange={(payload) =>
+          handleGradeChange(
+            payload.enrollmentId,
+            payload.gradeKey,
+            payload.value,
+          )}
+        canEdit={groupData.canEdit}
+        {pendingChanges}
+      />
     </div>
+
+    {#if selectedStudent && groupData.gradingScheme}
+      <div class="mb-8">
+        <h2 class="mb-4 text-xl font-semibold text-gray-800">
+          Rendimiento de {selectedStudent.firstName}
+          {selectedStudent.lastName}
+        </h2>
+        <StudentCourseGradesChart
+          studentGrades={selectedStudent}
+          gradingScheme={groupData.gradingScheme}
+        />
+      </div>
+    {/if}
 
     <div class="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
       <h3 class="mb-2 font-semibold text-blue-900">Esquema de Calificación</h3>
       <div
         class="grid grid-cols-2 gap-4 text-sm text-blue-800 md:grid-cols-3 lg:grid-cols-6"
       >
-        {#each Object.entries(gradeLabels) as [key, label] (key)}
+        {#each Object.entries(gradeLabelsForDisplay) as [key, label] (key)}
           <div>
             <span class="font-medium">{label}:</span>
             {groupData.gradingScheme[
@@ -477,6 +405,17 @@
           </div>
         {/each}
       </div>
+      <p class="mt-4 text-sm text-blue-800">Nota mínima aprobatoria: 10.5</p>
+    </div>
+  {:else}
+    <div class="rounded-lg border bg-white p-8 text-center shadow-md">
+      <BarChart class="mx-auto mb-4 h-16 w-16 text-gray-400" />
+      <p class="mb-2 text-lg text-gray-600">
+        No hay calificaciones registradas para este grupo.
+      </p>
+      <p class="text-sm text-gray-500">
+        Las calificaciones aparecerán aquí una vez que se registren.
+      </p>
     </div>
   {/if}
 </div>

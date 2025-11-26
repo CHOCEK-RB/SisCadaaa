@@ -10,10 +10,9 @@ export const load: PageServerLoad = async ({ locals, params, fetch }) => {
   const { academicCourseId } = params;
 
   try {
-    const grades = await enrollmentService.getGradeById(
-      academicCourseId,
+    const grades = await enrollmentService.getGradeById(academicCourseId, {
       fetch,
-    );
+    });
     return { grades };
   } catch (err) {
     console.error("Error loading grades page:", err);
@@ -24,4 +23,3 @@ export const load: PageServerLoad = async ({ locals, params, fetch }) => {
     };
   }
 };
-

@@ -17,6 +17,7 @@ import { EnrollmentModule } from './enrollment/enrollment.module';
 import { SeedingModule } from './seed/seeding.module';
 import { StudentModule } from './student/student.module';
 import { EventsModule } from './events/events.module';
+import { ReservationModule } from './reservation/reservation.module';
 
 @Module({
   imports: [
@@ -33,8 +34,10 @@ import { EventsModule } from './events/events.module';
     EnrollmentModule,
     StudentModule,
     EventsModule,
+    ReservationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}
+

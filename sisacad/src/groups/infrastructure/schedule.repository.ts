@@ -56,4 +56,21 @@ export class ScheduleSlotRepository implements IScheduleSlotRepository {
 
     return this.typeormRepo.save(newSchedule);
   }
+
+  async findOverlappingScheduleSlots(
+    classroomId: string,
+    dayOfWeek: DayOfWeek,
+    startTime: string,
+    endTime: string,
+  ): Promise<ScheduleSlot[]> {
+    return this.typeormRepo
+      .createQueryBuilder('scheduleSlot')
+      .where('scheduleSlot.classroom.id = :classroomId', { classroomId })
+      .andWhere('scheduleSlot.day = :dayOfWeek', { dayOfWeek })
+      .andWhere(
+        '(:startTime < scheduleSlot.endTime AND :endTime > scheduleSlot.startTime)',
+        { startTime, endTime },
+      )
+      .getMany();
+  }
 }

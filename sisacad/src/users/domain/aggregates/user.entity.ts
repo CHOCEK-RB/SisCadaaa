@@ -3,6 +3,7 @@ import { Student } from './student.entity';
 import { Teacher } from './teacher.entity';
 import { Secretary } from './secretary.entity';
 import { Admin } from './admin.entity';
+import { Role } from './role.enum';
 
 @Entity('users')
 export class User {
@@ -14,6 +15,13 @@ export class User {
 
   @Column({ nullable: true })
   googleId?: string;
+
+  @Column({
+    type: 'enum',
+    enum: Role,
+    default: Role.STUDENT,
+  })
+  role: Role;
 
   pictureURL?: string;
 

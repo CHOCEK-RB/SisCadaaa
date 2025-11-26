@@ -91,7 +91,9 @@
     </div>
   {:else if allGrades && allGrades.length > 0}
     <div class="mb-8 print:break-inside-avoid">
-      <h2 class="mb-4 text-xl font-semibold text-foreground">Resumen General</h2>
+      <h2 class="mb-4 text-xl font-semibold text-foreground">
+        Resumen General
+      </h2>
       <GradesStatistics gradesData={allGrades} />
     </div>
 

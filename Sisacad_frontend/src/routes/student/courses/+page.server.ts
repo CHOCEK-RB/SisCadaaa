@@ -8,7 +8,9 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
   }
 
   try {
-    const groupedEnrollments = await enrollmentService.getEnrollments(fetch);
+    const groupedEnrollments = await enrollmentService.getEnrollments({
+      fetch,
+    });
 
     return {
       groupedEnrollments,
@@ -21,4 +23,3 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
     };
   }
 };
-

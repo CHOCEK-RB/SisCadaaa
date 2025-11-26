@@ -1,28 +1,40 @@
-import { redirect } from '@sveltejs/kit';
-import type { LayoutServerLoad } from './$types';
-import { academicCourseService } from '$lib/services/academic_course.service';
+import { redirect } from "@sveltejs/kit";
+import type { LayoutServerLoad } from "./$types";
+import { groupsService } from "$lib/services/groups.service";
+import { academicCourseService } from "$lib/services/academic_course.service";
 
 export const load: LayoutServerLoad = async ({ locals, params, fetch }) => {
-  if (locals.user?.role !== 'teacher') {
-    throw redirect(303, '/');
+  if (locals.user?.role !== "teacher") {
+    throw redirect(303, "/");
   }
 
-  const { academicCourseId } = params;
+  const academicGroupId = params.academicCourseId;
 
   try {
+    const academicGroup = await groupsService.getAcademicCourse(
+      academicGroupId,
+      {
+        fetch,
+      },
+    );
+
+    if (!academicGroup || !academicGroup.course) {
+      throw new Error("Academic Group or associated course not found.");
+    }
+
     const courseDetails = await academicCourseService.getCourse(
-      academicCourseId,
-      fetch,
+      academicGroup.course.id,
+      {
+        fetch,
+      },
     );
 
     return {
       courseDetails,
+      academicGroupId, // Make the academicGroupId available to nested layouts/pages
     };
   } catch (err) {
-    console.error('Error loading course layout:', err);
-    return {
-      courseDetails: null,
-      error: 'Failed to load course details',
-    };
+    console.error("Error loading course layout:", err);
+    throw redirect(303, "/teacher/courses"); // Redirect to the courses list on error
   }
 };

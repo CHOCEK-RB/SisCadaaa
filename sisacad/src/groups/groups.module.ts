@@ -48,4 +48,3 @@ import { UserModule } from 'src/users/users.module';
   exports: [IAcademicGroupRepository, IScheduleSlotRepository],
 })
 export class GroupsModule {}
-

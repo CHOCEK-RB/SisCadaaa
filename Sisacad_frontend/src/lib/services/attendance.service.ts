@@ -1,5 +1,6 @@
 import { api } from "./api.service";
 import type { GroupAttendanceDTO } from "$lib/types/attendance.types";
+import type { RequestOptions } from "./api.service";
 
 export interface StudentAttendanceInfo {
   studentId: string;
@@ -35,10 +36,10 @@ export interface UpdateAttendanceDto {
 }
 
 export const attendanceService = {
-  async getGroupAttendance(groupID: string, fetcher?: typeof fetch) {
+  async getGroupAttendance(groupID: string, options: RequestOptions = {}) {
     const response = await api.get<GroupAttendanceDTO[]>(
       `/attendance/my-attendance/${groupID}`,
-      { fetch: fetcher },
+      options,
     );
 
     if (!response) {
@@ -50,11 +51,11 @@ export const attendanceService = {
 
   async checkCanTakeAttendance(
     groupId: string,
-    token: string,
+    options: RequestOptions = {},
   ): Promise<TakeAttendanceResponse> {
     const response = await api.get<TakeAttendanceResponse>(
       `/attendance/group/${groupId}/check`,
-      { token },
+      options,
     );
 
     if (!response) {
@@ -69,18 +70,18 @@ export const attendanceService = {
   async takeAttendance(
     groupId: string,
     updateDto: UpdateAttendanceDto,
-    token: string,
+    options: RequestOptions = {},
   ): Promise<void> {
-    await api.post(`/attendance/group/${groupId}/take`, updateDto, { token });
+    await api.post(`/attendance/group/${groupId}/take`, updateDto, options);
   },
 
   async getGroupAttendanceHistory(
     groupId: string,
-    token: string,
+    options: RequestOptions = {},
   ): Promise<GroupAttendanceRecord[]> {
     const response = await api.get<GroupAttendanceRecord[]>(
       `/attendance/group/${groupId}/history`,
-      { token },
+      options,
     );
 
     if (!response) {

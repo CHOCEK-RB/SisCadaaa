@@ -8,8 +8,8 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
   }
 
   try {
-    const schedulePromise = enrollmentService.getMySchedule(fetch);
-    const coursesPromise = enrollmentService.getEnrollments(fetch);
+    const schedulePromise = enrollmentService.getMySchedule({ fetch });
+    const coursesPromise = enrollmentService.getEnrollments({ fetch });
 
     const [schedule, courses] = await Promise.all([
       schedulePromise,

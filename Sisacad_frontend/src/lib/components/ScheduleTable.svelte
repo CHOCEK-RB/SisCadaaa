@@ -1,12 +1,19 @@
 <script lang="ts">
   import type { AcademicGroupDTO } from "$lib/types/group.types";
+  import type { Reservation } from "$lib/types/reservation.types";
   import * as Table from "$lib/components/ui/table";
   import * as Card from "$lib/components/ui/card";
   import { onMount } from "svelte";
   import { cn } from "$lib/utils";
+  import { format, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
 
-  let { groups = [], showCourseName = false } = $props<{
-    groups: AcademicGroupDTO[];
+  let {
+    groups = [],
+    reservations = [],
+    showCourseName = false,
+  } = $props<{
+    groups?: AcademicGroupDTO[];
+    reservations?: Reservation[];
     showCourseName?: boolean;
   }>();
 
@@ -62,10 +69,16 @@
     { start: "19:20", end: "20:10" },
   ];
 
-  interface ScheduleEvent {
-    group: AcademicGroupDTO;
-    schedule: any;
-  }
+  type ScheduleEvent =
+    | {
+        type: "class";
+        group: AcademicGroupDTO;
+        schedule: any;
+      }
+    | {
+        type: "reservation";
+        reservation: Reservation;
+      };
 
   function timeToMinutes(time: string): number {
     const [hours, minutes] = time.split(":").map(Number);
@@ -79,8 +92,11 @@
     return `${hours}:${minutes}`;
   }
 
-  const getTypeClass = (type: string) => {
-    switch (type?.toLowerCase()) {
+  const getTypeClass = (event: ScheduleEvent) => {
+    if (event.type === "reservation") {
+      return "bg-yellow-500/10 border-yellow-500/20 text-yellow-700 dark:text-yellow-300";
+    }
+    switch (event.group.type?.toLowerCase()) {
       case "theory":
         return "bg-blue-500/10 border-blue-500/20 text-blue-700 dark:text-blue-300";
       case "laboratory":
@@ -92,6 +108,18 @@
     }
   };
 
+  const isReservationActiveThisWeek = (reservation: Reservation) => {
+    const startOfCurrentWeek = startOfWeek(now, { weekStartsOn: 1 }); // Monday
+    const endOfCurrentWeek = endOfWeek(now, { weekStartsOn: 1 }); // Sunday
+
+    const reservationStartTime = new Date(reservation.startTime);
+
+    return isWithinInterval(reservationStartTime, {
+      start: startOfCurrentWeek,
+      end: endOfCurrentWeek,
+    });
+  };
+
   function findEventForSlot(
     day: string,
     timeSlot: { start: string; end: string },
@@ -101,7 +129,10 @@
     for (const group of groups) {
       for (const schedule of group.schedule ?? []) {
         const dayName = dayMap[schedule.day.toLowerCase()];
+
         if (dayName !== day) continue;
+
+        if (!schedule.start || !schedule.end) continue;
 
         const eventStartMinutes = timeToMinutes(normalizeTime(schedule.start));
         const eventEndMinutes = timeToMinutes(normalizeTime(schedule.end));
@@ -110,8 +141,33 @@
           slotStartMinutes >= eventStartMinutes &&
           slotStartMinutes < eventEndMinutes
         ) {
-          return { group, schedule };
+          return { type: "class", group, schedule };
         }
+      }
+    }
+
+    for (const reservation of reservations) {
+      if (!isReservationActiveThisWeek(reservation)) {
+        continue;
+      }
+
+      const reservationDate = new Date(reservation.startTime);
+      const reservationDay = jsDayToName[reservationDate.getDay()];
+      if (reservationDay !== day) continue;
+
+      // Defensive check for incomplete reservation data
+      if (!reservation.startTime || !reservation.endTime) continue;
+
+      const eventStartMinutes = timeToMinutes(format(reservationDate, "HH:mm"));
+      const eventEndMinutes = timeToMinutes(
+        format(new Date(reservation.endTime), "HH:mm"),
+      );
+
+      if (
+        slotStartMinutes >= eventStartMinutes &&
+        slotStartMinutes < eventEndMinutes
+      ) {
+        return { type: "reservation", reservation };
       }
     }
     return null;
@@ -159,27 +215,43 @@
                   "ring-2 ring-primary ring-inset": isCurrentCell,
                 })}
               >
-                <Card.Root class={`${getTypeClass(event.group.type)}`}>
+                <Card.Root class={getTypeClass(event)}>
                   <Card.Header>
-                    {#if showCourseName}
-                      <Card.Title class="min-w-0 break-all"
-                        >{event.group.course.course.name}</Card.Title
-                      >
+                    {#if event.type === "class"}
+                      {#if showCourseName}
+                        <Card.Title class="min-w-0 break-all"
+                          >{event.group.course.course.name}</Card.Title
+                        >
+                        <Card.Description>
+                          {event.group.course.course.code}
+                          <p>
+                            Grupo: {event.group.name} ({event.group.type})
+                          </p>
+                          {slot.start} - {slot.end}
+                        </Card.Description>
+                      {:else}
+                        <Card.Title class="min-w-0 break-all"
+                          ><p>
+                            Grupo: {event.group.name} ({event.group.type})
+                          </p></Card.Title
+                        >
+                        <Card.Description>
+                          {slot.start} - {slot.end}
+                        </Card.Description>
+                      {/if}
+                    {:else if event.type === "reservation"}
+                      <Card.Title class="min-w-0 break-all">Reserva</Card.Title>
                       <Card.Description>
-                        {event.group.course.course.code}
+                        Aula: {event.reservation.classroom.name}
                         <p>
-                          Grupo: {event.group.name} ({event.group.type})
+                          {format(
+                            new Date(event.reservation.startTime),
+                            "HH:mm",
+                          )} - {format(
+                            new Date(event.reservation.endTime),
+                            "HH:mm",
+                          )}
                         </p>
-                        {slot.start} - {slot.end}
-                      </Card.Description>
-                    {:else}
-                      <Card.Title class="min-w-0 break-all"
-                        ><p>
-                          Grupo: {event.group.name} ({event.group.type})
-                        </p></Card.Title
-                      >
-                      <Card.Description>
-                        {slot.start} - {slot.end}
                       </Card.Description>
                     {/if}
                   </Card.Header>

@@ -8,6 +8,12 @@ export interface IScheduleSlotRepository {
   findById(id: string): Promise<ScheduleSlot | null>;
   findByAcademicGroup(groupId: string): Promise<ScheduleSlot[] | null>;
   findByClassroom(classromId: string): Promise<ScheduleSlot[] | null>;
+  findOverlappingScheduleSlots(
+    classroomId: string,
+    dayOfWeek: DayOfWeek,
+    startTime: string,
+    endTime: string,
+  ): Promise<ScheduleSlot[]>;
   save(schedule: ScheduleSlot): Promise<ScheduleSlot>;
   save(schedules: ScheduleSlot[]): Promise<ScheduleSlot[]>;
   create(

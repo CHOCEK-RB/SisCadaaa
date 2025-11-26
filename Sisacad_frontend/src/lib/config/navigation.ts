@@ -32,8 +32,9 @@ export const navigationLinks: Record<UserRole, NavLink[]> = {
   ],
   teacher: [
     { url: "/teacher", title: "Inicio", icon: House },
-    { url: "/teacher/courses", title: "Cursos Asignados", icon: BookOpen },
+    { url: "/teacher/courses", title: "Mis Cursos", icon: BookOpen },
     { url: "/teacher/schedule", title: "Horario", icon: Calendar },
+    { url: "/teacher/reservation", title: "Reservaciones", icon: Calendar },
   ],
   secretary: [
     { url: "/home", title: "Inicio", icon: House },

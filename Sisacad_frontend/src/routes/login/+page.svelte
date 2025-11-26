@@ -1,23 +1,23 @@
 <script lang="ts">
-  import { PUBLIC_GOOGLE_CLIENT_ID } from '$env/static/public';
-  import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
-  import { authStore, isAuthenticated } from '$lib/store/auth.store';
-  import { resolve } from '$app/paths';
+  import { PUBLIC_GOOGLE_CLIENT_ID } from "$env/static/public";
+  import { onMount } from "svelte";
+  import { goto } from "$app/navigation";
+  import { authStore, isAuthenticated } from "$lib/store/auth.store";
+  import { resolve } from "$app/paths";
 
   let isLoading = false;
-  let error = '';
+  let error = "";
 
   $: if ($isAuthenticated) {
     const user = authStore.getUser();
     if (user) {
-      goto(resolve('/'), { replaceState: true });
+      goto(resolve("/"), { replaceState: true });
     }
   }
 
   onMount(() => {
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
     script.async = true;
     script.defer = true;
     document.head.appendChild(script);
@@ -30,11 +30,11 @@
         });
 
         window.google.accounts.id.renderButton(
-          document.getElementById('google-signin-button')!,
+          document.getElementById("google-signin-button")!,
           {
-            theme: 'outline',
-            size: 'large',
-            text: 'signin_with',
+            theme: "outline",
+            size: "large",
+            text: "signin_with",
           },
         );
       }
@@ -43,14 +43,14 @@
 
   async function handleCredentialResponse(response: any) {
     isLoading = true;
-    error = '';
+    error = "";
 
     try {
       await authStore.loginWithGoogle(response.credential);
     } catch (err: any) {
-      console.error('Login failed:', err);
+      console.error("Login failed:", err);
       error =
-        err.message || 'Error al iniciar sesión. Por favor intenta de nuevo.';
+        err.message || "Error al iniciar sesión. Por favor intenta de nuevo.";
     } finally {
       isLoading = false;
     }
@@ -62,12 +62,12 @@
 </svelte:head>
 
 <div
-  class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4"
+  class="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4"
 >
-  <div class="max-w-md w-full space-y-8">
+  <div class="w-full max-w-md space-y-8">
     <div class="text-center">
       <div
-        class="mx-auto h-20 w-20 bg-blue-600 rounded-full flex items-center justify-center shadow-lg"
+        class="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-blue-600 shadow-lg"
       >
         <svg
           class="h-12 w-12 text-white"
@@ -87,20 +87,20 @@
       <p class="mt-2 text-sm text-gray-600">Sistema Académico Universitario</p>
     </div>
 
-    <div class="bg-white py-8 px-6 shadow-xl rounded-2xl">
+    <div class="rounded-2xl bg-white px-6 py-8 shadow-xl">
       <div class="space-y-6">
         <div>
-          <h3 class="text-xl font-semibold text-gray-900 text-center mb-2">
+          <h3 class="mb-2 text-center text-xl font-semibold text-gray-900">
             Iniciar Sesión
           </h3>
-          <p class="text-sm text-gray-600 text-center">
+          <p class="text-center text-sm text-gray-600">
             Usa tu cuenta institucional para continuar
           </p>
         </div>
 
         {#if error}
           <div
-            class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg relative"
+            class="relative rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700"
             role="alert"
           >
             <span class="block sm:inline">{error}</span>

@@ -4,8 +4,7 @@
   import { Info, Calendar, SquareCheck, Users } from "lucide-svelte";
 
   let { data } = $props<{ data: LayoutData }>();
-  const { courseDetails } = data;
-  const academicCourseId = page.params.academicCourseId;
+  const { courseDetails, academicGroupId } = data; // Destructure academicGroupId
 
   interface Tab {
     href: string;
@@ -15,22 +14,22 @@
 
   const tabs: Tab[] = [
     {
-      href: `/teacher/courses/${academicCourseId}`,
+      href: `/teacher/courses/${academicGroupId}`, // Use academicGroupId
       label: "Información",
       icon: Info,
     },
     {
-      href: `/teacher/courses/${academicCourseId}/schedule`,
+      href: `/teacher/courses/${academicGroupId}/schedule`, // Use academicGroupId
       label: "Horario",
       icon: Calendar,
     },
     {
-      href: `/teacher/courses/${academicCourseId}/grades`,
+      href: `/teacher/courses/${academicGroupId}/grades`, // Use academicGroupId
       label: "Notas",
       icon: SquareCheck,
     },
     {
-      href: `/teacher/courses/${academicCourseId}/attendance`,
+      href: `/teacher/courses/${academicGroupId}/attendance`, // Use academicGroupId
       label: "Asistencia",
       icon: Users,
     },
@@ -57,7 +56,7 @@
         {@const Icon = tab.icon}
         {@const isActive =
           activePath === tab.href ||
-          (tab.href === `/courses/${academicCourseId}` &&
+          (tab.href === `/courses/${academicGroupId}` && // Use academicGroupId
             activePath === `${tab.href}/`)}
         <li>
           <a

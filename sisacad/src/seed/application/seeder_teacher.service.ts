@@ -10,6 +10,7 @@ import { ITeacherRepository } from 'src/users/domain/repositories/iteacher.repos
 
 import { User } from 'src/users/domain/aggregates/user.entity';
 import { Teacher } from 'src/users/domain/aggregates/teacher.entity';
+import { Role } from 'src/users/domain/aggregates/role.enum';
 
 /**
  * @class SeederTeacherService
@@ -67,6 +68,7 @@ export class SeederTeacherService {
         user = new User();
         user.email = teacherData.email;
         user.isActive = true;
+        user.role = Role.TEACHER;
 
         const teacherProfile = new Teacher();
         teacherProfile.name = teacherData.name;

@@ -1,6 +1,6 @@
-import type { ClassroomDTO } from './classroom.types';
-import type { TeacherProfileDTO } from './user.types';
-import type { AcademicCourseDTO } from './course.types';
+import type { Classroom } from "./classroom.types";
+import type { TeacherProfileDTO } from "./user.types";
+import type { AcademicCourseDTO } from "./course.types";
 
 export interface AcademicGroupDTO {
   id: string;
@@ -18,6 +18,6 @@ export interface ScheduleSlotDTO {
   day: string;
   start: string;
   end: string;
-  classroom: ClassroomDTO;
+  classroom: Classroom;
   group: string;
 }

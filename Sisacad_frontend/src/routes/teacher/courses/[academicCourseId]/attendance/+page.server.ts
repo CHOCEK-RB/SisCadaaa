@@ -7,12 +7,12 @@ export const load: PageServerLoad = async ({ locals, params, fetch }) => {
     throw redirect(303, '/');
   }
 
-  const { academicCourseId } = params;
+  const { academicCourseId: academicGroupId } = params;
 
   try {
     const groupGrades = await groupsService.getGroupGrades(
-      academicCourseId,
-      fetch,
+      academicGroupId,
+      {fetch},
     );
 
     return {

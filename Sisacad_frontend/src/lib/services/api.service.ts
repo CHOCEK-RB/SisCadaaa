@@ -106,8 +106,9 @@ class ApiService {
     data = {},
     options: RequestOptions = {},
   ): Promise<T | null> {
+    const fetcher = options.fetch || fetch;
     try {
-      const response = await fetch(`${this.baseURL}${endpoint}`, {
+      const response = await fetcher(`${this.baseURL}${endpoint}`, {
         method: "PUT",
         headers: this.getHeaders(options.headers),
         body: JSON.stringify(data),
@@ -127,8 +128,9 @@ class ApiService {
     data = {},
     options: RequestOptions = {},
   ): Promise<T | null> {
+    const fetcher = options.fetch || fetch;
     try {
-      const response = await fetch(`${this.baseURL}${endpoint}`, {
+      const response = await fetcher(`${this.baseURL}${endpoint}`, {
         method: "PATCH",
         headers: this.getHeaders(options.headers),
         body: JSON.stringify(data),
@@ -147,8 +149,9 @@ class ApiService {
     endpoint: string,
     options: RequestOptions = {},
   ): Promise<T | null> {
+    const fetcher = options.fetch || fetch;
     try {
-      const response = await fetch(`${this.baseURL}${endpoint}`, {
+      const response = await fetcher(`${this.baseURL}${endpoint}`, {
         method: "DELETE",
         headers: this.getHeaders(options.headers),
         credentials: "include",

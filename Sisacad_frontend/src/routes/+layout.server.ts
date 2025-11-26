@@ -9,7 +9,7 @@ export const load: LayoutServerLoad = async ({ locals, fetch }) => {
   }
 
   try {
-    const profile = await userService.getProfile(fetch);
+    const profile = await userService.getProfile({ fetch });
     if (profile) {
       profile.iconURL = user.pictureURL;
     }
@@ -26,4 +26,3 @@ export const load: LayoutServerLoad = async ({ locals, fetch }) => {
     };
   }
 };
-

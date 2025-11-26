@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
-  import { authStore, isLoading } from '$lib/store/auth.store';
-  import { resolve } from '$app/paths';
+  import { onMount } from "svelte";
+  import { goto } from "$app/navigation";
+  import { authStore, isLoading } from "$lib/store/auth.store";
+  import { resolve } from "$app/paths";
 
   onMount(async () => {
     const token = authStore.getToken();
 
     if (!token) {
-      goto(resolve('/login'), { replaceState: true });
+      goto(resolve("/login"), { replaceState: true });
       return;
     }
 
@@ -19,8 +19,8 @@
         await authStore.loadUserProfile();
         redirectBasedOnRole();
       } catch (error) {
-        console.error('Error loading profile:', error);
-        goto(resolve('/login'), { replaceState: true });
+        console.error("Error loading profile:", error);
+        goto(resolve("/login"), { replaceState: true });
       }
     } else {
       redirectBasedOnRole();
@@ -31,20 +31,20 @@
     const role = authStore.getUser()?.role;
 
     switch (role) {
-      case 'student':
-        goto(resolve('/student'), { replaceState: true });
+      case "student":
+        goto(resolve("/student"), { replaceState: true });
         break;
-      case 'teacher':
-        goto(resolve('/teacher'), { replaceState: true });
+      case "teacher":
+        goto(resolve("/teacher"), { replaceState: true });
         break;
-      case 'secretary':
-        goto('/secretary', { replaceState: true });
+      case "secretary":
+        goto("/secretary", { replaceState: true });
         break;
-      case 'admin':
-        goto('/admin', { replaceState: true });
+      case "admin":
+        goto("/admin", { replaceState: true });
         break;
       default:
-        goto(resolve('/login'), { replaceState: true });
+        goto(resolve("/login"), { replaceState: true });
     }
   }
 </script>

@@ -218,7 +218,7 @@ export class AcademicGroupRepository implements IAcademicGroupRepository {
     });
   }
 
-  save(group: AcademicGroup): Promise<AcademicGroup>;
+  save(group: AcademicGroup): Promise<AcademicGroup>; // Added this line
   save(groups: AcademicGroup[]): Promise<AcademicGroup[]>;
   async save(
     groupOrGroups: AcademicGroup | AcademicGroup[],
@@ -228,5 +228,22 @@ export class AcademicGroupRepository implements IAcademicGroupRepository {
     } else {
       return this.typeormRepo.save(groupOrGroups);
     }
+  }
+
+  async findByClassroomId(classroomId: string): Promise<AcademicGroup[]> {
+    return this.typeormRepo.find({
+      where: {
+        schedule: {
+          classroom: {
+            id: classroomId,
+          },
+        },
+      },
+      relations: {
+        academicCourse: { course: true },
+        schedule: { classroom: true },
+        teacher: true,
+      },
+    });
   }
 }

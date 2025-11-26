@@ -1,4 +1,4 @@
-import { api } from "./api.service";
+import { api, type RequestOptions } from "./api.service";
 import type { AcademicGroupDTO } from "$lib/types/group.types";
 
 export interface GroupsForPeriods {
@@ -52,10 +52,11 @@ export interface UpdateGradeDto {
 }
 
 export const groupsService = {
-  async getGroups(fetcher?: typeof fetch): Promise<GroupsForPeriods> {
-    const response = await api.get<GroupsForPeriods>("/groups/teacher", {
-      fetch: fetcher,
-    });
+  async getGroups(options: RequestOptions = {}): Promise<GroupsForPeriods> {
+    const response = await api.get<GroupsForPeriods>(
+      "/groups/teacher",
+      options,
+    );
 
     if (!response) {
       throw new Error("No se recibieron datos del servidor, grupos");
@@ -64,12 +65,10 @@ export const groupsService = {
     return response;
   },
 
-  async getScheduleForGroup(groupID: string, fetcher?: typeof fetch) {
+  async getScheduleForGroup(groupID: string, options: RequestOptions = {}) {
     const response = await api.get<AcademicGroupDTO[]>(
       `/groups/schedule/${groupID}`,
-      {
-        fetch: fetcher,
-      },
+      options,
     );
 
     if (!response) {
@@ -81,11 +80,11 @@ export const groupsService = {
 
   async getGroupGrades(
     groupId: string,
-    fetcher?: typeof fetch,
+    options: RequestOptions = {},
   ): Promise<GroupGradesResponse> {
     const response = await api.get<GroupGradesResponse>(
       `/groups/${groupId}/grades`,
-      { fetch: fetcher },
+      options,
     );
 
     if (!response) {
@@ -98,23 +97,24 @@ export const groupsService = {
   async updateStudentGrade(
     groupId: string,
     updateDto: UpdateGradeDto,
-    token: string,
+    options: RequestOptions = {},
   ): Promise<void> {
-    await api.patch(`/groups/${groupId}/grades`, updateDto, { token });
+    await api.patch(`/groups/${groupId}/grades`, updateDto, options);
   },
 
   async updateMultipleGrades(
     groupId: string,
     updates: UpdateGradeDto[],
-    token: string,
+    options: RequestOptions = {},
   ): Promise<void> {
-    await api.patch(`/groups/${groupId}/grades/bulk`, { updates }, { token });
+    await api.patch(`/groups/${groupId}/grades/bulk`, { updates }, options);
   },
 
-  async getAcademicCourse(id: string, fetcher?: typeof fetch) {
-    const response = await api.get<AcademicGroupDTO>(`/groups/course/${id}`, {
-      fetch: fetcher,
-    });
+  async getAcademicCourse(id: string, options: RequestOptions = {}) {
+    const response = await api.get<AcademicGroupDTO>(
+      `/groups/course/${id}`,
+      options,
+    );
 
     if (!response) {
       throw new Error("No se recibieron datos del servidor, cursos");
@@ -124,13 +124,11 @@ export const groupsService = {
   },
 
   async getTeacherSchedule(
-    fetcher?: typeof fetch,
+    options: RequestOptions = {},
   ): Promise<AcademicGroupDTO[]> {
     const response = await api.get<AcademicGroupDTO[]>(
-      '/groups/teacher/my-schedule',
-      {
-        fetch: fetcher,
-      },
+      "/groups/teacher/my-schedule",
+      options,
     );
 
     if (!response) {

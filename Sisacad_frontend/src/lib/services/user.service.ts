@@ -1,13 +1,11 @@
-import { api } from "$lib/services/api.service";
+import { api, type RequestOptions } from "$lib/services/api.service";
 import type { UserProfileDTO } from "$lib/types/auth.types";
 
 export const userService = {
-  async getProfile(fetcher?: typeof fetch) {
+  async getProfile(options: RequestOptions = {}) {
     console.log("UserService.getProfile llamado");
 
-    const response = await api.get<UserProfileDTO>("/user/profile", {
-      fetch: fetcher,
-    });
+    const response = await api.get<UserProfileDTO>("/user/profile", options);
 
     if (!response) {
       throw new Error(

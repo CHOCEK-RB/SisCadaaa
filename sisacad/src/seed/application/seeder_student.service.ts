@@ -10,6 +10,7 @@ import { IStudentRepository } from 'src/users/domain/repositories/istudent.repos
 
 import { User } from 'src/users/domain/aggregates/user.entity';
 import { Student } from 'src/users/domain/aggregates/student.entity';
+import { Role } from 'src/users/domain/aggregates/role.enum';
 
 /**
  * @class SeederStudentService
@@ -68,6 +69,7 @@ export class SeederStudentService {
         user = new User();
         user.email = studentData.email;
         user.isActive = true;
+        user.role = Role.STUDENT;
 
         const studentProfile = new Student();
         studentProfile.cui = studentData.cui;

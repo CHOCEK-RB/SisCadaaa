@@ -12,7 +12,7 @@ export const load: PageServerLoad = async ({ params, locals, fetch }) => {
   try {
     const scheduleGroups = await enrollmentService.getScheduleForCourse(
       academicCourseId,
-      fetch,
+      { fetch },
     );
 
     return {
@@ -28,4 +28,3 @@ export const load: PageServerLoad = async ({ params, locals, fetch }) => {
     };
   }
 };
-

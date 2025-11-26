@@ -8,7 +8,7 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
   }
 
   try {
-    const allScheduleGroups = await enrollmentService.getMySchedule(fetch);
+    const allScheduleGroups = await enrollmentService.getMySchedule({ fetch });
 
     return {
       allScheduleGroups,
@@ -22,4 +22,3 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
     };
   }
 };
-

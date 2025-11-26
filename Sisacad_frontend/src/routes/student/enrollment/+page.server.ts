@@ -12,15 +12,16 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
 
   try {
     const isPeriodActive = (
-      await enrollmentService.getLabEnrollmentStatus(fetch)
+      await enrollmentService.getLabEnrollmentStatus({ fetch })
     )?.isActive;
 
-    const availableCourses =
-      await enrollmentService.getAvailableLabGroups(fetch);
+    const availableCourses = await enrollmentService.getAvailableLabGroups({
+      fetch,
+    });
 
     const mySchedule =
       isPeriodActive && availableCourses && availableCourses.length > 0
-        ? await enrollmentService.getMySchedule(fetch)
+        ? await enrollmentService.getMySchedule({ fetch })
         : [];
 
     const schema = getDynamicSchema(availableCourses || []);
@@ -59,8 +60,9 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
 
 export const actions: Actions = {
   default: async ({ request, fetch }) => {
-    const availableCourses =
-      await enrollmentService.getAvailableLabGroups(fetch);
+    const availableCourses = await enrollmentService.getAvailableLabGroups({
+      fetch,
+    });
     const schema = getDynamicSchema(availableCourses);
 
     const form = await superValidate(request, zod4(schema));
@@ -81,7 +83,7 @@ export const actions: Actions = {
     }
 
     try {
-      await enrollmentService.enrollInLabGroups(labGroupIds, fetch);
+      await enrollmentService.enrollInLabGroups(labGroupIds, { fetch });
       return message(form, "¡Matrícula guardada con éxito!");
     } catch (error: any) {
       console.error("Error submitting enrollment:", error);

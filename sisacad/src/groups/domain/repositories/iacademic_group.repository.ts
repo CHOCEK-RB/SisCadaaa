@@ -1,4 +1,3 @@
-import { AcademicCourse } from 'src/courses/domain/aggregates/academic_course.entity';
 import { AcademicGroup, GroupType } from '../aggregates/academic_group.entity';
 
 export const IAcademicGroupRepository = Symbol('IAcademicGroupRepository');
@@ -48,4 +47,5 @@ export interface IAcademicGroupRepository {
   getCourseInfo(id: string): Promise<AcademicGroup | null>;
   getEnrollments(id: string): Promise<AcademicGroup | null>;
   getAttendances(id: string): Promise<AcademicGroup | null>;
+  findByClassroomId(classroomId: string): Promise<AcademicGroup[]>;
 }

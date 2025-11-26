@@ -1,4 +1,4 @@
-import { api } from "$lib/services/api.service";
+import { api, type RequestOptions } from "$lib/services/api.service";
 import { browser } from "$app/environment";
 
 export interface AuthResponse {
@@ -7,10 +7,17 @@ export interface AuthResponse {
 }
 
 export const authService = {
-  async login(idToken: string): Promise<AuthResponse> {
-    const response = await api.post<AuthResponse>("/auth/google/login", {
-      token: idToken,
-    });
+  async login(
+    idToken: string,
+    options: RequestOptions = {},
+  ): Promise<AuthResponse> {
+    const response = await api.post<AuthResponse>(
+      "/auth/google/login",
+      {
+        token: idToken,
+      },
+      options,
+    );
 
     if (!response || !response.success) {
       throw new Error("La autenticación falló");
@@ -20,8 +27,8 @@ export const authService = {
     return response;
   },
 
-  async logout(): Promise<void> {
-    await api.post("/auth/logout", {});
+  async logout(options: RequestOptions = {}): Promise<void> {
+    await api.post("/auth/logout", {}, options);
 
     if (browser) {
       document.cookie =

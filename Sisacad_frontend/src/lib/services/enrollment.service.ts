@@ -1,4 +1,4 @@
-import { api } from "./api.service";
+import { api, type RequestOptions } from "./api.service";
 import type { Grades } from "$lib/types/enrollment.types";
 import type { AcademicGroupDTO } from "$lib/types/group.types";
 import type { AcademicCourseDTO } from "$lib/types/course.types";
@@ -15,10 +15,8 @@ export interface EnrollLabGroupPayload {
 }
 
 export const enrollmentService = {
-  async getEnrollments(fetcher?: typeof fetch) {
-    const response = await api.get("/enrollments/my-courses", {
-      fetch: fetcher,
-    });
+  async getEnrollments(options: RequestOptions = {}) {
+    const response = await api.get("/enrollments/my-courses", options);
 
     if (!response) {
       throw new Error("No se recibieron datos del servidor, inscripciones");
@@ -27,12 +25,10 @@ export const enrollmentService = {
     return response;
   },
 
-  async getGradeById(academicCourseId: string, fetcher?: typeof fetch) {
+  async getGradeById(academicCourseId: string, options: RequestOptions = {}) {
     const response = await api.get<Grades>(
       `/enrollments/my-grades/${academicCourseId}`,
-      {
-        fetch: fetcher,
-      },
+      options,
     );
 
     if (!response) {
@@ -42,12 +38,13 @@ export const enrollmentService = {
     return response;
   },
 
-  async getScheduleForCourse(academicCourseId: string, fetcher?: typeof fetch) {
+  async getScheduleForCourse(
+    academicCourseId: string,
+    options: RequestOptions = {},
+  ) {
     const response = await api.get<AcademicGroupDTO[]>(
       `/enrollments/my-schedule/${academicCourseId}`,
-      {
-        fetch: fetcher,
-      },
+      options,
     );
 
     if (!response) {
@@ -57,12 +54,10 @@ export const enrollmentService = {
     return response;
   },
 
-  async getMySchedule(fetcher?: typeof fetch) {
+  async getMySchedule(options: RequestOptions = {}) {
     const response = await api.get<AcademicGroupDTO[]>(
       `/enrollments/my-schedule`,
-      {
-        fetch: fetcher,
-      },
+      options,
     );
 
     if (!response) {
@@ -72,10 +67,10 @@ export const enrollmentService = {
     return response;
   },
 
-  async getAllMyGrades(fetcher?: typeof fetch) {
+  async getAllMyGrades(options: RequestOptions = {}) {
     const response = await api.get<GradesAndPercent[]>(
-      '/enrollments/my-grades',
-      { fetch: fetcher },
+      "/enrollments/my-grades",
+      options,
     );
 
     if (!response) {
@@ -86,26 +81,26 @@ export const enrollmentService = {
   },
 
   async getAvailableLabGroups(
-    fetcher?: typeof fetch,
+    options: RequestOptions = {},
   ): Promise<AcademicCourseDTO[] | null> {
     const response = await api.get<AcademicCourseDTO[]>(
-      '/enrollments/available-labs',
-      {
-        fetch: fetcher,
-      },
+      "/enrollments/available-labs",
+      options,
     );
     return response;
   },
 
   async enrollInLabGroups(
     labGroupIds: string[],
-    fetcher?: typeof fetch,
+    options: RequestOptions = {},
   ): Promise<any> {
     const payload: EnrollLabGroupPayload = { labGroupIds };
 
-    const response = await api.post<any>('/student/enrollments/enroll-labs', payload, {
-      fetch: fetcher,
-    });
+    const response = await api.post<any>(
+      "/student/enrollments/enroll-labs",
+      payload,
+      options,
+    );
 
     if (!response) {
       throw new Error("No se recibió respuesta del servidor al matricular.");
@@ -115,16 +110,16 @@ export const enrollmentService = {
   },
 
   async getLabEnrollmentStatus(
-    fetcher?: typeof fetch,
+    options: RequestOptions = {},
   ): Promise<{ isActive: boolean }> {
     try {
       const response = await api.get<{ isActive: boolean }>(
-        '/events/status/lab_enrollment',
-        { fetch: fetcher },
+        "/events/status/lab_enrollment",
+        options,
       );
       return response || { isActive: false };
     } catch (error) {
-      console.error('Error fetching enrollment status:', error);
+      console.error("Error fetching enrollment status:", error);
       return { isActive: false }; // Por seguridad, si falla, se asume cerrado.
     }
   },

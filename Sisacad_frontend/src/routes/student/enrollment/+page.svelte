@@ -13,7 +13,6 @@
   import type { AcademicCourseDTO } from "$lib/types/course.types";
   import type { AcademicGroupDTO } from "$lib/types/group.types";
   import { getDynamicSchema } from "./enrollment-schema";
-  import { invalidateAll } from "$app/navigation";
 
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";

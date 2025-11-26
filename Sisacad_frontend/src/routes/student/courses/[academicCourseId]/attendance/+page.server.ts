@@ -12,7 +12,7 @@ export const load: PageServerLoad = async ({ params, locals, fetch }) => {
   try {
     const attendanceData = await attendanceService.getGroupAttendance(
       academicCourseId,
-      fetch,
+      { fetch },
     );
 
     return {
@@ -27,4 +27,3 @@ export const load: PageServerLoad = async ({ params, locals, fetch }) => {
     };
   }
 };
-
