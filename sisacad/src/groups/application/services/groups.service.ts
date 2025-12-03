@@ -13,7 +13,10 @@ import { IEnrollmentRepository } from 'src/enrollment/domain/repositories/ienrol
 import { JwtPayload } from 'src/auth/domain/interfaces/jwt-payload.interface';
 import { AcademicGroupDTO } from '../dto/academic_group.dto';
 import { AcademicCourseDTO } from 'src/courses/application/dto/academic_course.dto';
-import { Enrollment, Grades, } from 'src/enrollment/domain/aggregates/enrollment.entity';
+import {
+  Enrollment,
+  Grades,
+} from 'src/enrollment/domain/aggregates/enrollment.entity';
 import { GroupType } from '../../domain/aggregates/academic_group.entity';
 import { ScheduleSlotDTO } from '../dto/schedule.dto';
 
@@ -134,6 +137,9 @@ export class GroupsService {
   async getAcademicCourse(id: string): Promise<AcademicCourseDTO> {
     const group = await this.academicGroupRepository.getAcademicCourse(id);
 
+    console.log(id);
+    console.log(group?.academicCourse);
+
     if (!group) {
       throw new ForbiddenException('Group not found');
     }
@@ -161,8 +167,6 @@ export class GroupsService {
 
   async getSchedule(id: string): Promise<AcademicGroupDTO[]> {
     const group = await this.academicGroupRepository.getScheduleById(id);
-
-    console.log(id);
 
     if (!group) {
       throw new ForbiddenException('Group not found');
@@ -300,9 +304,7 @@ export class GroupsService {
       );
     }
 
-    const validateGrade = (
-      grade: number | null | undefined,
-    ): boolean => {
+    const validateGrade = (grade: number | null | undefined): boolean => {
       if (grade === undefined || grade === null) return true;
       return grade === -1 || (grade >= 0 && grade <= 20);
     };

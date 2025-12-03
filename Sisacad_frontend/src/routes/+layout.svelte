@@ -3,6 +3,8 @@
   import { authStore, isInitialized } from "$lib/store/auth.store";
   import "../app.css";
   import { ModeWatcher } from "mode-watcher";
+  import { Toaster } from "$lib/components/ui/sonner/index.js";
+
   let { children } = $props();
 
   onMount(() => {
@@ -10,6 +12,7 @@
   });
 </script>
 
+<Toaster />
 {#if $isInitialized}
   <ModeWatcher />
   {@render children?.()}

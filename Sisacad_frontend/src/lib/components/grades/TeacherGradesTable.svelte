@@ -24,31 +24,16 @@
 
   type Props = {
     groupGradesData: GroupGradesResponse;
-    canEdit: boolean;
-    pendingChanges: Map<string, Partial<any>>;
-    onSelectStudent: (student: StudentGradeInfo) => void;
-    onGradeChange: (payload: {
-      enrollmentId: string;
-      gradeKey: string;
-      value: number | null;
-    }) => void;
   };
-  let {
-    groupGradesData,
-    canEdit,
-    pendingChanges,
-    onSelectStudent,
-    onGradeChange,
-  }: Props = $props();
+  let { groupGradesData }: Props = $props();
 
   interface GradeRow {
     studentId: string;
-    enrollmentId: string; // Added enrollmentId
+    enrollmentId: string;
     cui: string;
     fullName: string;
     firstName: string;
     lastName: string;
-    grades: StudentGradeInfo["grades"]; // Store original grades
     firstContinue: number | null;
     secondContinue: number | null;
     thirdContinue: number | null;
@@ -97,7 +82,6 @@
         fullName: `${student.firstName} ${student.lastName}`,
         firstName: student.firstName,
         lastName: student.lastName,
-        grades: student.grades,
         firstContinue: student.grades.firstContinue,
         secondContinue: student.grades.secondContinue,
         thirdContinue: student.grades.thirdContinue,
@@ -118,18 +102,7 @@
           column,
           title: "Estudiante",
         }),
-      cell: ({ row }) => {
-        const student = row.original;
-        return renderSnippet(
-          createRawSnippet(() => ({
-            render: () => `
-              <div class="cursor-pointer hover:underline" onclick=${() => onSelectStudent(student)}>
-                ${student.fullName}
-              </div>
-            `,
-          })),
-        );
-      },
+      cell: ({ row }) => row.original.fullName,
     },
     {
       accessorKey: "cui",
@@ -148,47 +121,13 @@
           title: "C1",
         }),
       cell: ({ row }) => {
-        const gradeKey = "firstContinue";
-        const enrollmentId = row.original.enrollmentId;
-        const currentGrade = row.original.firstContinue;
-        const pendingValue = pendingChanges.get(enrollmentId)?.[gradeKey];
-        const displayValue =
-          pendingValue !== undefined ? pendingValue : (currentGrade ?? "");
-
+        const grade = row.original.firstContinue;
         return renderSnippet(
           createRawSnippet(() => ({
-            render: () => `
-              <div class="text-center">
-                ${
-                  canEdit
-                    ? `<input
-                    type="number"
-                    min="0"
-                    max="20"
-                    step="0.1"
-                    value="${displayValue}"
-                    oninput="${(e: Event) => {
-                      const target = e.target as HTMLInputElement;
-                      let value: number | null = parseFloat(target.value);
-                      if (isNaN(value)) value = null;
-                      if (value !== null && (value < 0 || value > 20)) {
-                        target.value =
-                          currentGrade !== null ? String(currentGrade) : "";
-                        return;
-                      }
-                      onGradeChange({
-                        enrollmentId,
-                        gradeKey,
-                        value,
-                      });
-                    }}"
-                    class="w-16 rounded border px-2 py-1 text-center text-sm ${getGradeColor(pendingValue !== undefined ? pendingValue : currentGrade)}"
-                    placeholder="-"
-                  />`
-                    : `<span class="text-sm ${getGradeColor(currentGrade)}">${currentGrade !== null ? currentGrade.toFixed(1) : "-"}</span>`
-                }
-              </div>
-            `,
+            render: () =>
+              `<div class="text-center"><span class="text-sm ${getGradeColor(grade)}">${
+                grade !== null ? grade.toFixed(1) : "-"
+              }</span></div>`,
           })),
         );
       },
@@ -201,47 +140,13 @@
           title: "C2",
         }),
       cell: ({ row }) => {
-        const gradeKey = "secondContinue";
-        const enrollmentId = row.original.enrollmentId;
-        const currentGrade = row.original.secondContinue;
-        const pendingValue = pendingChanges.get(enrollmentId)?.[gradeKey];
-        const displayValue =
-          pendingValue !== undefined ? pendingValue : (currentGrade ?? "");
-
+        const grade = row.original.secondContinue;
         return renderSnippet(
           createRawSnippet(() => ({
-            render: () => `
-              <div class="text-center">
-                ${
-                  canEdit
-                    ? `<input
-                    type="number"
-                    min="0"
-                    max="20"
-                    step="0.1"
-                    value="${displayValue}"
-                    oninput="${(e: Event) => {
-                      const target = e.target as HTMLInputElement;
-                      let value: number | null = parseFloat(target.value);
-                      if (isNaN(value)) value = null;
-                      if (value !== null && (value < 0 || value > 20)) {
-                        target.value =
-                          currentGrade !== null ? String(currentGrade) : "";
-                        return;
-                      }
-                      onGradeChange({
-                        enrollmentId,
-                        gradeKey,
-                        value,
-                      });
-                    }}"
-                    class="w-16 rounded border px-2 py-1 text-center text-sm ${getGradeColor(pendingValue !== undefined ? pendingValue : currentGrade)}"
-                    placeholder="-"
-                  />`
-                    : `<span class="text-sm ${getGradeColor(currentGrade)}">${currentGrade !== null ? currentGrade.toFixed(1) : "-"}</span>`
-                }
-              </div>
-            `,
+            render: () =>
+              `<div class="text-center"><span class="text-sm ${getGradeColor(grade)}">${
+                grade !== null ? grade.toFixed(1) : "-"
+              }</span></div>`,
           })),
         );
       },
@@ -254,47 +159,13 @@
           title: "C3",
         }),
       cell: ({ row }) => {
-        const gradeKey = "thirdContinue";
-        const enrollmentId = row.original.enrollmentId;
-        const currentGrade = row.original.thirdContinue;
-        const pendingValue = pendingChanges.get(enrollmentId)?.[gradeKey];
-        const displayValue =
-          pendingValue !== undefined ? pendingValue : (currentGrade ?? "");
-
+        const grade = row.original.thirdContinue;
         return renderSnippet(
           createRawSnippet(() => ({
-            render: () => `
-              <div class="text-center">
-                ${
-                  canEdit
-                    ? `<input
-                    type="number"
-                    min="0"
-                    max="20"
-                    step="0.1"
-                    value="${displayValue}"
-                    oninput="${(e: Event) => {
-                      const target = e.target as HTMLInputElement;
-                      let value: number | null = parseFloat(target.value);
-                      if (isNaN(value)) value = null;
-                      if (value !== null && (value < 0 || value > 20)) {
-                        target.value =
-                          currentGrade !== null ? String(currentGrade) : "";
-                        return;
-                      }
-                      onGradeChange({
-                        enrollmentId,
-                        gradeKey,
-                        value,
-                      });
-                    }}"
-                    class="w-16 rounded border px-2 py-1 text-center text-sm ${getGradeColor(pendingValue !== undefined ? pendingValue : currentGrade)}"
-                    placeholder="-"
-                  />`
-                    : `<span class="text-sm ${getGradeColor(currentGrade)}">${currentGrade !== null ? currentGrade.toFixed(1) : "-"}</span>`
-                }
-              </div>
-            `,
+            render: () =>
+              `<div class="text-center"><span class="text-sm ${getGradeColor(grade)}">${
+                grade !== null ? grade.toFixed(1) : "-"
+              }</span></div>`,
           })),
         );
       },
@@ -307,47 +178,13 @@
           title: "P1",
         }),
       cell: ({ row }) => {
-        const gradeKey = "firstPartial";
-        const enrollmentId = row.original.enrollmentId;
-        const currentGrade = row.original.firstPartial;
-        const pendingValue = pendingChanges.get(enrollmentId)?.[gradeKey];
-        const displayValue =
-          pendingValue !== undefined ? pendingValue : (currentGrade ?? "");
-
+        const grade = row.original.firstPartial;
         return renderSnippet(
           createRawSnippet(() => ({
-            render: () => `
-              <div class="text-center">
-                ${
-                  canEdit
-                    ? `<input
-                    type="number"
-                    min="0"
-                    max="20"
-                    step="0.1"
-                    value="${displayValue}"
-                    oninput="${(e: Event) => {
-                      const target = e.target as HTMLInputElement;
-                      let value: number | null = parseFloat(target.value);
-                      if (isNaN(value)) value = null;
-                      if (value !== null && (value < 0 || value > 20)) {
-                        target.value =
-                          currentGrade !== null ? String(currentGrade) : "";
-                        return;
-                      }
-                      onGradeChange({
-                        enrollmentId,
-                        gradeKey,
-                        value,
-                      });
-                    }}"
-                    class="w-16 rounded border px-2 py-1 text-center text-sm ${getGradeColor(pendingValue !== undefined ? pendingValue : currentGrade)}"
-                    placeholder="-"
-                  />`
-                    : `<span class="text-sm ${getGradeColor(currentGrade)}">${currentGrade !== null ? currentGrade.toFixed(1) : "-"}</span>`
-                }
-              </div>
-            `,
+            render: () =>
+              `<div class="text-center"><span class="text-sm ${getGradeColor(grade)}">${
+                grade !== null ? grade.toFixed(1) : "-"
+              }</span></div>`,
           })),
         );
       },
@@ -360,47 +197,13 @@
           title: "P2",
         }),
       cell: ({ row }) => {
-        const gradeKey = "secondPartial";
-        const enrollmentId = row.original.enrollmentId;
-        const currentGrade = row.original.secondPartial;
-        const pendingValue = pendingChanges.get(enrollmentId)?.[gradeKey];
-        const displayValue =
-          pendingValue !== undefined ? pendingValue : (currentGrade ?? "");
-
+        const grade = row.original.secondPartial;
         return renderSnippet(
           createRawSnippet(() => ({
-            render: () => `
-              <div class="text-center">
-                ${
-                  canEdit
-                    ? `<input
-                    type="number"
-                    min="0"
-                    max="20"
-                    step="0.1"
-                    value="${displayValue}"
-                    oninput="${(e: Event) => {
-                      const target = e.target as HTMLInputElement;
-                      let value: number | null = parseFloat(target.value);
-                      if (isNaN(value)) value = null;
-                      if (value !== null && (value < 0 || value > 20)) {
-                        target.value =
-                          currentGrade !== null ? String(currentGrade) : "";
-                        return;
-                      }
-                      onGradeChange({
-                        enrollmentId,
-                        gradeKey,
-                        value,
-                      });
-                    }}"
-                    class="w-16 rounded border px-2 py-1 text-center text-sm ${getGradeColor(pendingValue !== undefined ? pendingValue : currentGrade)}"
-                    placeholder="-"
-                  />`
-                    : `<span class="text-sm ${getGradeColor(currentGrade)}">${currentGrade !== null ? currentGrade.toFixed(1) : "-"}</span>`
-                }
-              </div>
-            `,
+            render: () =>
+              `<div class="text-center"><span class="text-sm ${getGradeColor(grade)}">${
+                grade !== null ? grade.toFixed(1) : "-"
+              }</span></div>`,
           })),
         );
       },
@@ -413,47 +216,13 @@
           title: "P3",
         }),
       cell: ({ row }) => {
-        const gradeKey = "thirdPartial";
-        const enrollmentId = row.original.enrollmentId;
-        const currentGrade = row.original.thirdPartial;
-        const pendingValue = pendingChanges.get(enrollmentId)?.[gradeKey];
-        const displayValue =
-          pendingValue !== undefined ? pendingValue : (currentGrade ?? "");
-
+        const grade = row.original.thirdPartial;
         return renderSnippet(
           createRawSnippet(() => ({
-            render: () => `
-              <div class="text-center">
-                ${
-                  canEdit
-                    ? `<input
-                    type="number"
-                    min="0"
-                    max="20"
-                    step="0.1"
-                    value="${displayValue}"
-                    oninput="${(e: Event) => {
-                      const target = e.target as HTMLInputElement;
-                      let value: number | null = parseFloat(target.value);
-                      if (isNaN(value)) value = null;
-                      if (value !== null && (value < 0 || value > 20)) {
-                        target.value =
-                          currentGrade !== null ? String(currentGrade) : "";
-                        return;
-                      }
-                      onGradeChange({
-                        enrollmentId,
-                        gradeKey,
-                        value,
-                      });
-                    }}"
-                    class="w-16 rounded border px-2 py-1 text-center text-sm ${getGradeColor(pendingValue !== undefined ? pendingValue : currentGrade)}"
-                    placeholder="-"
-                  />`
-                    : `<span class="text-sm ${getGradeColor(currentGrade)}">${currentGrade !== null ? currentGrade.toFixed(1) : "-"}</span>`
-                }
-              </div>
-            `,
+            render: () =>
+              `<div class="text-center"><span class="text-sm ${getGradeColor(grade)}">${
+                grade !== null ? grade.toFixed(1) : "-"
+              }</span></div>`,
           })),
         );
       },
@@ -468,9 +237,7 @@
       cell: ({ row }) => {
         const snippet = createRawSnippet(() => ({
           render: () =>
-            `<div class="text-left font-medium">${row.original.finalGrade.toFixed(
-              2,
-            )}</div>`,
+            `<div class="text-left font-medium">${row.original.finalGrade.toFixed(2)}</div>`,
         }));
         return renderSnippet(snippet);
       },
@@ -584,4 +351,3 @@
     </Table.Root>
   </div>
 </div>
-

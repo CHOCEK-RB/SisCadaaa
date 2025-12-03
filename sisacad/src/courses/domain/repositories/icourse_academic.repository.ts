@@ -1,5 +1,4 @@
 import { AcademicCourse } from '../aggregates/academic_course.entity';
-import { Course } from '../aggregates/course.entity';
 
 export const IAcademicCourseRepository = Symbol('IAcademicCourseRepository');
 

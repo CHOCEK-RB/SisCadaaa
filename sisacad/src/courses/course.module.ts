@@ -12,6 +12,7 @@ import { ICourseTopicRepository } from './domain/repositories/icourse_topic.repo
 import { ITopicProgressRepository } from './domain/repositories/itopic_progress.repository';
 
 import { AcademicCourseService } from './application/services/academic_course.service';
+import { TopicProgressService } from './application/services/topic-progress.service';
 import { AcademicCourseMapper } from './application/mappers/academic-course.mapper';
 
 import { AcademicCourseController } from './presentation/controllers/academic_course.controller';
@@ -36,6 +37,7 @@ import { GroupsModule } from 'src/groups/groups.module';
 
   providers: [
     AcademicCourseService,
+    TopicProgressService,
     AcademicCourseMapper,
     {
       provide: ICourseRepository,

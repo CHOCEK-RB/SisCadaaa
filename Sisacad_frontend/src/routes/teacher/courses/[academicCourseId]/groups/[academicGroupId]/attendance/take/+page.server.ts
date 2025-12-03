@@ -7,10 +7,10 @@ export const load: PageServerLoad = async ({ locals, params, fetch }) => {
     throw redirect(303, "/");
   }
 
-  const groupId = params.academicCourseId;
+  const groupId = params.academicGroupId;
 
   try {
-    const groupInfo = await groupsService.getAcademicCourse(groupId, fetch);
+    const groupInfo = await groupsService.getAcademicCourse(groupId, { fetch });
 
     return {
       groupId,
@@ -27,4 +27,3 @@ export const load: PageServerLoad = async ({ locals, params, fetch }) => {
     };
   }
 };
-

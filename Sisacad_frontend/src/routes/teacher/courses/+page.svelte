@@ -39,7 +39,7 @@
               {#each groupedCourses[period] as group (group.id)}
                 <Sidebar.MenuItem class="p-0">
                   <a
-                    href={`/teacher/courses/${group.id}`}
+                    href={`/teacher/courses/${group.course.id}/groups/${group.id}`}
                     class="flex w-full items-center gap-4 rounded-md px-3 py-2.5 text-left transition-colors hover:bg-accent hover:text-accent-foreground"
                     aria-label={`Ver detalles del curso ${group.course.course.name}`}
                   >
