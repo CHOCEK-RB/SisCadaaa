@@ -7,7 +7,7 @@ export const load: PageServerLoad = async ({ locals, params, fetch }) => {
     throw redirect(303, "/");
   }
 
-  const { academicGroupId: academicGroupId } = params;
+  const { academicGroupId, academicCourseId } = params;
 
   try {
     const groupGrades = await groupsService.getGroupGrades(academicGroupId, {
@@ -15,16 +15,19 @@ export const load: PageServerLoad = async ({ locals, params, fetch }) => {
     });
 
     return {
+      academicGroupId, 
+      academicCourseId,
       groupGrades,
     };
   } catch (err) {
     console.error("Error loading group grades for attendance:", err);
 
     return {
+      academicGroupId,  // Devolvemos el ID incluso si hay error
+      academicCourseId, // Devolvemos el ID incluso si hay error
       groupGrades: null,
       error:
         "Error de red al cargar las notas del grupo. Intenta de nuevo más tarde.",
     };
   }
 };
-

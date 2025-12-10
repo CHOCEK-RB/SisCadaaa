@@ -90,7 +90,7 @@
             <h2 class="mb-4 text-xl font-semibold text-foreground">
               Mis Cursos Actuales
             </h2>
-            <CurrentCourses {coursesByPeriod} />
+            <CurrentCourses rawData={coursesByPeriod} />
           </div>
         </div>
 

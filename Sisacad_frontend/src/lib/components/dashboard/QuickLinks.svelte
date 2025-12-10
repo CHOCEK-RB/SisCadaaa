@@ -1,42 +1,25 @@
 <script lang="ts">
   import { Button } from "$lib/components/ui/button";
+  import { userRole } from "$lib/store/auth.store";
   import { GraduationCap, Calendar, ListChecks } from "lucide-svelte";
+  import {type NavAccess, type UserRole, NavigationsAccess} from "$lib/config/access_direct"
+  const currentRole = $derived($userRole as UserRole);
+  const links: NavAccess[] = $derived(NavigationsAccess[currentRole]);
 </script>
 
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-  <a href="/student/grades" class="no-underline">
-    <Button variant="outline" class="h-24 w-full justify-start p-4 text-left">
-      <div class="flex items-center gap-4">
-        <GraduationCap class="h-8 w-8 text-primary" />
-        <div>
-          <h3 class="font-semibold">Mis Calificaciones</h3>
-          <p class="text-sm text-muted-foreground">Ver historial de notas.</p>
+  {#each links as link (link.url)}
+    {@const Icon = link.icon}
+    <a href={link.url} class="no-underline">
+      <Button variant="outline" class="h-24 w-full justify-start p-4 text-left">
+        <div class="flex items-center gap-4">
+          <Icon class="h-8 w-8 text-primary" />
+          <div>
+            <h3 class="font-semibold">{link.title}</h3>
+            <p class="text-sm text-muted-foreground">{link.description}</p>
+          </div>
         </div>
-      </div>
-    </Button>
-  </a>
-
-  <a href="/student/schedule" class="no-underline">
-    <Button variant="outline" class="h-24 w-full justify-start p-4 text-left">
-      <div class="flex items-center gap-4">
-        <Calendar class="h-8 w-8 text-primary" />
-        <div>
-          <h3 class="font-semibold">Mi Horario</h3>
-          <p class="text-sm text-muted-foreground">Consulta tus clases.</p>
-        </div>
-      </div>
-    </Button>
-  </a>
-
-  <a href="/student/enrollment" class="no-underline">
-    <Button variant="outline" class="h-24 w-full justify-start p-4 text-left">
-      <div class="flex items-center gap-4">
-        <ListChecks class="h-8 w-8 text-primary" />
-        <div>
-          <h3 class="font-semibold">Inscripción</h3>
-          <p class="text-sm text-muted-foreground">Matricúlate en cursos.</p>
-        </div>
-      </div>
-    </Button>
-  </a>
+      </Button>
+    </a>
+  {/each}
 </div>

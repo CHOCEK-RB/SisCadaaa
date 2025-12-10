@@ -1,21 +1,28 @@
 <script lang="ts">
   import backgroundHome from "$lib/assets/background_home.webp";
   import defaultAvatar from "$lib/assets/default_avatar.webp";
-  import type { LayoutData } from "../$types.js";
-
-  export let data: LayoutData;
-
+  import type { PageData } from "./$types";
+  import QuickLinks from "$lib/components/dashboard/QuickLinks.svelte";
+  import CurrentCourses from "$lib/components/dashboard/CurrentCourses.svelte";
+  import TodaySchedule from "$lib/components/dashboard/TodaySchedule.svelte";
+  export let data: PageData;
   $: userProfile = data.profile;
-
+  
   console.log(userProfile);
   $: avatarUrl = userProfile?.iconURL || defaultAvatar;
+  $: coursesByPeriod = data.groups || {};
+  $: error = data.error;
+  $: schedule = data.schedule || [];
+  $: reservations = data.reservations || [];
+
+  
 </script>
 
 <svelte:head>
   <title>Home - Sisacad</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50 pb-8">
+<div class="flex-1 space-y-4 bg-background p-0">
   <div
     class="relative h-48 w-full overflow-hidden rounded-b-lg shadow-md sm:h-64"
   >
@@ -54,5 +61,41 @@
       </div>
     </div>
   </div>
+
+    <div
+    class="container mx-auto px-4 pt-24 pb-8 sm:px-6 sm:pt-28 lg:px-8 lg:pt-32"
+  >
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
+        <!-- Left Column -->
+        <div class="space-y-6 lg:col-span-2">
+          <!-- Quick Links placeholder -->
+          <div class="rounded-lg bg-card p-6 shadow">
+            <h2 class="mb-4 text-xl font-semibold text-foreground">
+              Accesos Directos
+            </h2>
+            <QuickLinks />
+          </div>
+
+          <!-- Current Courses placeholder -->
+          <div class="rounded-lg bg-card p-6 shadow">
+            <h2 class="mb-4 text-xl font-semibold text-foreground">
+              Mis Cursos Actuales
+            </h2>
+            <CurrentCourses rawData = {coursesByPeriod} />
+          </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="space-y-6">
+          <!-- Today's Schedule placeholder -->
+          <div class="rounded-lg bg-card p-6 shadow">
+            <h2 class="mb-4 text-xl font-semibold text-foreground">
+              Horario para Hoy
+            </h2>
+            <TodaySchedule {schedule} />
+          </div>
+        </div>
+      </div>
+  </div>
 </div>
-}
+
