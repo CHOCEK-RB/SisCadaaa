@@ -4,22 +4,22 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
-} from '@nestjs/common';
-import { IAttendanceRepository } from '../../domain/repositories/iattendance.repository';
-import { IEnrollmentRepository } from 'src/enrollment/domain/repositories/ienrollment.repository';
-import { IStudentRepository } from 'src/users/domain/repositories/istudent.repository';
-import { ITeacherRepository } from 'src/users/domain/repositories/iteacher.repository';
-import { IAcademicGroupRepository } from 'src/groups/domain/repositories/iacademic_group.repository';
-import { JwtPayload } from 'src/auth/domain/interfaces/jwt-payload.interface';
-import { LocationStatus } from '../../domain/aggregates/attendance.entity';
+} from "@nestjs/common";
+import { IAttendanceRepository } from "../../domain/repositories/iattendance.repository";
+import { IEnrollmentRepository } from "src/enrollment/domain/repositories/ienrollment.repository";
+import { IStudentRepository } from "src/users/domain/repositories/istudent.repository";
+import { ITeacherRepository } from "src/users/domain/repositories/iteacher.repository";
+import { IAcademicGroupRepository } from "src/groups/domain/repositories/iacademic_group.repository";
+import { JwtPayload } from "src/auth/domain/interfaces/jwt-payload.interface";
+import { LocationStatus } from "../../domain/aggregates/attendance.entity";
 import {
   Attendance,
   AttendanceStatus,
-} from '../../domain/aggregates/attendance.entity';
-import { DayOfWeek } from 'src/groups/domain/aggregates/schedule.entity';
-import { StudentAttendanceInfoDTO } from '../dto/student-attendance-info.dto';
-import { TakeAttendanceResponseDto } from '../dto/take-attendance-response.dto';
-import { UpdateAttendanceRequestDto } from '../dto/update-attendance-request.dto';
+} from "../../domain/aggregates/attendance.entity";
+import { DayOfWeek } from "src/groups/domain/aggregates/schedule.entity";
+import { StudentAttendanceInfoDTO } from "../dto/student-attendance-info.dto";
+import { TakeAttendanceResponseDto } from "../dto/take-attendance-response.dto";
+import { UpdateAttendanceRequestDto } from "../dto/update-attendance-request.dto";
 
 /**
  * @class TakeAttendanceService
@@ -72,7 +72,7 @@ export class TakeAttendanceService {
     const dayIndex = date.getDay();
 
     if (dayIndex === 0 || dayIndex === 6) {
-      throw new BadRequestException('No hay clases los fines de semana.');
+      throw new BadRequestException("No hay clases los fines de semana.");
     }
     return days[dayIndex - 1];
   }
@@ -94,8 +94,8 @@ export class TakeAttendanceService {
   ): boolean {
     const now = currentTime.getHours() * 60 + currentTime.getMinutes();
 
-    const [startHour, startMin] = scheduleStart.split(':').map(Number);
-    const [endHour, endMin] = scheduleEnd.split(':').map(Number);
+    const [startHour, startMin] = scheduleStart.split(":").map(Number);
+    const [endHour, endMin] = scheduleEnd.split(":").map(Number);
 
     const start = startHour * 60 + startMin;
     const end = endHour * 60 + endMin;
@@ -114,14 +114,15 @@ export class TakeAttendanceService {
    * @param {JwtPayload} authenticatedUser - The authenticated teacher's JWT payload.
    * @returns {Promise<TakeAttendanceResponseDto>} A promise that resolves to a DTO indicating whether attendance can be taken and the reason if not.
    */
+ 
   async checkCanTakeAttendance(
     groupId: string,
     authenticatedUser: JwtPayload,
   ): Promise<TakeAttendanceResponseDto> {
-    if (authenticatedUser.role !== 'teacher') {
+    if (authenticatedUser.role !== "teacher") {
       return {
         canTakeAttendance: false,
-        reason: 'Solo los profesores pueden tomar asistencia.',
+        reason: "Solo los profesores pueden tomar asistencia.",
       };
     }
 
@@ -131,7 +132,7 @@ export class TakeAttendanceService {
     if (!teacherProfile) {
       return {
         canTakeAttendance: false,
-        reason: 'Perfil de profesor no encontrado.',
+        reason: "Perfil de profesor no encontrado.",
       };
     }
 
@@ -139,14 +140,14 @@ export class TakeAttendanceService {
     if (!group) {
       return {
         canTakeAttendance: false,
-        reason: 'Grupo no encontrado.',
+        reason: "Grupo no encontrado.",
       };
     }
 
     if (!group.teacher || group.teacher.id !== teacherProfile.id) {
       return {
         canTakeAttendance: false,
-        reason: 'No estás asignado a este grupo.',
+        reason: "No estás asignado a este grupo.",
       };
     }
 
@@ -160,10 +161,9 @@ export class TakeAttendanceService {
     if (!todaySchedule) {
       return {
         canTakeAttendance: false,
-        reason: 'No hay clase programada para hoy.',
+        reason: "No hay clase programada para hoy.",
       };
     }
-
     const withinSchedule = this.isWithinSchedule(
       now,
       todaySchedule.startTime,
@@ -272,7 +272,7 @@ export class TakeAttendanceService {
     const group = await this.academicGroupRepository.findById(groupId);
 
     if (!teacherProfile || !group) {
-      throw new NotFoundException('Profesor o grupo no encontrado.');
+      throw new NotFoundException("Profesor o grupo no encontrado.");
     }
 
     const today = new Date();
@@ -289,10 +289,10 @@ export class TakeAttendanceService {
     } else {
       attendance = new Attendance();
       attendance.teacher = teacherProfile;
-      attendance.ipAddress = ipAddress!;
+      attendance.ipAddress = ipAddress || "127.0.0.1";
       attendance.location = LocationStatus.UNIVERSITY;
       attendance.academicGroup = group;
-      attendance.classDate = new Date();
+      attendance.classDate = today;
       attendance.studentStatuses = updateDto.studentStatuses;
       await this.attendanceRepository.add(attendance);
     }

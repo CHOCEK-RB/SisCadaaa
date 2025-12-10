@@ -8,22 +8,28 @@ export const load: PageServerLoad = async ({ locals, params, fetch }) => {
   }
 
   const groupId = params.academicGroupId;
+  const academicCourseId = params.academicCourseId;
 
   try {
-    const groupInfo = await groupsService.getAcademicCourse(groupId, { fetch });
+    const groupData = await groupsService.getGroupGrades(groupId, { fetch });
 
     return {
       groupId,
-      courseCode: groupInfo.course.course.code || "N/A",
-      groupName: "Grupo",
+      academicCourseId,
+      courseCode: groupData.courseCode || "N/A",
+      courseName: groupData.courseName || "Curso",
+      groupName: groupData.groupName || "Grupo",
+      roster: groupData.students || []
     };
   } catch (error) {
-    console.error("Error loading group info:", error);
+    console.error("Error loading group grades for attendance:", error);
     return {
       groupId,
       courseCode: "N/A",
-      groupName: "Grupo",
-      error: "No se pudo cargar la información del grupo.",
+      courseName: "Error de Carga",
+      groupName: "---",
+      roster: [],
+      error: "No se pudo cargar la lista de estudiantes. Intente nuevamente.",
     };
   }
 };

@@ -1,11 +1,12 @@
 <script lang="ts">
-  import type {
-    GroupGradesResponse,
-    StudentGradeInfo,
-  } from "$lib/services/groups.service";
+  import type { GroupGradesResponse, StudentGradeInfo, UpdateGradeDto } from "$lib/services/groups.service";
+  import { invalidateAll } from "$app/navigation";
+  import { groupsService } from "$lib/services/groups.service";
   import * as Table from "$lib/components/ui/table";
   import { Input } from "$lib/components/ui/input";
-  import { createRawSnippet } from "svelte";
+  import { Button } from "$lib/components/ui/button";
+  import { Loader2, Save, Pencil, X } from "lucide-svelte";
+  import { toast } from "svelte-sonner";
   import {
     createSvelteTable,
     FlexRender,
@@ -21,293 +22,195 @@
     type ColumnFiltersState,
   } from "@tanstack/table-core";
   import DataTableColumnHeader from "$lib/components/data-table/data-table-column-header.svelte";
+  import GradeCell from "./GradeCell.svelte"; //
+  import { createRawSnippet } from "svelte";
 
-  type Props = {
-    groupGradesData: GroupGradesResponse;
-  };
-  let { groupGradesData }: Props = $props();
+  let { groupGradesData } = $props<{ groupGradesData: GroupGradesResponse }>();
 
-  interface GradeRow {
-    studentId: string;
-    enrollmentId: string;
-    cui: string;
-    fullName: string;
-    firstName: string;
-    lastName: string;
-    firstContinue: number | null;
-    secondContinue: number | null;
-    thirdContinue: number | null;
-    firstPartial: number | null;
-    secondPartial: number | null;
-    thirdPartial: number | null;
-    finalGrade: number;
-    status: "Aprobado" | "Reprobado" | "Pendiente";
+  // --- Estado ---
+  let isEditing = $state(false);
+  let isSaving = $state(false);
+  let sorting = $state<SortingState>([]);
+  let columnFilters = $state<ColumnFiltersState>([]);
+    $effect(() => {
+    localStudents = groupGradesData.students.map(mapStudentToRow);
+  });
+
+  // Mapeo inicial de datos (Local state para edición)
+  let localStudents = $state(groupGradesData.students.map(mapStudentToRow));
+  let backupStudents = $state<any[]>([]); // Backup para cancelar
+
+  function mapStudentToRow(student: StudentGradeInfo) {
+    const g = student.grades || {};
+    return {
+      enrollmentId: student.enrollmentId,
+      cui: student.cui,
+      fullName: `${student.firstName} ${student.lastName}`,
+      // Aseguramos que existan las propiedades
+      firstContinue: g.firstContinue ?? null,
+      secondContinue: g.secondContinue ?? null,
+      thirdContinue: g.thirdContinue ?? null,
+      firstPartial: g.firstPartial ?? null,
+      secondPartial: g.secondPartial ?? null,
+      thirdPartial: g.thirdPartial ?? null,
+    };
   }
 
-  function getGradeColor(grade: number | null): string {
-    if (grade === null || grade < 0) return "text-gray-400";
-    if (grade >= 10.5) return "text-green-600 font-semibold";
-    return "text-red-600 font-semibold";
+  // --- Funciones de Acción ---
+
+  function enableEditMode() {
+    backupStudents = JSON.parse(JSON.stringify(localStudents)); // Guardar backup
+    isEditing = true;
   }
 
-  const data: GradeRow[] = $derived(
-    groupGradesData.students.map((student: StudentGradeInfo) => {
-      const g = student.grades;
-      const p = groupGradesData.gradingScheme;
+  function cancelEditMode() {
+    localStudents = JSON.parse(JSON.stringify(backupStudents)); // Restaurar
+    isEditing = false;
+  }
 
-      let finalGrade = 0;
-      let hasSomeGrade = false;
+  function updateLocalGrade(rowIndex: number, key: string, value: number | null) {
+    // Actualizamos el estado local
+    localStudents[rowIndex] = {
+      ...localStudents[rowIndex],
+      [key]: value
+    };
+  }
 
-      if (g && p) {
-        finalGrade =
-          ((g.firstContinue ?? 0) * (p.firstContinue ?? 0)) / 100 +
-          ((g.secondContinue ?? 0) * (p.secondContinue ?? 0)) / 100 +
-          ((g.thirdContinue ?? 0) * (p.thirdContinue ?? 0)) / 100 +
-          ((g.firstPartial ?? 0) * (p.firstPartial ?? 0)) / 100 +
-          ((g.secondPartial ?? 0) * (p.secondPartial ?? 0)) / 100 +
-          ((g.thirdPartial ?? 0) * (p.thirdPartial ?? 0)) / 100;
-
-        hasSomeGrade = Object.values(g).some((grade) => grade !== null);
-      }
-
-      let status: GradeRow["status"] = "Pendiente";
-      if (hasSomeGrade) {
-        status = finalGrade >= 10.5 ? "Aprobado" : "Reprobado";
-      }
-
-      return {
-        studentId: student.studentId,
+  async function handleSaveChanges() {
+    isSaving = true;
+    try {
+      const updates: UpdateGradeDto[] = localStudents.map(student => ({
         enrollmentId: student.enrollmentId,
-        cui: student.cui,
-        fullName: `${student.firstName} ${student.lastName}`,
-        firstName: student.firstName,
-        lastName: student.lastName,
-        firstContinue: student.grades.firstContinue,
-        secondContinue: student.grades.secondContinue,
-        thirdContinue: student.grades.thirdContinue,
-        firstPartial: student.grades.firstPartial,
-        secondPartial: student.grades.secondPartial,
-        thirdPartial: student.grades.thirdPartial,
-        finalGrade: finalGrade,
-        status: status,
-      };
-    }),
-  );
+        grades: {
+          firstContinue: student.firstContinue,
+          secondContinue: student.secondContinue,
+          thirdContinue: student.thirdContinue,
+          firstPartial: student.firstPartial,
+          secondPartial: student.secondPartial,
+          thirdPartial: student.thirdPartial,
+        }
+      }));
 
-  const columns: ColumnDef<GradeRow>[] = [
+      await groupsService.updateMultipleGrades(groupGradesData.groupId, updates);
+      await invalidateAll();
+      toast.success("Notas guardadas correctamente");
+      isEditing = false;
+    } catch (error: any) {
+      toast.error("Error al guardar: " + (error.message || "Desconocido"));
+    } finally {
+      isSaving = false;
+    }
+  }
+
+  // --- Definición de Columnas (Reactiva con $derived) ---
+  // Usamos $derived para que cuando cambie 'isEditing', las columnas se regeneren
+  const columns = $derived<ColumnDef<any>[]>([
     {
       accessorKey: "fullName",
-      header: ({ column }) =>
-        renderComponent(DataTableColumnHeader, {
-          column,
-          title: "Estudiante",
-        }),
+      header: ({ column }) => renderComponent(DataTableColumnHeader, { column, title: "Estudiante" }),
       cell: ({ row }) => row.original.fullName,
     },
     {
       accessorKey: "cui",
-      header: ({ column }) =>
-        renderComponent(DataTableColumnHeader, {
-          column,
-          title: "CUI",
-        }),
+      header: ({ column }) => renderComponent(DataTableColumnHeader, { column, title: "CUI" }),
       cell: ({ row }) => row.original.cui,
     },
+    // Columnas de Notas usando GradeCell
+    ...createGradeColumn("firstContinue", "C1"),
+    ...createGradeColumn("secondContinue", "C2"),
+    ...createGradeColumn("thirdContinue", "C3"),
+    ...createGradeColumn("firstPartial", "P1", true),
+    ...createGradeColumn("secondPartial", "P2", true),
+    ...createGradeColumn("thirdPartial", "P3", true),
     {
-      accessorKey: "firstContinue",
-      header: ({ column }) =>
-        renderComponent(DataTableColumnHeader, {
-          column,
-          title: "C1",
-        }),
+      id: "final",
+      header: "Promedio",
       cell: ({ row }) => {
-        const grade = row.original.firstContinue;
-        return renderSnippet(
-          createRawSnippet(() => ({
-            render: () =>
-              `<div class="text-center"><span class="text-sm ${getGradeColor(grade)}">${
-                grade !== null ? grade.toFixed(1) : "-"
-              }</span></div>`,
-          })),
-        );
-      },
-    },
-    {
-      accessorKey: "secondContinue",
-      header: ({ column }) =>
-        renderComponent(DataTableColumnHeader, {
-          column,
-          title: "C2",
-        }),
-      cell: ({ row }) => {
-        const grade = row.original.secondContinue;
-        return renderSnippet(
-          createRawSnippet(() => ({
-            render: () =>
-              `<div class="text-center"><span class="text-sm ${getGradeColor(grade)}">${
-                grade !== null ? grade.toFixed(1) : "-"
-              }</span></div>`,
-          })),
-        );
-      },
-    },
-    {
-      accessorKey: "thirdContinue",
-      header: ({ column }) =>
-        renderComponent(DataTableColumnHeader, {
-          column,
-          title: "C3",
-        }),
-      cell: ({ row }) => {
-        const grade = row.original.thirdContinue;
-        return renderSnippet(
-          createRawSnippet(() => ({
-            render: () =>
-              `<div class="text-center"><span class="text-sm ${getGradeColor(grade)}">${
-                grade !== null ? grade.toFixed(1) : "-"
-              }</span></div>`,
-          })),
-        );
-      },
-    },
-    {
-      accessorKey: "firstPartial",
-      header: ({ column }) =>
-        renderComponent(DataTableColumnHeader, {
-          column,
-          title: "P1",
-        }),
-      cell: ({ row }) => {
-        const grade = row.original.firstPartial;
-        return renderSnippet(
-          createRawSnippet(() => ({
-            render: () =>
-              `<div class="text-center"><span class="text-sm ${getGradeColor(grade)}">${
-                grade !== null ? grade.toFixed(1) : "-"
-              }</span></div>`,
-          })),
-        );
-      },
-    },
-    {
-      accessorKey: "secondPartial",
-      header: ({ column }) =>
-        renderComponent(DataTableColumnHeader, {
-          column,
-          title: "P2",
-        }),
-      cell: ({ row }) => {
-        const grade = row.original.secondPartial;
-        return renderSnippet(
-          createRawSnippet(() => ({
-            render: () =>
-              `<div class="text-center"><span class="text-sm ${getGradeColor(grade)}">${
-                grade !== null ? grade.toFixed(1) : "-"
-              }</span></div>`,
-          })),
-        );
-      },
-    },
-    {
-      accessorKey: "thirdPartial",
-      header: ({ column }) =>
-        renderComponent(DataTableColumnHeader, {
-          column,
-          title: "P3",
-        }),
-      cell: ({ row }) => {
-        const grade = row.original.thirdPartial;
-        return renderSnippet(
-          createRawSnippet(() => ({
-            render: () =>
-              `<div class="text-center"><span class="text-sm ${getGradeColor(grade)}">${
-                grade !== null ? grade.toFixed(1) : "-"
-              }</span></div>`,
-          })),
-        );
-      },
-    },
-    {
-      accessorKey: "finalGrade",
-      header: ({ column }) =>
-        renderComponent(DataTableColumnHeader, {
-          column,
-          title: "Promedio Final",
-        }),
-      cell: ({ row }) => {
-        const snippet = createRawSnippet(() => ({
-          render: () =>
-            `<div class="text-left font-medium">${row.original.finalGrade.toFixed(2)}</div>`,
-        }));
-        return renderSnippet(snippet);
-      },
-    },
-    {
-      accessorKey: "status",
-      header: "Estado",
-      cell: ({ row }) => {
-        const statusText = row.original.status;
-        const statusSnippet = createRawSnippet<[{ status: string }]>(
-          (getStatus) => {
-            const { status } = getStatus();
-            const baseClasses =
-              "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2";
-            const variantClasses =
-              status === "Aprobado"
-                ? "border-transparent bg-primary text-primary-foreground"
-                : status === "Reprobado"
-                  ? "border-transparent bg-destructive text-destructive-foreground"
-                  : "border-transparent bg-secondary text-secondary-foreground";
-            return {
-              render: () =>
-                `<div class="${baseClasses} ${variantClasses}">${status}</div>`,
-            };
-          },
-        );
-        return renderSnippet(statusSnippet, { status: statusText });
-      },
-    },
-  ];
+        const s = row.original;
+        const p = groupGradesData.gradingScheme;
+        const final = (
+          (Number(s.firstContinue||0) * (p.firstContinue||0)/100) +
+          (Number(s.secondContinue||0) * (p.secondContinue||0)/100) +
+          (Number(s.thirdContinue||0) * (p.thirdContinue||0)/100) +
+          (Number(s.firstPartial||0) * (p.firstPartial||0)/100) +
+          (Number(s.secondPartial||0) * (p.secondPartial||0)/100) +
+          (Number(s.thirdPartial||0) * (p.thirdPartial||0)/100)
+        ).toFixed(1);
+        
+        // Renderizamos HTML simple para el promedio ya que es solo lectura
+        const colorClass = Number(final) >= 10.5 ? "text-green-600" : "text-red-600";
+        return renderSnippet(createRawSnippet(() => ({
+            render: () => `<div class="text-center font-bold ${colorClass}">${final}</div>`
+        })));
+      }
+    }
+  ]);
 
-  let sorting: SortingState = $state([]);
-  let columnFilters: ColumnFiltersState = $state([]);
+  // Helper para crear columnas repetitivas
+  function createGradeColumn(key: string, title: string, isPartial = false): ColumnDef<any>[] {
+    return [{
+      accessorKey: key,
+      header: ({ column }) => renderComponent(DataTableColumnHeader, { column, title }),
+      cell: ({ row, getValue }) => renderComponent(GradeCell, {
+        value: getValue() as number | null,
+        isEditing: isEditing, // Pasamos el estado reactivo
+        onUpdate: (val) => updateLocalGrade(row.index, key, val)
+      }),
+      meta: {
+        isPartial // Podrías usar esto para estilos si quisieras
+      }
+    }];
+  }
 
+  // --- Configuración de la Tabla ---
   const table = createSvelteTable({
-    get data() {
-      return data;
-    },
-    columns,
+    get data() { return localStudents; },
+    get columns() { return columns; }, // Getter para reactividad
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    onSortingChange: (updater) =>
-      (sorting = typeof updater === "function" ? updater(sorting) : updater),
-    onColumnFiltersChange: (updater) =>
-      (columnFilters =
-        typeof updater === "function" ? updater(columnFilters) : updater),
-    get state() {
-      return {
-        get sorting() {
-          return sorting;
-        },
-        get columnFilters() {
-          return columnFilters;
-        },
-      };
+    onSortingChange: (updater) => sorting = typeof updater === "function" ? updater(sorting) : updater,
+    onColumnFiltersChange: (updater) => columnFilters = typeof updater === "function" ? updater(columnFilters) : updater,
+    state: {
+      get sorting() { return sorting; },
+      get columnFilters() { return columnFilters; },
     },
   });
 </script>
 
 <div class="w-full space-y-4">
-  <div class="flex items-center">
+  <div class="flex items-center justify-between gap-4 p-1">
     <Input
-      placeholder="Filtrar por nombre de estudiante..."
+      placeholder="Filtrar por estudiante..."
       value={(table.getColumn("fullName")?.getFilterValue() as string) ?? ""}
-      oninput={(e) =>
-        table.getColumn("fullName")?.setFilterValue(e.currentTarget.value)}
+      oninput={(e) => table.getColumn("fullName")?.setFilterValue(e.currentTarget.value)}
       class="max-w-sm"
     />
+    
+    <div class="flex gap-2">
+      {#if !isEditing}
+        <Button onclick={enableEditMode} variant="secondary">
+          <Pencil class="mr-2 h-4 w-4" />
+          Modificar Notas
+        </Button>
+      {:else}
+        <Button onclick={cancelEditMode} variant="ghost" disabled={isSaving}>
+          <X class="mr-2 h-4 w-4" />
+          Cancelar
+        </Button>
+        <Button onclick={handleSaveChanges} disabled={isSaving} class="min-w-[140px]">
+          {#if isSaving}
+            <Loader2 class="mr-2 h-4 w-4 animate-spin" />
+            Guardando...
+          {:else}
+            <Save class="mr-2 h-4 w-4" />
+            Guardar
+          {/if}
+        </Button>
+      {/if}
+    </div>
   </div>
+
   <div class="rounded-md border">
     <Table.Root>
       <Table.Header>
@@ -316,10 +219,7 @@
             {#each headerGroup.headers as header (header.id)}
               <Table.Head>
                 {#if !header.isPlaceholder}
-                  <FlexRender
-                    content={header.column.columnDef.header}
-                    context={header.getContext()}
-                  />
+                  <FlexRender content={header.column.columnDef.header} context={header.getContext()} />
                 {/if}
               </Table.Head>
             {/each}
@@ -332,10 +232,7 @@
             <Table.Row>
               {#each row.getVisibleCells() as cell (cell.id)}
                 <Table.Cell>
-                  <FlexRender
-                    content={cell.column.columnDef.cell}
-                    context={cell.getContext()}
-                  />
+                  <FlexRender content={cell.column.columnDef.cell} context={cell.getContext()} />
                 </Table.Cell>
               {/each}
             </Table.Row>

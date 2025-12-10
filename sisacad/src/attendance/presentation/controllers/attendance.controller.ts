@@ -97,12 +97,9 @@ export class AttendanceController {
     @Param('groupId', ParseUUIDPipe) groupId: string,
     @Body() updateDto: UpdateAttendanceRequestDto,
     @GetUser() user: JwtPayload,
-  ): Promise<void> {
-    return await this.takeAttendanceService.takeAttendance(
-      groupId,
-      updateDto,
-      user,
-    );
+  ) {
+    await this.takeAttendanceService.takeAttendance(groupId, updateDto, user);
+    return { success: true, message: "Asistencia registrada correctamente" };
   }
 
   /**

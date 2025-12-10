@@ -107,7 +107,7 @@ export const groupsService = {
     updates: UpdateGradeDto[],
     options: RequestOptions = {},
   ): Promise<void> {
-    await api.patch(`/groups/${groupId}/grades/bulk`, { updates }, options);
+    await api.patch(`/groups/${groupId}/grades/bulk`, updates , options);
   },
 
   async getAcademicCourse(id: string, options: RequestOptions = {}) {

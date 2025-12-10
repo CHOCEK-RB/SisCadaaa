@@ -1,385 +1,300 @@
 <script lang="ts">
   import { attendanceService } from "$lib/services/attendance.service";
-  import type {
-    TakeAttendanceResponse,
-    StudentAttendanceInfo,
-  } from "$lib/services/attendance.service";
-  import { authStore } from "$lib/store/auth.store";
-  import {
-    AlertCircle,
-    CheckCircle,
-    Save,
-    Clock,
-    MapPin,
-    Calendar,
-    UserCheck,
-    UserX,
-    Users,
-  } from "lucide-svelte";
+  import type { TakeAttendanceResponse } from "$lib/services/attendance.service";
   import { onMount } from "svelte";
+  import { goto } from "$app/navigation";
+  import { Button } from "$lib/components/ui/button";
+  import * as Card from "$lib/components/ui/card";
+  import * as Table from "$lib/components/ui/table";
+  import { Badge } from "$lib/components/ui/badge";
+  import { toast } from "svelte-sonner";
+  import { 
+    Loader2, Save, UserCheck, UserX, Users, 
+    Calendar, Clock, MapPin, AlertCircle, CheckCircle2 
+  } from "lucide-svelte";
 
   let { data } = $props<{ data: any }>();
+  
   const groupId = data.groupId;
+  const academicCourseId = data.academicCourseId;
   const courseName = data.courseName;
-  const courseCode = data.courseCode;
   const groupName = data.groupName;
+  const roster = data.roster || [];
 
+  
   let checkData = $state<TakeAttendanceResponse | null>(null);
   let loading = $state(true);
   let saving = $state(false);
-  let error = $state("");
-  let successMessage = $state("");
+  let error = $state(data.error || "");
+  
+  
+  let isEditingMode = $state(false);
 
+  // Mapa de estados: { "uuid-estudiante": "present" | "absent" }
   let attendanceStatuses = $state<Record<string, "present" | "absent">>({});
 
   onMount(async () => {
-    await checkSchedule();
-    const interval = setInterval(checkSchedule, 60000);
-    return () => clearInterval(interval);
+    if (!data.error) {
+      await checkSchedule();
+    } else {
+      loading = false;
+    }
   });
 
   async function checkSchedule() {
     loading = true;
-    error = "";
     try {
-      const token = authStore.getToken();
-      if (!token) {
-        throw new Error("No se encontró token de autenticación");
-      }
+      // 1. Consultamos al backend si se puede tomar lista hoy
+      checkData = await attendanceService.checkCanTakeAttendance(groupId);
 
-      checkData = await attendanceService.checkCanTakeAttendance(
-        groupId,
-        token,
-      );
-
-      if (checkData.todayAttendance) {
+      // 2. Determinamos si es CREACIÓN o EDICIÓN
+      if (checkData.todayAttendance && checkData.todayAttendance.students.length > 0) {
+        // CASO A: Ya existe asistencia -> MODO EDICIÓN
+        isEditingMode = true;
         const statuses: Record<string, "present" | "absent"> = {};
+        
+        // Cargamos los estados guardados
         checkData.todayAttendance.students.forEach((student) => {
           statuses[student.studentId] = student.status;
         });
         attendanceStatuses = statuses;
-      } else if (checkData.canTakeAttendance) {
-        const allEnrollments = await loadStudentsList();
+
+      } else {
+        // CASO B: No hay asistencia hoy -> MODO CREACIÓN
+        isEditingMode = false;
         const statuses: Record<string, "present" | "absent"> = {};
-        allEnrollments.forEach((student) => {
-          statuses[student.studentId] = "absent";
+        
+        // Inicializamos usando el ROSTER del servidor
+        roster.forEach((student: any) => {
+          // Por defecto todos presentes (ahorra tiempo al profesor)
+          // Asegúrate que tu objeto student tenga 'studentId' (viene de GroupGrades)
+          statuses[student.studentId] = "present"; 
         });
         attendanceStatuses = statuses;
       }
     } catch (err: any) {
-      error = err.message || "Error al verificar el horario";
+      console.error(err);
+      error = err.message || "Error al verificar la sesión de asistencia";
+      toast.error(error);
     } finally {
       loading = false;
     }
   }
 
-  async function loadStudentsList(): Promise<StudentAttendanceInfo[]> {
-    return [];
-  }
-
   function toggleAttendance(studentId: string) {
-    attendanceStatuses[studentId] =
-      attendanceStatuses[studentId] === "present" ? "absent" : "present";
-    attendanceStatuses = { ...attendanceStatuses };
+    attendanceStatuses[studentId] = attendanceStatuses[studentId] === "present" ? "absent" : "present";
   }
 
-  function markAllPresent() {
-    if (!checkData?.todayAttendance) return;
-    const statuses: Record<string, "present" | "absent"> = {};
-    checkData.todayAttendance.students.forEach((student) => {
-      statuses[student.studentId] = "present";
+  function setAll(status: "present" | "absent") {
+    // Actualizamos masivamente el estado local
+    Object.keys(attendanceStatuses).forEach(id => {
+      attendanceStatuses[id] = status;
     });
-    attendanceStatuses = statuses;
-  }
-
-  function markAllAbsent() {
-    if (!checkData?.todayAttendance) return;
-    const statuses: Record<string, "present" | "absent"> = {};
-    checkData.todayAttendance.students.forEach((student) => {
-      statuses[student.studentId] = "absent";
-    });
-    attendanceStatuses = statuses;
   }
 
   async function saveAttendance() {
     saving = true;
-    error = "";
-    successMessage = "";
-
+    const toastId = toast.loading("Guardando asistencia...");
+    
     try {
-      const token = authStore.getToken();
-      if (!token) {
-        throw new Error("No se encontró token de autenticación");
-      }
-
       await attendanceService.takeAttendance(
         groupId,
-        { studentStatuses: attendanceStatuses },
-        token,
+        { studentStatuses: attendanceStatuses }
       );
-
-      successMessage = "¡Asistencia guardada exitosamente!";
-
+      
+      toast.success("¡Asistencia guardada con éxito!", { id: toastId });
       setTimeout(() => {
-        successMessage = "";
-      }, 3000);
+        goto(`/teacher/courses/${academicCourseId}/groups/${groupId}/attendance`);
+      }, 1000);
+      
+      isEditingMode = true;
+      
     } catch (err: any) {
-      error = err.message || "Error al guardar la asistencia";
+      toast.error("Error al guardar: " + (err.message || "Intente de nuevo"), { id: toastId });
     } finally {
       saving = false;
     }
   }
 
-  const presentCount = $derived(
-    Object.values(attendanceStatuses).filter((s) => s === "present").length,
+  const studentsToList = $derived(
+    (isEditingMode && checkData?.todayAttendance?.students.length)
+      ? checkData.todayAttendance.students
+      : roster.map((s: any) => ({
+          studentId: s.studentId,
+          cui: s.cui,
+          firstName: s.firstName,
+          lastName: s.lastName,
+          // Usamos el estado actual del mapa
+          status: attendanceStatuses[s.studentId] || 'present'
+        }))
   );
 
-  const absentCount = $derived(
-    Object.values(attendanceStatuses).filter((s) => s === "absent").length,
-  );
+  const sortedStudents = $derived([...studentsToList].sort((a, b) => a.lastName.localeCompare(b.lastName)));
+
+  // Contadores reactivos
+  const presentCount = $derived(Object.values(attendanceStatuses).filter(s => s === "present").length);
+  const absentCount = $derived(Object.values(attendanceStatuses).filter(s => s === "absent").length);
+  const totalStudents = $derived(Object.keys(attendanceStatuses).length);
+
 </script>
 
 <svelte:head>
-  <title>Tomar Asistencia - Sisacad</title>
+  <title>Asistencia - Sisacad</title>
 </svelte:head>
 
-<div class="container mx-auto px-4 py-8">
-  {#if loading}
-    <div class="flex items-center justify-center py-12">
-      <div
-        class="h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"
-      ></div>
-    </div>
-  {:else if error && !checkData}
-    <div
-      class="mb-4 flex items-center rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800"
-      role="alert"
-    >
-      <AlertCircle class="mr-3 h-5 w-5 flex-shrink-0" />
-      <div><span class="font-medium">Error:</span> {error}</div>
-    </div>
-  {:else if checkData}
-    <div class="mb-6">
-      <h1 class="mb-2 text-3xl font-bold text-gray-800">Tomar Asistencia</h1>
-      <p class="text-gray-600">
-        {courseName} ({courseCode}) - Grupo {groupName}
+<div class="container mx-auto px-4 py-8 space-y-6">
+  
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div>
+      <h1 class="text-3xl font-bold tracking-tight text-foreground">Gestión de Asistencia</h1>
+      <p class="text-muted-foreground mt-1 text-lg">
+        {courseName} - Grupo {groupName}
       </p>
     </div>
+    
+    {#if checkData?.canTakeAttendance}
+      <Button onclick={saveAttendance} disabled={saving} size="lg" class="w-full md:w-auto shadow-sm min-w-[180px]">
+        {#if saving}
+          <Loader2 class="mr-2 h-4 w-4 animate-spin" />
+          Guardando...
+        {:else}
+          <Save class="mr-2 h-4 w-4" />
+          {isEditingMode ? "Modificar Asistencia" : "Tomar Asistencia"}
+        {/if}
+      </Button>
+    {/if}
+  </div>
 
+  {#if loading}
+    <div class="flex justify-center py-12">
+      <Loader2 class="h-10 w-10 animate-spin text-primary" />
+    </div>
+  {:else if error}
+    <div class="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-destructive flex items-center gap-3">
+      <AlertCircle class="h-5 w-5" />
+      <span class="font-medium">{error}</span>
+    </div>
+  {:else if checkData}
+    
     {#if !checkData.canTakeAttendance}
-      <div
-        class="mb-6 rounded-r-lg border-l-4 border-yellow-400 bg-yellow-50 p-6"
-      >
-        <div class="flex items-start">
-          <AlertCircle
-            class="mt-1 mr-3 h-6 w-6 flex-shrink-0 text-yellow-600"
-          />
+      <Card.Root class="border-l-4 border-l-yellow-500 bg-yellow-50/50">
+        <Card.Content class="p-6 flex items-start gap-4">
+          <Clock class="h-6 w-6 text-yellow-600 mt-1" />
           <div>
-            <h3 class="mb-2 text-lg font-semibold text-yellow-800">
-              No se puede tomar asistencia en este momento
-            </h3>
-            <p class="mb-4 text-yellow-700">{checkData.reason}</p>
-
-            {#if checkData.currentSchedule}
-              <div class="rounded-lg border border-yellow-200 bg-white p-4">
-                <h4 class="mb-3 font-medium text-gray-800">
-                  Horario de clase:
-                </h4>
-                <div class="space-y-2 text-sm">
-                  <div class="flex items-center text-gray-700">
-                    <Calendar class="mr-2 h-4 w-4 text-gray-500" />
-                    <span class="font-medium">Día:</span>
-                    <span class="ml-2 capitalize"
-                      >{checkData.currentSchedule.day}</span
-                    >
-                  </div>
-                  <div class="flex items-center text-gray-700">
-                    <Clock class="mr-2 h-4 w-4 text-gray-500" />
-                    <span class="font-medium">Horario:</span>
-                    <span class="ml-2"
-                      >{checkData.currentSchedule.start} - {checkData
-                        .currentSchedule.end}</span
-                    >
-                  </div>
-                  <div class="flex items-center text-gray-700">
-                    <MapPin class="mr-2 h-4 w-4 text-gray-500" />
-                    <span class="font-medium">Aula:</span>
-                    <span class="ml-2"
-                      >{checkData.currentSchedule.classroom}</span
-                    >
-                  </div>
-                </div>
-              </div>
-            {/if}
+            <h3 class="font-semibold text-lg text-yellow-800">No es posible tomar asistencia ahora</h3>
+            <p class="text-yellow-700 mt-1">{checkData.reason}</p>
           </div>
-        </div>
-      </div>
+        </Card.Content>
+      </Card.Root>
     {:else}
-      <div
-        class="mb-6 rounded-r-lg border-l-4 border-green-400 bg-green-50 p-4"
-      >
-        <div class="flex items-center">
-          <CheckCircle class="mr-3 h-5 w-5 text-green-600" />
-          <div>
-            <p class="font-medium text-green-800">
-              Puedes tomar asistencia ahora
-            </p>
-            {#if checkData.currentSchedule}
-              <p class="mt-1 text-sm text-green-700">
-                Clase: {checkData.currentSchedule.start} - {checkData
-                  .currentSchedule.end} | Aula: {checkData.currentSchedule
-                  .classroom}
-              </p>
-            {/if}
-          </div>
-        </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card.Root>
+          <Card.Content class="p-4 flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-muted-foreground">Total Estudiantes</p>
+              <p class="text-2xl font-bold">{totalStudents}</p>
+            </div>
+            <div class="h-10 w-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center">
+              <Users class="h-5 w-5" />
+            </div>
+          </Card.Content>
+        </Card.Root>
+
+        <Card.Root>
+          <Card.Content class="p-4 flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-muted-foreground">Presentes</p>
+              <p class="text-2xl font-bold text-green-600">{presentCount}</p>
+            </div>
+            <div class="h-10 w-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
+              <UserCheck class="h-5 w-5" />
+            </div>
+          </Card.Content>
+        </Card.Root>
+
+        <Card.Root>
+          <Card.Content class="p-4 flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-muted-foreground">Ausentes</p>
+              <p class="text-2xl font-bold text-red-600">{absentCount}</p>
+            </div>
+            <div class="h-10 w-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center">
+              <UserX class="h-5 w-5" />
+            </div>
+          </Card.Content>
+        </Card.Root>
       </div>
 
-      {#if successMessage}
-        <div
-          class="mb-6 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800"
-        >
-          <CheckCircle class="mr-2 inline h-4 w-4" />
-          {successMessage}
-        </div>
-      {/if}
+      <div class="flex gap-2">
+        <Button variant="outline" size="sm" onclick={() => setAll("present")} 
+                class="border-green-200 hover:bg-green-50 text-green-700">
+          <UserCheck class="mr-2 h-4 w-4" /> Todos Presentes
+        </Button>
+        <Button variant="outline" size="sm" onclick={() => setAll("absent")}
+                class="border-red-200 hover:bg-red-50 text-red-700">
+          <UserX class="mr-2 h-4 w-4" /> Todos Ausentes
+        </Button>
+      </div>
 
-      {#if error}
-        <div
-          class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800"
-        >
-          <AlertCircle class="mr-2 inline h-4 w-4" />
-          {error}
-        </div>
-      {/if}
-
-      {#if checkData.todayAttendance}
-        <!-- Resumen -->
-        <div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div
-            class="rounded-lg border-2 border-blue-200 bg-blue-50 p-4 text-center"
-          >
-            <Users class="mx-auto mb-2 h-8 w-8 text-blue-600" />
-            <p class="text-2xl font-bold text-blue-900">
-              {checkData.todayAttendance.students.length}
-            </p>
-            <p class="text-sm text-blue-700">Total Estudiantes</p>
-          </div>
-          <div
-            class="rounded-lg border-2 border-green-200 bg-green-50 p-4 text-center"
-          >
-            <UserCheck class="mx-auto mb-2 h-8 w-8 text-green-600" />
-            <p class="text-2xl font-bold text-green-900">{presentCount}</p>
-            <p class="text-sm text-green-700">Presentes</p>
-          </div>
-          <div
-            class="rounded-lg border-2 border-red-200 bg-red-50 p-4 text-center"
-          >
-            <UserX class="mx-auto mb-2 h-8 w-8 text-red-600" />
-            <p class="text-2xl font-bold text-red-900">{absentCount}</p>
-            <p class="text-sm text-red-700">Ausentes</p>
-          </div>
-        </div>
-
-        <!-- Botones de marcado rápido -->
-        <div class="mb-6 flex gap-3">
-          <button
-            onclick={markAllPresent}
-            class="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700"
-          >
-            <UserCheck class="h-4 w-4" />
-            Marcar Todos Presentes
-          </button>
-          <button
-            onclick={markAllAbsent}
-            class="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-white transition-colors hover:bg-red-700"
-          >
-            <UserX class="h-4 w-4" />
-            Marcar Todos Ausentes
-          </button>
-          <button
-            onclick={saveAttendance}
-            disabled={saving}
-            class="ml-auto flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
-          >
-            {#if saving}
-              <div
-                class="h-4 w-4 animate-spin rounded-full border-b-2 border-white"
-              ></div>
-            {:else}
-              <Save class="h-4 w-4" />
-            {/if}
-            Guardar Asistencia
-          </button>
-        </div>
-
-        <!-- Tabla de asistencia -->
-        <div
-          class="overflow-x-auto rounded-lg border border-gray-200 shadow-sm"
-        >
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-              <tr>
-                <th
-                  class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
-                >
-                  CUI
-                </th>
-                <th
-                  class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
-                >
-                  Apellidos
-                </th>
-                <th
-                  class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
-                >
-                  Nombres
-                </th>
-                <th
-                  class="px-6 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase"
-                >
-                  Asistencia
-                </th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200 bg-white">
-              {#each checkData.todayAttendance.students as student (student.studentId)}
+      <div class="rounded-md border bg-card shadow-sm">
+        <Table.Root>
+          <Table.Header>
+            <Table.Row>
+              <Table.Head class="w-[100px]">CUI</Table.Head>
+              <Table.Head>Estudiante</Table.Head>
+              <Table.Head class="text-center w-[120px]">Estado</Table.Head>
+              <Table.Head class="text-right w-[140px]">Acción</Table.Head>
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            {#if sortedStudents.length > 0}
+              {#each sortedStudents as student (student.studentId)}
                 {@const status = attendanceStatuses[student.studentId]}
-                <tr class="transition-colors hover:bg-gray-50">
-                  <td
-                    class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900"
-                  >
+                <Table.Row class={status === 'absent' ? 'bg-red-50/40' : ''}>
+                  <Table.Cell class="font-mono text-muted-foreground font-medium">
                     {student.cui}
-                  </td>
-                  <td class="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
-                    {student.lastName}
-                  </td>
-                  <td class="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
-                    {student.firstName}
-                  </td>
-                  <td class="px-6 py-4 text-center whitespace-nowrap">
-                    <button
+                  </Table.Cell>
+                  <Table.Cell>
+                    <div class="flex flex-col">
+                      <span class="font-medium text-foreground">{student.lastName}, {student.firstName}</span>
+                    </div>
+                  </Table.Cell>
+                  <Table.Cell class="text-center">
+                    {#if status === 'present'}
+                      <Badge class="bg-green-500 hover:bg-green-600">Presente</Badge>
+                    {:else}
+                      <Badge variant="destructive">Ausente</Badge>
+                    {/if}
+                  </Table.Cell>
+                  <Table.Cell class="text-right">
+                    <Button 
+                      variant={status === 'present' ? 'default' : 'outline'}
+                      size="sm"
+                      class={status === 'present' 
+                        ? 'bg-green-600 hover:bg-green-700 w-[100px]' 
+                        : 'text-red-600 border-red-200 hover:bg-red-50 w-[100px]'}
                       onclick={() => toggleAttendance(student.studentId)}
-                      class="inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors {status ===
-                      'present'
-                        ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                        : 'bg-red-100 text-red-800 hover:bg-red-200'}"
                     >
-                      {#if status === "present"}
-                        <CheckCircle class="h-4 w-4" />
-                        Presente
+                      {#if status === 'present'}
+                        <CheckCircle2 class="h-4 w-4 mr-1" /> Asistió
                       {:else}
-                        <UserX class="h-4 w-4" />
-                        Ausente
+                        <UserX class="h-4 w-4 mr-1" /> Falto
                       {/if}
-                    </button>
-                  </td>
-                </tr>
+                    </Button>
+                  </Table.Cell>
+                </Table.Row>
               {/each}
-            </tbody>
-          </table>
-        </div>
-      {/if}
+            {:else}
+              <Table.Row>
+                <Table.Cell colspan={4} class="h-24 text-center text-muted-foreground">
+                  No se encontraron estudiantes matriculados en este grupo.
+                </Table.Cell>
+              </Table.Row>
+            {/if}
+          </Table.Body>
+        </Table.Root>
+      </div>
     {/if}
   {/if}
 </div>
