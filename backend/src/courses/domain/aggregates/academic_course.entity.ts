@@ -28,7 +28,10 @@ export class AcademicCourse {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Teacher, (teacher) => teacher.coordinatedCourses)
+  @ManyToOne(() => Teacher, (teacher) => teacher.coordinatedCourses, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
   coordinator: Teacher;
 
   @Column('timestamptz')

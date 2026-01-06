@@ -76,9 +76,11 @@ export class UserPostgresRepository implements IUserRepository {
     // Apply pagination
     queryBuilder.skip((page - 1) * limit).take(limit);
 
-    const [data, total] = await queryBuilder.getManyAndCount();
+        const [data, total] = await queryBuilder.getManyAndCount();
 
-    return { data, total };
+        console.log('UserPostgresRepository.findAllStudents data:', data);
+
+        return { data, total };
   }
 
   async findAllStudents(
@@ -209,5 +211,9 @@ export class UserPostgresRepository implements IUserRepository {
 
   async add(user: User): Promise<User> {
     return this.typeormRepo.save(user);
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.typeormRepo.delete(id);
   }
 }

@@ -461,6 +461,7 @@ export class GroupsService {
           },
           teacher: {
             id: teacherProfile.id,
+            userId: authenticatedUser.sub,
             email: authenticatedUser.email,
             firstName: teacherProfile.name,
             lastName:

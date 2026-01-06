@@ -5,6 +5,13 @@ import {
   Query,
   ParseIntPipe,
   DefaultValuePipe,
+  Patch,
+  Param,
+  Body,
+  Delete,
+  HttpCode,
+  HttpStatus,
+  ParseUUIDPipe,
 } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { PaginatedUsersDto } from "src/users/application/dto/paginated-users.dto";
@@ -12,6 +19,7 @@ import { RolesGuard } from "src/auth/presentation/guards/roles.guard";
 import { Roles } from "src/auth/presentation/decorators/roles.decorator";
 import { Role } from "src/users/domain/aggregates/role.enum";
 import { TeacherService } from "../../application/services/teacher.service";
+import { UpdateTeacherDto } from "../../application/dto/update-teacher.dto";
 
 @Controller("teachers")
 export class TeacherController {
@@ -34,5 +42,23 @@ export class TeacherController {
       sortBy,
       order,
     });
+  }
+
+  @Patch(":id")
+  @UseGuards(AuthGuard("jwt"), RolesGuard)
+  @Roles(Role.ADMIN, Role.SECRETARY)
+  async update(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() updateTeacherDto: UpdateTeacherDto,
+  ) {
+    return this.teacherService.update(id, updateTeacherDto);
+  }
+
+  @Delete(":id")
+  @UseGuards(AuthGuard("jwt"), RolesGuard)
+  @Roles(Role.ADMIN, Role.SECRETARY)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(@Param("id", ParseUUIDPipe) id: string) {
+    return this.teacherService.remove(id);
   }
 }

@@ -18,7 +18,9 @@ export class Attendance {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Teacher, (teacher) => teacher.attendances)
+  @ManyToOne(() => Teacher, (teacher) => teacher.attendances, {
+    onDelete: 'CASCADE',
+  })
   teacher: Teacher;
 
   @Column('timestamptz')

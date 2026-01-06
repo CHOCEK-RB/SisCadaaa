@@ -2,24 +2,17 @@
   import { MoreHorizontal } from "@lucide/svelte";
   import { Button } from "$lib/components/ui/button";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
+  import EditStudentSheet from "./edit-student-sheet.svelte";
+  import DeleteStudentDialog from "./delete-student-dialog.svelte";
+  import type { StudentUserDTO } from "./student-columns";
 
-  export let studentId: string;
+  let { student } = $props<{ student: StudentUserDTO }>();
+
+  let sheetOpen = $state(false);
+  let dialogOpen = $state(false);
 
   function viewDetails() {
-    console.log("View details for student ID:", studentId);
-    // TODO: Implement navigation to student detail page
-    // goto(`/secretary/students/${studentId}`);
-  }
-
-  function editStudent() {
-    console.log("Edit student with ID:", studentId);
-    // TODO: Implement navigation to edit student page
-    // goto(`/secretary/students/${studentId}/edit`);
-  }
-
-  function deleteStudent() {
-    console.log("Delete student with ID:", studentId);
-    // TODO: Implement delete student logic
+    console.log("View details for student ID:", student.id);
   }
 </script>
 
@@ -39,14 +32,17 @@
   </DropdownMenu.Trigger>
   <DropdownMenu.Content align="end">
     <DropdownMenu.Label>Acciones</DropdownMenu.Label>
-    <DropdownMenu.Item onclick={viewDetails}>
+    <DropdownMenu.Item onmousedown={viewDetails}>
       Ver detalles del estudiante
     </DropdownMenu.Item>
-    <DropdownMenu.Item onclick={editStudent}>
+    <DropdownMenu.Item onmousedown={() => (sheetOpen = true)}>
       Editar estudiante
     </DropdownMenu.Item>
-    <DropdownMenu.Item onclick={deleteStudent}>
+    <DropdownMenu.Item onmousedown={() => (dialogOpen = true)}>
       Eliminar estudiante
     </DropdownMenu.Item>
   </DropdownMenu.Content>
 </DropdownMenu.Root>
+
+<EditStudentSheet bind:open={sheetOpen} {student} />
+<DeleteStudentDialog bind:open={dialogOpen} studentId={student.userId} />

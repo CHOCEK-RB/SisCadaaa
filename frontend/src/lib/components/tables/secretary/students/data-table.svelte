@@ -44,6 +44,7 @@
       return data;
     },
     columns,
+    getRowId: (row) => row.userId,
     state: {
       get sorting() {
         return sorting;

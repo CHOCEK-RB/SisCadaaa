@@ -44,4 +44,5 @@ export interface IUserRepository {
   findAllTeachers(
     options: FindAllTeachersOptions,
   ): Promise<PaginatedUsersResult>;
+  delete(id: string): Promise<void>;
 }

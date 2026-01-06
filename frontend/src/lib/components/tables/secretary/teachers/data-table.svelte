@@ -14,7 +14,7 @@
   import * as Table from "$lib/components/ui/table";
   import DataTablePagination from "$lib/components/tables/utils/data-table-pagination.svelte";
   import DataTableToolbar from "./data-table-toolbar.svelte";
-  import type { StudentUserDTO } from "./student-columns";
+  import type { TeacherUserDTO } from "./teacher-columns";
   import type { ColumnDef } from "@tanstack/svelte-table";
 
   let {
@@ -27,8 +27,8 @@
     sorting = $bindable([]),
     columnVisibility = $bindable({}),
   } = $props<{
-    data: StudentUserDTO[];
-    columns: ColumnDef<StudentUserDTO>[];
+    data: TeacherUserDTO[];
+    columns: ColumnDef<TeacherUserDTO>[];
     filterValue?: string;
     pageIndex: number;
     pageSize: number;
@@ -39,11 +39,13 @@
 
   const rowSelection = writable({});
 
-  const table = createSvelteTable<StudentUserDTO>({
+  const table = createSvelteTable<TeacherUserDTO>({
     get data() {
       return data;
     },
     columns,
+    getRowId: (row) => row.userId,
+
     state: {
       get sorting() {
         return sorting;

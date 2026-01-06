@@ -20,6 +20,7 @@ export class UserMapper {
     if (user.studentProfile) {
       return {
         id: user.studentProfile.id,
+        userId: user.id,
         email: user.email,
         isActive: user.isActive,
         role: 'student',
@@ -34,6 +35,7 @@ export class UserMapper {
     if (user.teacherProfile) {
       return {
         id: user.teacherProfile.id,
+        userId: user.id,
         email: user.email,
         isActive: user.isActive,
         role: 'teacher',
@@ -46,6 +48,7 @@ export class UserMapper {
     if (user.adminProfile) {
       return {
         id: user.adminProfile.id,
+        userId: user.id,
         email: user.email,
         isActive: user.isActive,
         role: 'admin',
@@ -58,6 +61,7 @@ export class UserMapper {
     if (user.secretaryProfile) {
       return {
         id: user.secretaryProfile.id,
+        userId: user.id,
         email: user.email,
         isActive: user.isActive,
         role: 'secretary',
@@ -69,6 +73,7 @@ export class UserMapper {
 
     return {
       id: user.id,
+      userId: user.id,
       email: user.email,
       isActive: user.isActive,
       role: 'unknown',

@@ -36,4 +36,8 @@ export class StudentPostgresRepository implements IStudentRepository {
   async add(student: Student): Promise<Student> {
     return this.typeormRepo.save(student);
   }
+
+  async delete(id: string): Promise<void> {
+    await this.typeormRepo.delete(id);
+  }
 }

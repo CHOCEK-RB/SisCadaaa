@@ -11,4 +11,5 @@ export interface ITeacherRepository {
   findRandom(): Promise<Teacher | null>;
   save(teacher: Teacher): Promise<Teacher>;
   add(teacher: Teacher): Promise<Teacher>;
+  delete(id: string): Promise<void>;
 }

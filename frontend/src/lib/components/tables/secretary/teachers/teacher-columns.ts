@@ -5,6 +5,7 @@ import DataTableActions from "./data-table-actions.svelte";
 
 export interface TeacherUserDTO {
   id: string;
+  userId: string;
   email: string;
   firstName: string;
   lastName: string;
@@ -39,7 +40,7 @@ export const columns: ColumnDef<TeacherUserDTO>[] = [
     enableSorting: false,
     enableHiding: false,
     cell: ({ row }) => {
-      return renderComponent(DataTableActions, { teacherId: row.original.id });
+      return renderComponent(DataTableActions, { teacher: row.original });
     },
   },
 ];

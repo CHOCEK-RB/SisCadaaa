@@ -58,4 +58,8 @@ export class TeacherPostgresRepository implements ITeacherRepository {
   async add(teacher: Teacher): Promise<Teacher> {
     return this.typeormRepo.save(teacher);
   }
+
+  async delete(id: string): Promise<void> {
+    await this.typeormRepo.delete(id);
+  }
 }

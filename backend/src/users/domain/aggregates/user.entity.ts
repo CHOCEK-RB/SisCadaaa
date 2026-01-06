@@ -28,10 +28,14 @@ export class User {
   @Column({ default: false })
   isActive: boolean;
 
-  @OneToOne(() => Student, (student) => student.user)
+  @OneToOne(() => Student, (student) => student.user, {
+    cascade: ['update'],
+  })
   studentProfile: Student;
 
-  @OneToOne(() => Teacher, (teacher) => teacher.user)
+  @OneToOne(() => Teacher, (teacher) => teacher.user, {
+    cascade: ['update'],
+  })
   teacherProfile: Teacher;
 
   @OneToOne(() => Secretary, (secretary) => secretary.user)

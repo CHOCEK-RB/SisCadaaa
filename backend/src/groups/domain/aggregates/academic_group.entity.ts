@@ -36,7 +36,10 @@ export class AcademicGroup {
   @ManyToOne(() => AcademicCourse, (course) => course.groups)
   academicCourse: AcademicCourse;
 
-  @ManyToOne(() => Teacher, (teacher) => teacher.groups)
+  @ManyToOne(() => Teacher, (teacher) => teacher.groups, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
   teacher: Teacher;
 
   @OneToMany(() => ScheduleSlot, (slot) => slot.academicGroup, {

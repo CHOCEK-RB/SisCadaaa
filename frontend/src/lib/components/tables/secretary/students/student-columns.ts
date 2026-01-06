@@ -5,6 +5,7 @@ import DataTableActions from "./data-table-actions.svelte";
 
 export interface StudentUserDTO {
   id: string;
+  userId: string;
   email: string;
   firstName: string;
   lastName: string;
@@ -50,7 +51,7 @@ export const columns: ColumnDef<StudentUserDTO>[] = [
     enableSorting: false,
     enableHiding: false,
     cell: ({ row }) => {
-      return renderComponent(DataTableActions, { studentId: row.original.id });
+      return renderComponent(DataTableActions, { student: row.original });
     },
   },
 ];

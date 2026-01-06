@@ -23,6 +23,7 @@ export class EnrollmentMapper {
       coordinator: enrollment.course.coordinator
         ? {
             id: enrollment.course.coordinator.id,
+            userId: enrollment.course.coordinator.user?.id ?? '', // Provide a default empty string if user?.id is null or undefined
             firstName: enrollment.course.coordinator.name,
             lastName:
               `${enrollment.course.coordinator.firstLastName} ${enrollment.course.coordinator.secondLastName}`.trim(),

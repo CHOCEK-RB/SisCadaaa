@@ -9,4 +9,5 @@ export interface IStudentRepository {
   findByUserId(userId: string): Promise<Student | null>;
   save(student: Student): Promise<Student>;
   add(student: Student): Promise<Student>;
+  delete(id: string): Promise<void>;
 }

@@ -5,11 +5,11 @@
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
 
   import type { Table } from "@tanstack/svelte-table";
-  import type { StudentUserDTO } from "./student-columns";
+  import type { TeacherUserDTO } from "./teacher-columns";
 
   let { filterValue = $bindable(""), table } = $props<{
     filterValue: string;
-    table: Table<StudentUserDTO>;
+    table: Table<TeacherUserDTO>;
   }>();
 
   function clearFilter() {
