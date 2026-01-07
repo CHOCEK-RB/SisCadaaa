@@ -109,4 +109,17 @@ export const attendanceService = {
     }
     return response;
   },
+
+  async getStudentAttendanceReport(studentId: string, options: RequestOptions = {}) {
+    const response = await api.get<any[]>(
+      `/attendance/student/${studentId}/report`,
+      options
+    );
+
+    if (!response) {
+      throw new Error("No se pudo obtener el reporte de asistencia");
+    }
+
+    return response;
+  }
 };

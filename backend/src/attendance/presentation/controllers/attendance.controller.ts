@@ -6,16 +6,18 @@ import {
   ParseUUIDPipe,
   Post,
   UseGuards,
-} from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
-import { AttendanceQueryService } from '../../application/services/attendance-query.service';
-import { TakeAttendanceService } from '../../application/services/take-attendance.service';
-import { StudentCourseAttendanceResponseDto } from '../../application/dto/student-course-attendance-response.dto';
-import { GroupAttendanceRecordResponseDto } from '../../application/dto/group-attendance-record-response.dto';
-import { UpdateAttendanceRequestDto } from '../../application/dto/update-attendance-request.dto';
-import { TakeAttendanceResponseDto } from '../../application/dto/take-attendance-response.dto';
-import { GetUser } from 'src/users/presentation/decorators/get_user.decorator';
-import type { JwtPayload } from 'src/auth/domain/interfaces/jwt-payload.interface';
+} from "@nestjs/common";
+import { AuthGuard } from "@nestjs/passport";
+import { AttendanceQueryService } from "../../application/services/attendance-query.service";
+import { TakeAttendanceService } from "../../application/services/take-attendance.service";
+import { StudentCourseAttendanceResponseDto } from "../../application/dto/student-course-attendance-response.dto";
+import { GroupAttendanceRecordResponseDto } from "../../application/dto/group-attendance-record-response.dto";
+import { UpdateAttendanceRequestDto } from "../../application/dto/update-attendance-request.dto";
+import { TakeAttendanceResponseDto } from "../../application/dto/take-attendance-response.dto";
+import { GetUser } from "src/users/presentation/decorators/get_user.decorator";
+import type { JwtPayload } from "src/auth/domain/interfaces/jwt-payload.interface";
+import { Roles } from "src/auth/presentation/decorators/roles.decorator";
+import { Role } from "src/users/domain/aggregates/role.enum";
 
 /**
  * @class AttendanceController
@@ -25,8 +27,8 @@ import type { JwtPayload } from 'src/auth/domain/interfaces/jwt-payload.interfac
  * to view group attendance history, check if attendance can be taken, and record/update attendance.
  * All endpoints are protected by JWT authentication.
  */
-@Controller('attendance')
-@UseGuards(AuthGuard('jwt'))
+@Controller("attendance")
+@UseGuards(AuthGuard("jwt"))
 export class AttendanceController {
   /**
    * @constructor
@@ -47,10 +49,10 @@ export class AttendanceController {
    * @param {JwtPayload} user - The authenticated user's JWT payload (student).
    * @returns {Promise<StudentCourseAttendanceResponseDto>} A promise that resolves to a DTO containing the student's attendance.
    */
-  @Get('my-attendance/:academicCourseId')
-  @UseGuards(AuthGuard('jwt'))
+  @Get("my-attendance/:academicCourseId")
+  @UseGuards(AuthGuard("jwt"))
   async getMyAttendanceForCourse(
-    @Param('academicCourseId', ParseUUIDPipe) academicCourseId: string,
+    @Param("academicCourseId", ParseUUIDPipe) academicCourseId: string,
     @GetUser() user: JwtPayload,
   ): Promise<StudentCourseAttendanceResponseDto> {
     return await this.attendanceQueryService.getMyAttendanceForCourse(
@@ -68,10 +70,10 @@ export class AttendanceController {
    * @param {JwtPayload} user - The authenticated user's JWT payload (teacher).
    * @returns {Promise<GroupAttendanceRecordResponseDto[]>} A promise that resolves to an array of DTOs containing the group's attendance history.
    */
-  @Get('group/:groupId/history')
-  @UseGuards(AuthGuard('jwt'))
+  @Get("group/:groupId/history")
+  @UseGuards(AuthGuard("jwt"))
   async getGroupAttendanceHistory(
-    @Param('groupId', ParseUUIDPipe) groupId: string,
+    @Param("groupId", ParseUUIDPipe) groupId: string,
     @GetUser() user: JwtPayload,
   ): Promise<GroupAttendanceRecordResponseDto[]> {
     return await this.attendanceQueryService.getGroupAttendanceHistory(
@@ -87,10 +89,10 @@ export class AttendanceController {
    * @param {string} groupId - The UUID of the academic group.
    * @returns {Promise<GroupAttendanceRecordResponseDto[]>} A promise that resolves to an array of DTOs containing the group's attendance history.
    */
-  @Get('all/:groupId')
-  @UseGuards(AuthGuard('jwt'))
+  @Get("all/:groupId")
+  @UseGuards(AuthGuard("jwt"))
   async getAllAttendanceForGroup(
-    @Param('groupId', ParseUUIDPipe) groupId: string,
+    @Param("groupId", ParseUUIDPipe) groupId: string,
   ): Promise<GroupAttendanceRecordResponseDto[]> {
     return await this.attendanceQueryService.getAllAttendanceForGroup(groupId);
   }
@@ -106,10 +108,10 @@ export class AttendanceController {
    * @param {JwtPayload} user - The authenticated user's JWT payload (teacher).
    * @returns {Promise<void>} A promise that resolves when attendance has been recorded or updated.
    */
-  @Post('group/:groupId/take')
-  @UseGuards(AuthGuard('jwt'))
+  @Post("group/:groupId/take")
+  @UseGuards(AuthGuard("jwt"))
   async takeAttendance(
-    @Param('groupId', ParseUUIDPipe) groupId: string,
+    @Param("groupId", ParseUUIDPipe) groupId: string,
     @Body() updateDto: UpdateAttendanceRequestDto,
     @GetUser() user: JwtPayload,
   ) {
@@ -127,12 +129,23 @@ export class AttendanceController {
    * @param {JwtPayload} user - The authenticated user's JWT payload (teacher).
    * @returns {Promise<TakeAttendanceResponseDto>} A promise that resolves to a DTO indicating if attendance can be taken and the reason if not.
    */
-  @Get('group/:groupId/check')
-  @UseGuards(AuthGuard('jwt'))
+  @Get("group/:groupId/check")
+  @UseGuards(AuthGuard("jwt"))
   async checkCanTakeAttendance(
-    @Param('groupId', ParseUUIDPipe) groupId: string,
+    @Param("groupId", ParseUUIDPipe) groupId: string,
     @GetUser() user: JwtPayload,
   ): Promise<TakeAttendanceResponseDto> {
-    return await this.takeAttendanceService.checkCanTakeAttendance(groupId, user);
+    return await this.takeAttendanceService.checkCanTakeAttendance(
+      groupId,
+      user,
+    );
+  }
+
+  @Get("student/:studentId/report")
+  @Roles(Role.ADMIN, Role.SECRETARY)
+  async getStudentReport(@Param("studentId", ParseUUIDPipe) studentId: string) {
+    return await this.attendanceQueryService.getStudentAttendanceReport(
+      studentId,
+    );
   }
 }

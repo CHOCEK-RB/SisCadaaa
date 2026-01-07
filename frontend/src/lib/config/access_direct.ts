@@ -25,9 +25,9 @@ export const NavigationsAccess: Record<UserRole, NavAccess[]>={
         {url: "/teacher/schedule", title:"Horario", description:"Clases a dictar", icon:Calendar},
 
     ],secretary:[
-        {url: "/secretary/students", title:"Estudiantes", description:"Gestionar estudiantes.",icon:Users},
-        {url: "/secretary/courses", title:"Cursos", description:"Gestionar cursos.",icon:GraduationCap},
-        {url: "/secretary/enrollments", title:"Matrículas", description:"Gestionar matrículas.",icon:ListChecks},
+        {url: "/secretary/search/student", title:"Estudiantes", description:"Gestionar estudiantes.",icon:Users},
+        {url: "/secretary/search/teacher", title:"Docentes", description:"Gestionar docentes.",icon:Users},
+        {url: "/secretary/courses", title:"Cursos", description:"Gestion de Cursos.",icon:GraduationCap},
     ],
     admin:[
         {url: "/admin/students", title:"Estudiantes", description:"Lista de alumnos",icon:UserPen},

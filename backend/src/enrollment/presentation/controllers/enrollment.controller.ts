@@ -22,7 +22,9 @@ import { AcademicCourseDTO } from "src/courses/application/dto/academic_course.d
 import { LabEnrollmentActiveGuard } from "../guards/lab-enrollment-active.guard";
 import { EnrollLabGroupDto } from "../../application/dto/enrollment.dto";
 import { EventType } from "src/events/domain/aggregates/global_event.entity";
-
+import { Roles } from "src/auth/presentation/decorators/roles.decorator";
+import { RolesGuard } from "src/auth/presentation/guards/roles.guard";
+import { Role } from "src/users/domain/aggregates/role.enum";
 /**
  * @class EnrollmentController
  * @description
@@ -204,5 +206,12 @@ export class EnrollmentController {
   async getGradingPeriodStatus(): Promise<{ isActive: boolean }> {
     const isActive = await this.eventService.isEventActive(EventType.GRADING);
     return { isActive };
+  }
+
+  @Get("student/:studentId/grades")
+  @Roles(Role.ADMIN, Role.SECRETARY) // Solo personal autorizado
+  @UseGuards(AuthGuard("jwt"), RolesGuard)
+  async getStudentGrades(@Param("studentId", ParseUUIDPipe) studentId: string) {
+    return await this.enrollmentQueryService.getGradesByStudentId(studentId);
   }
 }
