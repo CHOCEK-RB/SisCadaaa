@@ -4,17 +4,17 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
-} from '@nestjs/common';
-import { JwtPayload } from 'src/auth/domain/interfaces/jwt-payload.interface';
-import { IEnrollmentRepository } from '../../domain/repositories/ienrollment.repository';
-import { IStudentRepository } from 'src/users/domain/repositories/istudent.repository';
-import { IAcademicGroupRepository } from 'src/groups/domain/repositories/iacademic_group.repository';
-import { Enrollment } from '../../domain/aggregates/enrollment.entity';
-import { GroupType } from 'src/groups/domain/aggregates/academic_group.entity';
-import { EnrollLabGroupDto } from '../dto/enrollment.dto';
-import { AcademicCourseDTO } from 'src/courses/application/dto/academic_course.dto';
-import { ScheduleSlotDTO } from 'src/groups/application/dto/schedule.dto';
-import { AcademicGroupDTO } from 'src/groups/application/dto/academic_group.dto';
+} from "@nestjs/common";
+import { JwtPayload } from "src/auth/domain/interfaces/jwt-payload.interface";
+import { IEnrollmentRepository } from "../../domain/repositories/ienrollment.repository";
+import { IStudentRepository } from "src/users/domain/repositories/istudent.repository";
+import { IAcademicGroupRepository } from "src/groups/domain/repositories/iacademic_group.repository";
+import { Enrollment } from "../../domain/aggregates/enrollment.entity";
+import { GroupType } from "src/groups/domain/aggregates/academic_group.entity";
+import { EnrollLabGroupDto } from "../dto/enrollment.dto";
+import { AcademicCourseDTO } from "src/courses/application/dto/academic_course.dto";
+import { ScheduleSlotDTO } from "src/groups/application/dto/schedule.dto";
+import { AcademicGroupDTO } from "src/groups/application/dto/academic_group.dto";
 
 @Injectable()
 export class EnrollmentLabGroupService {
@@ -30,9 +30,9 @@ export class EnrollmentLabGroupService {
   async getAvaLabGroupsForUser(
     authenticatedUser: JwtPayload,
   ): Promise<AcademicCourseDTO[]> {
-    if (authenticatedUser.role !== 'student') {
+    if (authenticatedUser.role !== "student") {
       throw new ForbiddenException(
-        'Solo los estudiantes pueden ver esta información.',
+        "Solo los estudiantes pueden ver esta información.",
       );
     }
     const studentProfile = await this.studentRepository.findByUserId(
@@ -132,10 +132,10 @@ export class EnrollmentLabGroupService {
     dto: EnrollLabGroupDto,
     authenticatedUser: JwtPayload,
   ): Promise<void> {
-    console.log('EnrollLabGroupDto', dto);
+    console.log("EnrollLabGroupDto", dto);
 
-    if (authenticatedUser.role !== 'student') {
-      throw new ForbiddenException('Solo los estudiantes pueden matricularse.');
+    if (authenticatedUser.role !== "student") {
+      throw new ForbiddenException("Solo los estudiantes pueden matricularse.");
     }
 
     const studentProfile = await this.studentRepository.findByUserId(
@@ -147,7 +147,7 @@ export class EnrollmentLabGroupService {
 
     const labGroupIds = dto.labGroupIds;
     if (!labGroupIds || labGroupIds.length === 0) {
-      throw new BadRequestException('No se seleccionó ningún grupo.');
+      throw new BadRequestException("No se seleccionó ningún grupo.");
     }
 
     const updatedEnrollments: Enrollment[] = [];
@@ -157,10 +157,10 @@ export class EnrollmentLabGroupService {
       GroupType.LABORATORY,
     );
 
-    console.log('newGroups', newGroups, labGroupIds);
+    console.log("newGroups", newGroups, labGroupIds);
 
     if (newGroups!.length !== labGroupIds.length) {
-      throw new NotFoundException('Uno o más grupos seleccionados no existen.');
+      throw new NotFoundException("Uno o más grupos seleccionados no existen.");
     }
 
     const enrollments =
@@ -208,7 +208,7 @@ export class EnrollmentLabGroupService {
       // This case should ideally not be reached if labGroupIds is not empty
       // and all selected groups are valid. But as a safeguard:
       throw new BadRequestException(
-        'No se pudo actualizar ninguna matrícula. Verifique los grupos seleccionados.',
+        "No se pudo actualizar ninguna matrícula. Verifique los grupos seleccionados.",
       );
     }
 

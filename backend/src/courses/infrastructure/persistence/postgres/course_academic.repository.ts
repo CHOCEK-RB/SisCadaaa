@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThan } from 'typeorm';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository, MoreThan } from "typeorm";
 
-import { AcademicCourse } from 'src/courses/domain/aggregates/academic_course.entity';
-import { IAcademicCourseRepository } from 'src/courses/domain/repositories/icourse_academic.repository';
+import { AcademicCourse } from "src/courses/domain/aggregates/academic_course.entity";
+import { IAcademicCourseRepository } from "src/courses/domain/repositories/icourse_academic.repository";
 
 @Injectable()
 export class AcademicCourseRepository implements IAcademicCourseRepository {
@@ -16,14 +16,15 @@ export class AcademicCourseRepository implements IAcademicCourseRepository {
     return this.typeormRepo.findOne({
       where: { id },
       relations: {
-        coordinator: true,
+        coordinator: { user: true },
         course: true,
         topics: true,
         progress: true,
+        groups: true,
       },
       order: {
         topics: {
-          topicOrder: 'ASC',
+          topicOrder: "ASC",
         },
       },
     });
@@ -32,10 +33,10 @@ export class AcademicCourseRepository implements IAcademicCourseRepository {
   async findByIdWithCoordinator(id: string): Promise<AcademicCourse | null> {
     return this.typeormRepo.findOne({
       where: { id },
-      relations: ['course', 'topics', 'coordinator'],
+      relations: ["course", "topics", "coordinator"],
       order: {
         topics: {
-          topicOrder: 'ASC',
+          topicOrder: "ASC",
         },
       },
     });
@@ -71,8 +72,30 @@ export class AcademicCourseRepository implements IAcademicCourseRepository {
     return this.typeormRepo.find({ relations: { course: true } });
   }
 
+  async findAllWithGroups(): Promise<AcademicCourse[]> {
+    return this.typeormRepo.find({ relations: { course: true, groups: true } });
+  }
+
   async findAllWithTopics(): Promise<AcademicCourse[]> {
     return this.typeormRepo.find({ relations: { course: true, topics: true } });
+  }
+
+  async findByAcademicPeriodId(periodId: string): Promise<AcademicCourse[]> {
+    return this.typeormRepo.find({
+      where: {
+        academicPeriod: { id: periodId },
+      },
+      relations: {
+        course: true,
+        academicPeriod: true,
+        coordinator: { user: true },
+      },
+      order: {
+        course: {
+          code: "ASC",
+        },
+      },
+    });
   }
 
   save(courses: AcademicCourse[]): Promise<AcademicCourse[]>;

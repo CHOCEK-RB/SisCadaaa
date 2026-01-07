@@ -1,11 +1,11 @@
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { Module } from "@nestjs/common";
+import { TypeOrmModule } from "@nestjs/typeorm";
 
-import { GlobalEvent } from './domain/aggregates/global_event.entity';
-import { IGlobalEventRepository } from './domain/repositories/iglobal_event.repository';
-import { GlobalEventRepository } from './infrastructure/global_event.repository';
-import { GlobalEventService } from './application/global_event.service';
-import { EventsController } from './presentation/controllers/events.controller';
+import { GlobalEvent } from "./domain/aggregates/global_event.entity";
+import { IGlobalEventRepository } from "./domain/repositories/iglobal_event.repository";
+import { GlobalEventRepository } from "./infrastructure/global_event.repository";
+import { GlobalEventService } from "./application/global_event.service";
+import { EventsController } from "./presentation/controllers/events.controller";
 
 @Module({
   imports: [TypeOrmModule.forFeature([GlobalEvent])],
@@ -20,4 +20,3 @@ import { EventsController } from './presentation/controllers/events.controller';
   exports: [GlobalEventService, IGlobalEventRepository],
 })
 export class EventsModule {}
-

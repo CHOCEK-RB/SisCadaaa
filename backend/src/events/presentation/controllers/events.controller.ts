@@ -1,6 +1,6 @@
 import { Controller, Get, Param, ParseEnumPipe } from '@nestjs/common';
 import { GlobalEventService } from '../../application/global_event.service';
-import { EventType } from '../../domain/aggregates/global_event.entity';
+import { GlobalEvent, EventType } from '../../domain/aggregates/global_event.entity';
 
 /**
  * @class EventsController
@@ -29,5 +29,10 @@ export class EventsController {
   ): Promise<{ isActive: boolean }> {
     const isActive = await this.eventService.isEventActive(type);
     return { isActive };
+  }
+
+  @Get('periods')
+  async findAllAcademicPeriods(): Promise<GlobalEvent[]> {
+    return await this.eventService.findAllAcademicPeriods();
   }
 }

@@ -5,24 +5,24 @@ import {
   ManyToMany,
   JoinTable,
   OneToMany,
-} from 'typeorm';
-import { AcademicCourse } from './academic_course.entity';
+} from "typeorm";
+import { AcademicCourse } from "./academic_course.entity";
 
 @Entity()
 export class Course {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column({ unique: true })
   code: string;
 
-  @Column('varchar', { length: 60 })
+  @Column("varchar", { length: 60 })
   name: string;
 
-  @Column('int')
+  @Column("int")
   credits: number;
 
-  @Column('int')
+  @Column("int")
   semester: number;
 
   @ManyToMany(() => Course)

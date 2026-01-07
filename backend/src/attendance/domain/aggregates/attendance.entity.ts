@@ -1,41 +1,41 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm";
 
-import { AcademicGroup } from 'src/groups/domain/aggregates/academic_group.entity';
-import { Teacher } from 'src/users/domain/aggregates/teacher.entity';
+import { AcademicGroup } from "src/groups/domain/aggregates/academic_group.entity";
+import { Teacher } from "src/users/domain/aggregates/teacher.entity";
 
 export enum LocationStatus {
-  UNIVERSITY = 'university',
-  OTHER = 'other',
+  UNIVERSITY = "university",
+  OTHER = "other",
 }
 
 export enum AttendanceStatus {
-  PRESENT = 'present',
-  ABSENT = 'absent',
+  PRESENT = "present",
+  ABSENT = "absent",
 }
 
 @Entity()
 export class Attendance {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @ManyToOne(() => Teacher, (teacher) => teacher.attendances, {
-    onDelete: 'CASCADE',
+    onDelete: "CASCADE",
   })
   teacher: Teacher;
 
-  @Column('timestamptz')
+  @Column("timestamptz")
   classDate: Date;
 
   @Column({
-    type: 'jsonb',
+    type: "jsonb",
     default: {},
   })
   studentStatuses: Record<string, AttendanceStatus>;
 
-  @Column('inet')
+  @Column("inet")
   ipAddress: string;
 
-  @Column('enum', { enum: LocationStatus, default: LocationStatus.UNIVERSITY })
+  @Column("enum", { enum: LocationStatus, default: LocationStatus.UNIVERSITY })
   location: LocationStatus;
 
   @ManyToOne(() => AcademicGroup, (group) => group.attendances)

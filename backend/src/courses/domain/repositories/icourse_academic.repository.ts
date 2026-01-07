@@ -1,6 +1,6 @@
-import { AcademicCourse } from '../aggregates/academic_course.entity';
+import { AcademicCourse } from "../aggregates/academic_course.entity";
 
-export const IAcademicCourseRepository = Symbol('IAcademicCourseRepository');
+export const IAcademicCourseRepository = Symbol("IAcademicCourseRepository");
 
 export interface IAcademicCourseRepository {
   findById(id: string): Promise<AcademicCourse | null>;
@@ -11,7 +11,9 @@ export interface IAcademicCourseRepository {
     studentId: string,
   ): Promise<AcademicCourse | null>;
   findAll(): Promise<AcademicCourse[]>;
+  findAllWithGroups(): Promise<AcademicCourse[]>;
   findAllWithTopics(): Promise<AcademicCourse[]>;
+  findByAcademicPeriodId(periodId: string): Promise<AcademicCourse[]>;
   save(courses: AcademicCourse[]): Promise<AcademicCourse[]>;
   save(course: AcademicCourse): Promise<AcademicCourse>;
   add(academicCourse: AcademicCourse): Promise<AcademicCourse>;

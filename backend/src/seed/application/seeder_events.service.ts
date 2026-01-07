@@ -35,14 +35,80 @@ export class SeederEventsService {
   async seedEvents(): Promise<void> {
     const eventsToCreate: Partial<GlobalEvent>[] = [];
 
+    // Academic Periods
     eventsToCreate.push({
-      name: 'Período Académico 2025-II',
+      name: 'Período Académico 2021-A',
+      type: EventType.ACADEMIC,
+      startDate: new Date('2021-02-01T00:00:00Z'),
+      endDate: new Date('2021-07-31T23:59:59Z'),
+      isActive: true,
+    });
+    eventsToCreate.push({
+      name: 'Período Académico 2021-B',
+      type: EventType.ACADEMIC,
+      startDate: new Date('2021-08-01T00:00:00Z'),
+      endDate: new Date('2021-12-31T23:59:59Z'),
+      isActive: true,
+    });
+    eventsToCreate.push({
+      name: 'Período Académico 2022-A',
+      type: EventType.ACADEMIC,
+      startDate: new Date('2022-02-01T00:00:00Z'),
+      endDate: new Date('2022-07-31T23:59:59Z'),
+      isActive: true,
+    });
+    eventsToCreate.push({
+      name: 'Período Académico 2022-B',
+      type: EventType.ACADEMIC,
+      startDate: new Date('2022-08-01T00:00:00Z'),
+      endDate: new Date('2022-12-31T23:59:59Z'),
+      isActive: true,
+    });
+    eventsToCreate.push({
+      name: 'Período Académico 2023-A',
+      type: EventType.ACADEMIC,
+      startDate: new Date('2023-02-01T00:00:00Z'),
+      endDate: new Date('2023-07-31T23:59:59Z'),
+      isActive: true,
+    });
+    eventsToCreate.push({
+      name: 'Período Académico 2023-B',
+      type: EventType.ACADEMIC,
+      startDate: new Date('2023-08-01T00:00:00Z'),
+      endDate: new Date('2023-12-31T23:59:59Z'),
+      isActive: true,
+    });
+    eventsToCreate.push({
+      name: 'Período Académico 2024-A',
+      type: EventType.ACADEMIC,
+      startDate: new Date('2024-02-01T00:00:00Z'),
+      endDate: new Date('2024-07-31T23:59:59Z'),
+      isActive: true,
+    });
+    eventsToCreate.push({
+      name: 'Período Académico 2024-B',
+      type: EventType.ACADEMIC,
+      startDate: new Date('2024-08-01T00:00:00Z'),
+      endDate: new Date('2024-12-31T23:59:59Z'),
+      isActive: true,
+    });
+    eventsToCreate.push({
+      name: 'Período Académico 2025-A',
+      type: EventType.ACADEMIC,
+      startDate: new Date('2025-02-01T00:00:00Z'),
+      endDate: new Date('2025-07-31T23:59:59Z'),
+      isActive: true,
+    });
+    eventsToCreate.push({
+      name: 'Período Académico 2025-B',
       type: EventType.ACADEMIC,
       startDate: new Date('2025-08-01T00:00:00Z'),
-      endDate: new Date('2025-12-15T23:59:59Z'),
+      endDate: new Date('2025-12-31T23:59:59Z'),
       isActive: true,
     });
 
+
+    // Other events
     eventsToCreate.push({
       name: 'Registro de Notas Finales 2025-II',
       type: EventType.GRADING,

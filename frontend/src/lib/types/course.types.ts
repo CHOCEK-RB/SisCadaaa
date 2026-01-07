@@ -1,6 +1,7 @@
-import type { TeacherProfileDTO } from "./user.types";
+import type { TeacherInfoDTO } from "./user.types";
 import type { AcademicGroupDTO } from "./group.types";
 import type { EnrollmentDetailDTO } from "./enrollment.types";
+import type { GlobalEvent } from "./event.types";
 
 export interface AcademicCourseDTO {
   id: string;
@@ -11,12 +12,13 @@ export interface AcademicCourseDTO {
 
   progress?: TopicProgressDTO[];
 
-  coordinator?: TeacherProfileDTO;
+  coordinator?: TeacherInfoDTO;
   groups?: AcademicGroupDTO[];
   topics?: CourseTopicDTO[];
   enrollments?: EnrollmentDetailDTO[];
 
   currentlyEnrolledLabGroupId?: string;
+  academicPeriod: GlobalEvent;
 }
 
 export interface GradingScheme {

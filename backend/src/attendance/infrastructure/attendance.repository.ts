@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
-import { Attendance } from '../domain/aggregates/attendance.entity';
-import { IAttendanceRepository } from '../domain/repositories/iattendance.repository';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository, In } from "typeorm";
+import { Attendance } from "../domain/aggregates/attendance.entity";
+import { IAttendanceRepository } from "../domain/repositories/iattendance.repository";
 
 @Injectable()
 export class AttendanceRepository implements IAttendanceRepository {
@@ -14,7 +14,7 @@ export class AttendanceRepository implements IAttendanceRepository {
   async findById(id: string): Promise<Attendance | null> {
     return this.typeormRepo.findOne({
       where: { id },
-      relations: ['academicGroup'],
+      relations: ["academicGroup"],
     });
   }
 
@@ -51,9 +51,21 @@ export class AttendanceRepository implements IAttendanceRepository {
       where: {
         academicGroup: { id: In(groupIds) },
       },
-      relations: ['academicGroup'],
+      relations: ["academicGroup"],
       order: {
-        classDate: 'ASC',
+        classDate: "ASC",
+      },
+    });
+  }
+
+  async findByGroupId(groupId: string): Promise<Attendance[]> {
+    return this.typeormRepo.find({
+      where: {
+        academicGroup: { id: groupId },
+      },
+      relations: ["academicGroup", "teacher"],
+      order: {
+        classDate: "ASC",
       },
     });
   }

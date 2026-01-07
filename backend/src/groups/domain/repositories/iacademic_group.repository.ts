@@ -4,6 +4,9 @@ export const IAcademicGroupRepository = Symbol('IAcademicGroupRepository');
 
 export interface IAcademicGroupRepository {
   findById(id: string): Promise<AcademicGroup | null>;
+  findGroupDetailsById(id: string): Promise<AcademicGroup | null>;
+  findGroupGradesById(id: string): Promise<AcademicGroup | null>;
+  findByIdWithEnrolledStudents(groupId: string): Promise<AcademicGroup | null>;
   findAll(): Promise<AcademicGroup[]>;
   findByIdAndType(id: string, type: GroupType): Promise<AcademicGroup | null>;
   findByAcaCourseAndType(
@@ -33,6 +36,10 @@ export interface IAcademicGroupRepository {
     type: GroupType,
     name: string,
   ): Promise<AcademicGroup | null>;
+
+  findGroupsByCourseIdWithTeacherAndTopics(
+    courseId: string,
+  ): Promise<AcademicGroup[] | null>;
 
   getScheduleById(id: string): Promise<AcademicGroup | null>;
   getAcademicCourse(id: string): Promise<AcademicGroup | null>;

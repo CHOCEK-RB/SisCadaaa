@@ -4,21 +4,23 @@ import {
   ForbiddenException,
   NotFoundException,
   BadRequestException,
-} from '@nestjs/common';
+  InternalServerErrorException,
+} from "@nestjs/common";
 
-import { IAcademicGroupRepository } from '../../domain/repositories/iacademic_group.repository';
-import { IStudentRepository } from 'src/users/domain/repositories/istudent.repository';
-import { ITeacherRepository } from 'src/users/domain/repositories/iteacher.repository';
-import { IEnrollmentRepository } from 'src/enrollment/domain/repositories/ienrollment.repository';
-import { JwtPayload } from 'src/auth/domain/interfaces/jwt-payload.interface';
-import { AcademicGroupDTO } from '../dto/academic_group.dto';
-import { AcademicCourseDTO } from 'src/courses/application/dto/academic_course.dto';
+import { IAcademicGroupRepository } from "../../domain/repositories/iacademic_group.repository";
+import { IStudentRepository } from "src/users/domain/repositories/istudent.repository";
+import { ITeacherRepository } from "src/users/domain/repositories/iteacher.repository";
+import { IEnrollmentRepository } from "src/enrollment/domain/repositories/ienrollment.repository";
+import { JwtPayload } from "src/auth/domain/interfaces/jwt-payload.interface";
+import { AcademicGroupDTO } from "../dto/academic_group.dto";
+import { AcademicCourseDTO } from "src/courses/application/dto/academic_course.dto";
 import {
   Enrollment,
   Grades,
-} from 'src/enrollment/domain/aggregates/enrollment.entity';
-import { GroupType } from '../../domain/aggregates/academic_group.entity';
-import { ScheduleSlotDTO } from '../dto/schedule.dto';
+} from "src/enrollment/domain/aggregates/enrollment.entity";
+import { GroupType } from "../../domain/aggregates/academic_group.entity";
+import { ScheduleSlotDTO } from "../dto/schedule.dto";
+import { StudentInfoDTO } from "../dto/student-info.dto";
 
 export interface GroupsForPeriods {
   [period: string]: AcademicGroupDTO[];
@@ -69,6 +71,152 @@ export class GroupsService {
     private readonly enrollmentRepository: IEnrollmentRepository,
   ) {}
 
+  async getGroupDetails(id: string): Promise<AcademicGroupDTO> {
+    const group = await this.academicGroupRepository.findGroupDetailsById(id);
+
+    if (!group) {
+      throw new NotFoundException(`Group with ID ${id} not found.`);
+    }
+
+    if (!group.academicCourse) {
+      throw new InternalServerErrorException(
+        `Academic Course not found for group with ID ${id}. Data inconsistency.`,
+      );
+    }
+
+    if (!group.academicCourse.course) {
+      throw new InternalServerErrorException(
+        `Course details not found for academic course of group with ID ${id}. Data inconsistency.`,
+      );
+    }
+
+    const courseDTO: AcademicCourseDTO = {
+      id: group.academicCourse.id,
+      creationDate: group.academicCourse.creationDate,
+      urlSyllabus: group.academicCourse.urlSyllabus,
+      course: {
+        id: group.academicCourse.course.id,
+        code: group.academicCourse.course.code,
+        name: group.academicCourse.course.name,
+        semester: group.academicCourse.course.semester,
+        credits: group.academicCourse.course.credits,
+      },
+      grades: group.academicCourse.grades,
+      coordinator: group.academicCourse.coordinator
+        ? {
+            id: group.academicCourse.coordinator.id,
+            userId: group.academicCourse.coordinator.user.id,
+            email: group.academicCourse.coordinator.user.email,
+            firstName: group.academicCourse.coordinator.name,
+            lastName:
+              `${group.academicCourse.coordinator.firstLastName} ${group.academicCourse.coordinator.secondLastName}`.trim(),
+            role: "teacher",
+            isActive: group.academicCourse.coordinator.user.isActive,
+          }
+        : undefined,
+      academicPeriod: group.academicCourse.academicPeriod,
+      currentlyEnrolledLabGroupId: undefined,
+      topics: group.academicCourse.topics.map((topic) => ({
+        id: topic.id,
+        order: topic.topicOrder,
+        topic: topic.topic,
+      })),
+      progress:
+        group.academicCourse.progress?.map((p) => ({
+          id: p.id,
+          groupName: p.groupName,
+          completedTopics: p.completedTopics.map((ct) => ({
+            id: ct.id,
+            order: ct.topicOrder,
+            topic: ct.topic,
+          })),
+        })) || [],
+    };
+
+    const groupDTO: AcademicGroupDTO = {
+      id: group.id,
+      name: group.name,
+      type: group.type,
+      capacity: group.capacity,
+      course: courseDTO,
+      teacher: group.teacher
+        ? {
+            id: group.teacher.id,
+            userId: group.teacher.user.id,
+            email: group.teacher.user.email,
+            firstName: group.teacher.name,
+            lastName:
+              `${group.teacher.firstLastName} ${group.teacher.secondLastName}`.trim(),
+            role: "teacher",
+            isActive: group.teacher.user.isActive,
+          }
+        : undefined,
+      enrollmentsCount: group.enrollments?.length ?? 0,
+    };
+
+    return groupDTO;
+  }
+
+  async getGroupGradesForSecretary(
+    groupId: string,
+  ): Promise<GroupGradesResponse> {
+    const group =
+      await this.academicGroupRepository.findGroupGradesById(groupId);
+
+    if (!group) {
+      throw new NotFoundException(`Group with ID ${groupId} not found.`);
+    }
+
+    if (!group.academicCourse) {
+      throw new InternalServerErrorException(
+        `Academic Course not found for group with ID ${groupId}. Data inconsistency.`,
+      );
+    }
+    if (!group.academicCourse.course) {
+      throw new InternalServerErrorException(
+        `Course details not found for academic course of group with ID ${groupId}. Data inconsistency.`,
+      );
+    }
+
+    const students: StudentGradeInfo[] =
+      group.enrollments?.map((enrollment) => ({
+        enrollmentId: enrollment.id,
+        studentId: enrollment.student.id,
+        cui: enrollment.student.cui,
+        firstName: enrollment.student.name,
+        lastName:
+          `${enrollment.student.firstLastName} ${enrollment.student.secondLastName}`.trim(),
+        grades: enrollment.grades || {
+          firstContinue: -1,
+          secondContinue: -1,
+          thirdContinue: -1,
+          firstPartial: -1,
+          secondPartial: -1,
+          thirdPartial: -1,
+        },
+      })) || [];
+
+    students.sort((a, b) => a.lastName.localeCompare(b.lastName));
+
+    return {
+      groupId: group.id,
+      groupName: group.name,
+      groupType: group.type,
+      courseName: group.academicCourse.course.name,
+      courseCode: group.academicCourse.course.code,
+      canEdit: false, // Secretary cannot edit grades
+      students,
+      gradingScheme: group.academicCourse.grades || {
+        firstContinue: 0,
+        secondContinue: 0,
+        thirdContinue: 0,
+        firstPartial: 0,
+        secondPartial: 0,
+        thirdPartial: 0,
+      },
+    };
+  }
+
   private getAcademicPeriodLabel(date: Date): string {
     const year = date.getFullYear();
     const month = date.getUTCMonth();
@@ -83,8 +231,8 @@ export class GroupsService {
   async getAllGroupsForTeacher(
     authenticatedUser: JwtPayload,
   ): Promise<GroupsForPeriods> {
-    if (authenticatedUser.role !== 'teacher') {
-      throw new ForbiddenException('Only teachers can access this route');
+    if (authenticatedUser.role !== "teacher") {
+      throw new ForbiddenException("Only teachers can access this route");
     }
 
     const teacherId = await this.teacherRepository.getIdForUserId(
@@ -92,14 +240,14 @@ export class GroupsService {
     );
 
     if (!teacherId) {
-      throw new ForbiddenException('Teacher not found');
+      throw new ForbiddenException("Teacher not found");
     }
 
     const groups =
       await this.academicGroupRepository.findByIdTeacher(teacherId);
 
     if (!groups) {
-      throw new ForbiddenException('Groups not found');
+      throw new ForbiddenException("Groups not found");
     }
 
     const groupsForPeriods: GroupsForPeriods = {};
@@ -141,7 +289,7 @@ export class GroupsService {
     console.log(group?.academicCourse);
 
     if (!group) {
-      throw new ForbiddenException('Group not found');
+      throw new ForbiddenException("Group not found");
     }
 
     const course: AcademicCourseDTO = {
@@ -169,7 +317,7 @@ export class GroupsService {
     const group = await this.academicGroupRepository.getScheduleById(id);
 
     if (!group) {
-      throw new ForbiddenException('Group not found');
+      throw new ForbiddenException("Group not found");
     }
 
     const groupDTO: AcademicGroupDTO = {
@@ -196,19 +344,56 @@ export class GroupsService {
     return groups;
   }
 
+  async getGroupsByCourse(courseId: string): Promise<AcademicGroupDTO[]> {
+    const groups =
+      await this.academicGroupRepository.findGroupsByCourseIdWithTeacherAndTopics(
+        courseId,
+      );
+
+    if (!groups) {
+      return [];
+    }
+
+    return groups.map((group) => {
+      const groupDTO: AcademicGroupDTO = {
+        id: group.id,
+        name: group.name,
+        type: group.type,
+        capacity: group.capacity,
+        teacher: group.teacher
+          ? {
+              id: group.teacher.id,
+              userId: group.teacher.user.id,
+              email: group.teacher.user.email,
+              firstName: group.teacher.name,
+              lastName:
+                `${group.teacher.firstLastName} ${group.teacher.secondLastName}`.trim(),
+              role: "teacher",
+            }
+          : undefined,
+        topics: group.academicCourse.topics?.map((topic) => ({
+          id: topic.id,
+          order: topic.topicOrder,
+          topic: topic.topic,
+        })),
+      };
+      return groupDTO;
+    });
+  }
+
   async getGroupGrades(
     groupId: string,
     authenticatedUser: JwtPayload,
   ): Promise<GroupGradesResponse> {
-    if (authenticatedUser.role !== 'teacher') {
-      throw new ForbiddenException('Only teachers can access group grades.');
+    if (authenticatedUser.role !== "teacher") {
+      throw new ForbiddenException("Only teachers can access group grades.");
     }
 
     const teacherProfile = await this.teacherRepository.findByUserId(
       authenticatedUser.sub,
     );
     if (!teacherProfile) {
-      throw new NotFoundException('Teacher profile not found.');
+      throw new NotFoundException("Teacher profile not found.");
     }
 
     console.log(teacherProfile);
@@ -221,7 +406,7 @@ export class GroupsService {
     console.log(group);
 
     if (!group.teacher || group.teacher.id !== teacherProfile.id) {
-      throw new ForbiddenException('You are not assigned to teach this group.');
+      throw new ForbiddenException("You are not assigned to teach this group.");
     }
 
     const allEnrollments = group.enrollments;
@@ -269,15 +454,15 @@ export class GroupsService {
     updateGradeDto: UpdateGradeDto,
     authenticatedUser: JwtPayload,
   ): Promise<void> {
-    if (authenticatedUser.role !== 'teacher') {
-      throw new ForbiddenException('Only teachers can update grades.');
+    if (authenticatedUser.role !== "teacher") {
+      throw new ForbiddenException("Only teachers can update grades.");
     }
 
     const teacherProfile = await this.teacherRepository.findByUserId(
       authenticatedUser.sub,
     );
     if (!teacherProfile) {
-      throw new NotFoundException('Teacher profile not found.');
+      throw new NotFoundException("Teacher profile not found.");
     }
 
     const group = await this.academicGroupRepository.findById(groupId);
@@ -286,12 +471,12 @@ export class GroupsService {
     }
 
     if (!group.teacher || group.teacher.id !== teacherProfile.id) {
-      throw new ForbiddenException('You are not assigned to teach this group.');
+      throw new ForbiddenException("You are not assigned to teach this group.");
     }
 
     if (group.type !== GroupType.THEORY) {
       throw new BadRequestException(
-        'Grades can only be edited for theory groups.',
+        "Grades can only be edited for theory groups.",
       );
     }
 
@@ -319,7 +504,7 @@ export class GroupsService {
       !validateGrade(grades.thirdPartial)
     ) {
       throw new BadRequestException(
-        'Grades must be between 0 and 20, or -1 for not set.',
+        "Grades must be between 0 and 20, or -1 for not set.",
       );
     }
 
@@ -336,15 +521,15 @@ export class GroupsService {
     updates: UpdateGradeDto[],
     authenticatedUser: JwtPayload,
   ): Promise<void> {
-    if (authenticatedUser.role !== 'teacher') {
-      throw new ForbiddenException('Only teachers can update grades.');
+    if (authenticatedUser.role !== "teacher") {
+      throw new ForbiddenException("Only teachers can update grades.");
     }
 
     const teacherProfile = await this.teacherRepository.findByUserId(
       authenticatedUser.sub,
     );
     if (!teacherProfile) {
-      throw new NotFoundException('Teacher profile not found.');
+      throw new NotFoundException("Teacher profile not found.");
     }
 
     const group = await this.academicGroupRepository.findById(groupId);
@@ -353,12 +538,12 @@ export class GroupsService {
     }
 
     if (!group.teacher || group.teacher.id !== teacherProfile.id) {
-      throw new ForbiddenException('You are not assigned to teach this group.');
+      throw new ForbiddenException("You are not assigned to teach this group.");
     }
 
     if (group.type !== GroupType.THEORY) {
       throw new BadRequestException(
-        'Grades can only be edited for theory groups.',
+        "Grades can only be edited for theory groups.",
       );
     }
 
@@ -389,8 +574,8 @@ export class GroupsService {
   async getTeacherSchedule(
     authenticatedUser: JwtPayload,
   ): Promise<AcademicGroupDTO[]> {
-    if (authenticatedUser.role !== 'teacher') {
-      throw new ForbiddenException('Only teachers can view their schedule.');
+    if (authenticatedUser.role !== "teacher") {
+      throw new ForbiddenException("Only teachers can view their schedule.");
     }
 
     const teacherProfile = await this.teacherRepository.findByUserId(
@@ -466,7 +651,7 @@ export class GroupsService {
             firstName: teacherProfile.name,
             lastName:
               `${teacherProfile.firstLastName} ${teacherProfile.secondLastName}`.trim(),
-            role: 'teacher',
+            role: "teacher",
           },
           schedule: schedules,
         };
@@ -476,5 +661,34 @@ export class GroupsService {
     }
 
     return Array.from(groupsMap.values());
+  }
+
+  async getStudentsInGroup(groupId: string): Promise<StudentInfoDTO[]> {
+    const group =
+      await this.academicGroupRepository.findByIdWithEnrolledStudents(groupId);
+
+    if (!group) {
+      throw new NotFoundException(
+        `Academic group with ID ${groupId} not found`,
+      );
+    }
+
+    if (!group.enrollments || group.enrollments.length === 0) {
+      return [];
+    }
+
+    const students: StudentInfoDTO[] = group.enrollments.map((enrollment) => ({
+      id: enrollment.student.id,
+      cui: enrollment.student.cui,
+      firstName: enrollment.student.name,
+      lastName:
+        `${enrollment.student.firstLastName} ${enrollment.student.secondLastName}`.trim(),
+      email: enrollment.student.user.email,
+    }));
+
+    // Sort by last name
+    students.sort((a, b) => a.lastName.localeCompare(b.lastName));
+
+    return students;
   }
 }

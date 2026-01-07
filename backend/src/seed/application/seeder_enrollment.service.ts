@@ -1,19 +1,19 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject } from "@nestjs/common";
 
-import { IEnrollmentRepository } from 'src/enrollment/domain/repositories/ienrollment.repository';
-import { IAcademicCourseRepository } from 'src/courses/domain/repositories/icourse_academic.repository';
-import { IStudentRepository } from 'src/users/domain/repositories/istudent.repository';
+import { IEnrollmentRepository } from "src/enrollment/domain/repositories/ienrollment.repository";
+import { IAcademicCourseRepository } from "src/courses/domain/repositories/icourse_academic.repository";
+import { IStudentRepository } from "src/users/domain/repositories/istudent.repository";
 
 import {
   Enrollment,
   EnrollmentStatus,
-} from 'src/enrollment/domain/aggregates/enrollment.entity';
-import { Student } from 'src/users/domain/aggregates/student.entity';
-import { AcademicCourse } from 'src/courses/domain/aggregates/academic_course.entity';
+} from "src/enrollment/domain/aggregates/enrollment.entity";
+import { Student } from "src/users/domain/aggregates/student.entity";
+import { AcademicCourse } from "src/courses/domain/aggregates/academic_course.entity";
 import {
   AcademicGroup,
   GroupType,
-} from 'src/groups/domain/aggregates/academic_group.entity';
+} from "src/groups/domain/aggregates/academic_group.entity";
 
 /**
  * @class SeederEnrollmentService
@@ -50,20 +50,20 @@ export class SeederEnrollmentService {
    * @throws {Error} If there is a failure during the enrollment saving process.
    */
   async seedEnrollment(): Promise<void> {
-    const academicCourses = await this.academicCourseRepository.findAll();
+    const academicCourses = await this.academicCourseRepository.findAllWithGroups();
     const students = await this.studentRepository.findAll();
 
     if (!academicCourses || academicCourses.length === 0) {
-      console.log('No academic courses found to seed enrollments.');
+      console.log("No academic courses found to seed enrollments.");
       return;
     }
     if (!students || students.length === 0) {
-      console.log('No students found. Cannot assign students to enrollments.');
+      console.log("No students found. Cannot assign students to enrollments.");
       return;
     }
 
     academicCourses.forEach((ac) => {
-      if (typeof ac.creationDate === 'string') {
+      if (typeof ac.creationDate === "string") {
         ac.creationDate = new Date(ac.creationDate);
       }
     });
@@ -83,7 +83,7 @@ export class SeederEnrollmentService {
         const yearsToAdd = Math.floor((targetSemester - 1) / 2);
         const targetYear = startYear + yearsToAdd;
         const isFirstAcademicSemester = targetSemester % 2 !== 0;
-        const targetMonth = isFirstAcademicSemester ? 3 : 8;
+        const targetMonth = isFirstAcademicSemester ? 2 : 8;
 
         const relevantAcademicCourses = academicCourses.filter(
           (ac) =>
@@ -101,9 +101,9 @@ export class SeederEnrollmentService {
           continue;
         }
 
-        let groupName = Math.random() < 0.5 ? 'A' : 'B';
-        if (student.cui === '20233595') {
-          groupName = 'A';
+        let groupName = Math.random() < 0.5 ? "A" : "B";
+        if (student.cui === "20233595") {
+          groupName = "A";
         }
 
         for (const ac of relevantAcademicCourses) {
@@ -140,7 +140,7 @@ export class SeederEnrollmentService {
 
           if (assignedGroupIds.length === 0) {
             console.warn(
-              `Skipping enrollment for ${student.cui} in course ${ac.course?.code || ac.id} (${targetYear}-${isFirstAcademicSemester ? 'A' : 'B'}) - No suitable groups found for '${groupName}'. Available groups: ${groups.map((g) => `${g.name}-${g.type}`).join(', ')}`,
+              `Skipping enrollment for ${student.cui} in course ${ac.course?.code || ac.id} (${targetYear}-${isFirstAcademicSemester ? "A" : "B"}) - No suitable groups found for '${groupName}'. Available groups: ${groups.map((g) => `${g.name}-${g.type}`).join(", ")}`,
             );
             continue;
           }
@@ -200,10 +200,10 @@ export class SeederEnrollmentService {
           `Successfully created all ${enrollmentsToCreate.length} enrollments.`,
         );
       } else {
-        console.log('No new enrollments needed to be created.');
+        console.log("No new enrollments needed to be created.");
       }
     } catch (error) {
-      console.error('Failed to save enrollments:', error);
+      console.error("Failed to save enrollments:", error);
       throw error;
     }
   }

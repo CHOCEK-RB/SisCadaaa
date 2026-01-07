@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
 
-import { Course } from 'src/courses/domain/aggregates/course.entity';
-import { ICourseRepository } from 'src/courses/domain/repositories/icourse.repository';
+import { Course } from "src/courses/domain/aggregates/course.entity";
+import { ICourseRepository } from "src/courses/domain/repositories/icourse.repository";
 
 @Injectable()
 export class CourseRepository implements ICourseRepository {

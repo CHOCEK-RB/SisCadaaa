@@ -22,8 +22,7 @@ import {
 } from "../../application/services/groups.service";
 import { AcademicGroupDTO } from "../../application/dto/academic_group.dto";
 import { AcademicCourseDTO } from "src/courses/application/dto/academic_course.dto";
-
-import { GradingPeriodActiveGuard } from "src/enrollment/presentation/guards/grading-period-active.guard";
+import { StudentInfoDTO } from "../../application/dto/student-info.dto"; // Added import
 
 /**
  * @class GroupsController
@@ -40,6 +39,14 @@ export class GroupsController {
    * @param {GroupsService} groupsService - Service for handling business logic related to academic groups.
    */
   constructor(private readonly groupsService: GroupsService) {}
+
+  @Get(":id/details")
+  @UseGuards(AuthGuard("jwt"))
+  async getGroupDetails(
+    @Param("id", ParseUUIDPipe) id: string,
+  ): Promise<AcademicGroupDTO> {
+    return await this.groupsService.getGroupDetails(id);
+  }
 
   /**
    * @method getAllGroupsForTeacher
@@ -101,6 +108,14 @@ export class GroupsController {
     return await this.groupsService.getAcademicCourse(id);
   }
 
+  @Get("/by-course/:courseId")
+  @UseGuards(AuthGuard("jwt"))
+  async getGroupsByCourse(
+    @Param("courseId", ParseUUIDPipe) courseId: string,
+  ): Promise<AcademicGroupDTO[]> {
+    return await this.groupsService.getGroupsByCourse(courseId);
+  }
+
   /**
    * @method getGroupGrades
    * @description
@@ -116,6 +131,29 @@ export class GroupsController {
     @GetUser() user: JwtPayload,
   ): Promise<GroupGradesResponse> {
     return await this.groupsService.getGroupGrades(id, user);
+  }
+
+  @Get("/:id/grades/secretary")
+  @UseGuards(AuthGuard("jwt"))
+  async getGroupGradesForSecretary(
+    @Param("id", ParseUUIDPipe) id: string,
+  ): Promise<GroupGradesResponse> {
+    return await this.groupsService.getGroupGradesForSecretary(id);
+  }
+
+  /**
+   * @method getStudentsInGroup
+   * @description
+   * Retrieves a list of students enrolled in a specific academic group.
+   * @param {string} groupId - The UUID of the academic group.
+   * @returns {Promise<StudentInfoDTO[]>} A promise that resolves to an array of DTOs containing basic student information.
+   */
+  @Get("/:groupId/students")
+  @UseGuards(AuthGuard("jwt"))
+  async getStudentsInGroup(
+    @Param("groupId", ParseUUIDPipe) groupId: string,
+  ): Promise<StudentInfoDTO[]> {
+    return await this.groupsService.getStudentsInGroup(groupId);
   }
 
   /**

@@ -1,7 +1,7 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { IAcademicCourseRepository } from '../../domain/repositories/icourse_academic.repository';
-import { AcademicCourseDTO } from '../dto/academic_course.dto';
-import { AcademicCourseMapper } from '../mappers/academic-course.mapper';
+import { Injectable, Inject, NotFoundException } from "@nestjs/common";
+import { IAcademicCourseRepository } from "../../domain/repositories/icourse_academic.repository";
+import { AcademicCourseDTO } from "../dto/academic_course.dto";
+import { AcademicCourseMapper } from "../mappers/academic-course.mapper";
 
 /**
  * @class AcademicCourseService
@@ -38,5 +38,14 @@ export class AcademicCourseService {
     }
 
     return this.academicCourseMapper.toDto(academicCourse);
+  }
+
+  async findAllByPeriod(periodId: string): Promise<AcademicCourseDTO[]> {
+    const courses =
+      await this.academicCourseRepository.findByAcademicPeriodId(periodId);
+
+    console.log(courses);
+
+    return courses.map((course) => this.academicCourseMapper.toDto(course));
   }
 }

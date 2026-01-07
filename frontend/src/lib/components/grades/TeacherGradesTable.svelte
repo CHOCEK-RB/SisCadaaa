@@ -46,7 +46,7 @@
     };
   }
 
-  const columns = $derived<ColumnDef<any>[]>([
+  const baseColumns = $derived<ColumnDef<any>[]>([
     {
       accessorKey: "fullName",
       header: ({ column }) =>
@@ -90,16 +90,21 @@
         );
       },
     },
-    {
-      id: "actions",
-      header: "Acción",
-      cell: ({ row }) =>
-        renderComponent(EditStudentGradesDialog, {
-          student: row.original,
-          groupId: groupGradesData.groupId,
-        }),
-    },
   ]);
+
+  const actionsColumn: ColumnDef<any> = {
+    id: "actions",
+    header: "Acción",
+    cell: ({ row }) =>
+      renderComponent(EditStudentGradesDialog, {
+        student: row.original,
+        groupId: groupGradesData.groupId,
+      }),
+  };
+
+  const displayColumns = $derived<ColumnDef<any>[]>(
+    groupGradesData.canEdit ? [...baseColumns, actionsColumn] : baseColumns,
+  );
 
   function createReadOnlyColumn(key: string, title: string): ColumnDef<any> {
     return {
@@ -118,7 +123,7 @@
       return tableData;
     },
     get columns() {
-      return columns;
+      return displayColumns;
     },
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -149,8 +154,9 @@
       class="max-w-sm"
     />
 
-    <!-- Botón de Importar CSV añadido aquí -->
-    <UploadGradesDialog {groupGradesData} />
+    {#if groupGradesData.canEdit}
+      <UploadGradesDialog {groupGradesData} />
+    {/if}
   </div>
 
   <div class="rounded-md border shadow-sm">
@@ -187,7 +193,10 @@
           {/each}
         {:else}
           <Table.Row>
-            <Table.Cell colspan={columns.length} class="h-24 text-center">
+            <Table.Cell
+              colspan={displayColumns.length}
+              class="h-24 text-center"
+            >
               No se encontraron estudiantes.
             </Table.Cell>
           </Table.Row>

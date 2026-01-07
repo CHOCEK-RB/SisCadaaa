@@ -1,14 +1,14 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { In } from 'typeorm';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { In } from "typeorm";
 
 import {
   AcademicGroup,
   GroupType,
-} from '../domain/aggregates/academic_group.entity';
+} from "../domain/aggregates/academic_group.entity";
 
-import { IAcademicGroupRepository } from '../domain/repositories/iacademic_group.repository';
+import { IAcademicGroupRepository } from "../domain/repositories/iacademic_group.repository";
 
 @Injectable()
 export class AcademicGroupRepository implements IAcademicGroupRepository {
@@ -24,6 +24,43 @@ export class AcademicGroupRepository implements IAcademicGroupRepository {
         enrollments: { student: true },
         teacher: true,
         academicCourse: { course: true },
+      },
+    });
+  }
+
+  async findGroupDetailsById(id: string): Promise<AcademicGroup | null> {
+    return this.typeormRepo.findOne({
+      where: { id },
+      relations: {
+        teacher: { user: true },
+        academicCourse: {
+          course: true,
+          coordinator: { user: true },
+          topics: true,
+          progress: { completedTopics: true },
+        },
+        enrollments: true,
+      },
+    });
+  }
+
+  async findGroupGradesById(id: string): Promise<AcademicGroup | null> {
+    return this.typeormRepo.findOne({
+      where: { id },
+      relations: {
+        enrollments: { student: true },
+        academicCourse: { course: true },
+      },
+    });
+  }
+
+  async findByIdWithEnrolledStudents(
+    groupId: string,
+  ): Promise<AcademicGroup | null> {
+    return this.typeormRepo.findOne({
+      where: { id: groupId },
+      relations: {
+        enrollments: { student: { user: true } },
       },
     });
   }
@@ -161,13 +198,13 @@ export class AcademicGroupRepository implements IAcademicGroupRepository {
 
     const pattern = `%${age}%`;
     const query = this.typeormRepo
-      .createQueryBuilder('group')
-      .innerJoin('group.academicCourse', 'ac')
-      .innerJoin('ac.course', 'course')
-      .where('group.type = :type', { type })
-      .andWhere('group.name = :name', { name })
-      .andWhere('course.code = :courseCode', { courseCode })
-      .andWhere('CAST(ac.creationDate AS TEXT) LIKE :agePattern', {
+      .createQueryBuilder("group")
+      .innerJoin("group.academicCourse", "ac")
+      .innerJoin("ac.course", "course")
+      .where("group.type = :type", { type })
+      .andWhere("group.name = :name", { name })
+      .andWhere("course.code = :courseCode", { courseCode })
+      .andWhere("CAST(ac.creationDate AS TEXT) LIKE :agePattern", {
         agePattern: pattern,
       })
       .take(1);
@@ -175,6 +212,22 @@ export class AcademicGroupRepository implements IAcademicGroupRepository {
     const result = await query.getOne();
 
     return result || null;
+  }
+
+  async findGroupsByCourseIdWithTeacherAndTopics(
+    courseId: string,
+  ): Promise<AcademicGroup[] | null> {
+    return this.typeormRepo.find({
+      where: { academicCourse: { id: courseId } },
+      relations: {
+        teacher: {
+          user: true,
+        },
+        academicCourse: {
+          topics: true,
+        },
+      },
+    });
   }
 
   async getScheduleById(id: string): Promise<AcademicGroup | null> {
@@ -198,7 +251,7 @@ export class AcademicGroupRepository implements IAcademicGroupRepository {
       order: {
         academicCourse: {
           topics: {
-            topicOrder: 'ASC',
+            topicOrder: "ASC",
           },
         },
       },

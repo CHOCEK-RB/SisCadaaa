@@ -1,16 +1,16 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
 import {
   FindOneOptions,
   Repository,
   LessThanOrEqual,
   MoreThanOrEqual,
-} from 'typeorm';
+} from "typeorm";
 import {
   GlobalEvent,
   EventType,
-} from '../domain/aggregates/global_event.entity';
-import { IGlobalEventRepository } from '../domain/repositories/iglobal_event.repository';
+} from "../domain/aggregates/global_event.entity";
+import { IGlobalEventRepository } from "../domain/repositories/iglobal_event.repository";
 
 @Injectable()
 export class GlobalEventRepository implements IGlobalEventRepository {
@@ -38,6 +38,11 @@ export class GlobalEventRepository implements IGlobalEventRepository {
     return await this.eventRepository.findOne(options);
   }
 
+  async findAllByType(type: EventType): Promise<GlobalEvent[]> {
+    // Added
+    return await this.eventRepository.find({ where: { type } }); // Added
+  } // Added
+
   async save(event: Partial<GlobalEvent>): Promise<GlobalEvent>;
   async save(events: Partial<GlobalEvent>[]): Promise<GlobalEvent[]>;
   async save(
@@ -50,4 +55,3 @@ export class GlobalEventRepository implements IGlobalEventRepository {
     }
   }
 }
-

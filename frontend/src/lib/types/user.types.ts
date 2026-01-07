@@ -32,3 +32,11 @@ export interface PaginatedResult<T> {
   data: T[];
   total: number;
 }
+
+export interface TeacherInfoDTO {
+  id: string;
+  firstName: string;
+  lastName: string;
+  secondLastName?: string;
+  user?: undefined; // Explicitly undefined as per backend data
+}

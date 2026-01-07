@@ -1,6 +1,6 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { EventType } from '../domain/aggregates/global_event.entity';
-import { IGlobalEventRepository } from '../domain/repositories/iglobal_event.repository';
+import { Injectable, Inject } from "@nestjs/common";
+import { GlobalEvent, EventType } from "../domain/aggregates/global_event.entity";
+import { IGlobalEventRepository } from "../domain/repositories/iglobal_event.repository";
 
 /**
  * @class GlobalEventService
@@ -30,5 +30,9 @@ export class GlobalEventService {
   async isEventActive(type: EventType): Promise<boolean> {
     const activeEvent = await this.eventRepository.findActive(type);
     return !!activeEvent;
+  }
+
+  async findAllAcademicPeriods(): Promise<GlobalEvent[]> {
+    return this.eventRepository.findAllByType(EventType.ACADEMIC);
   }
 }

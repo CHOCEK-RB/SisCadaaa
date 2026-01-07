@@ -5,32 +5,32 @@ import {
   OneToMany,
   ManyToOne,
   ManyToMany,
-} from 'typeorm';
+} from "typeorm";
 
-import { ScheduleSlot } from './schedule.entity';
-import { AcademicCourse } from 'src/courses/domain/aggregates/academic_course.entity';
-import { Teacher } from 'src/users/domain/aggregates/teacher.entity';
-import { Attendance } from 'src/attendance/domain/aggregates/attendance.entity';
-import { Enrollment } from 'src/enrollment/domain/aggregates/enrollment.entity';
+import { ScheduleSlot } from "./schedule.entity";
+import { AcademicCourse } from "src/courses/domain/aggregates/academic_course.entity";
+import { Teacher } from "src/users/domain/aggregates/teacher.entity";
+import { Attendance } from "src/attendance/domain/aggregates/attendance.entity";
+import { Enrollment } from "src/enrollment/domain/aggregates/enrollment.entity";
 
 export enum GroupType {
-  LABORATORY = 'laboratory',
-  THEORY = 'theory',
-  PRACTICE = 'practice',
+  LABORATORY = "laboratory",
+  THEORY = "theory",
+  PRACTICE = "practice",
 }
 
 @Entity()
 export class AcademicGroup {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column('varchar', { length: 100 })
+  @Column("varchar", { length: 100 })
   name: string;
 
-  @Column('int')
+  @Column("int")
   capacity: number;
 
-  @Column('enum', { enum: GroupType, default: GroupType.THEORY })
+  @Column("enum", { enum: GroupType, default: GroupType.THEORY })
   type: GroupType;
 
   @ManyToOne(() => AcademicCourse, (course) => course.groups)
@@ -38,7 +38,7 @@ export class AcademicGroup {
 
   @ManyToOne(() => Teacher, (teacher) => teacher.groups, {
     nullable: true,
-    onDelete: 'SET NULL',
+    onDelete: "SET NULL",
   })
   teacher: Teacher;
 

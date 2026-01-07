@@ -1,5 +1,6 @@
 import { api, type RequestOptions } from "./api.service";
 import type { AcademicGroupDTO } from "$lib/types/group.types";
+import type { StudentUserDTO } from "$lib/types/user.types";
 
 export interface GroupsForPeriods {
   [period: string]: AcademicGroupDTO[];
@@ -52,6 +53,22 @@ export interface UpdateGradeDto {
 }
 
 export const groupsService = {
+  async getGroupDetails(
+    id: string,
+    options: RequestOptions = {},
+  ): Promise<AcademicGroupDTO> {
+    const response = await api.get<AcademicGroupDTO>(
+      `/groups/${id}/details`,
+      options,
+    );
+    if (!response) {
+      throw new Error(
+        "No se recibieron datos del servidor para los detalles del grupo",
+      );
+    }
+    return response;
+  },
+
   async getGroups(options: RequestOptions = {}): Promise<GroupsForPeriods> {
     const response = await api.get<GroupsForPeriods>(
       "/groups/teacher",
@@ -94,6 +111,22 @@ export const groupsService = {
     return response;
   },
 
+  async getGroupGradesForSecretary(
+    groupId: string,
+    options: RequestOptions = {},
+  ): Promise<GroupGradesResponse> {
+    const response = await api.get<GroupGradesResponse>(
+      `/groups/${groupId}/grades/secretary`,
+      options,
+    );
+
+    if (!response) {
+      throw new Error("No se recibieron datos del servidor, notas del grupo para secretaria");
+    }
+
+    return response;
+  },
+
   async updateStudentGrade(
     groupId: string,
     updateDto: UpdateGradeDto,
@@ -107,7 +140,7 @@ export const groupsService = {
     updates: UpdateGradeDto[],
     options: RequestOptions = {},
   ): Promise<void> {
-    await api.patch(`/groups/${groupId}/grades/bulk`, updates , options);
+    await api.patch(`/groups/${groupId}/grades/bulk`, updates, options);
   },
 
   async getAcademicCourse(id: string, options: RequestOptions = {}) {
@@ -137,6 +170,36 @@ export const groupsService = {
       );
     }
 
+    return response;
+  },
+
+  async getGroupsByCourse(
+    courseId: string,
+    options: RequestOptions = {},
+  ): Promise<AcademicGroupDTO[]> {
+    const response = await api.get<AcademicGroupDTO[]>(
+      `/groups/by-course/${courseId}`,
+      options,
+    );
+
+    if (!response) {
+      throw new Error("No data received from the server for groups by course");
+    }
+    return response;
+  },
+
+  async getStudentsInGroup(
+    groupId: string,
+    options: RequestOptions = {},
+  ): Promise<StudentUserDTO[]> {
+    const response = await api.get<StudentUserDTO[]>(
+      `/groups/${groupId}/students`,
+      options,
+    );
+
+    if (!response) {
+      throw new Error("No data received from the server for students in group");
+    }
     return response;
   },
 };

@@ -1,15 +1,15 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject } from "@nestjs/common";
 
-import { IAcademicGroupRepository } from 'src/groups/domain/repositories/iacademic_group.repository';
-import { IAcademicCourseRepository } from 'src/courses/domain/repositories/icourse_academic.repository';
-import { ITeacherRepository } from 'src/users/domain/repositories/iteacher.repository';
+import { IAcademicGroupRepository } from "src/groups/domain/repositories/iacademic_group.repository";
+import { IAcademicCourseRepository } from "src/courses/domain/repositories/icourse_academic.repository";
+import { ITeacherRepository } from "src/users/domain/repositories/iteacher.repository";
 
 import {
   AcademicGroup,
   GroupType,
-} from 'src/groups/domain/aggregates/academic_group.entity';
-import { AcademicCourse } from 'src/courses/domain/aggregates/academic_course.entity';
-import { Teacher } from 'src/users/domain/aggregates/teacher.entity';
+} from "src/groups/domain/aggregates/academic_group.entity";
+import { AcademicCourse } from "src/courses/domain/aggregates/academic_course.entity";
+import { Teacher } from "src/users/domain/aggregates/teacher.entity";
 
 /**
  * @class SeederAcademicGroupsService
@@ -48,11 +48,11 @@ export class SeederAcademicGroupsService {
     const allTeachers = await this.teacherRepository.findAll();
 
     if (!academicCourses || academicCourses.length === 0) {
-      console.log('No academic courses found to seed groups.');
+      console.log("No academic courses found to seed groups.");
       return;
     }
     if (!allTeachers || allTeachers.length === 0) {
-      console.log('No teachers found. Cannot assign teachers to groups.');
+      console.log("No teachers found. Cannot assign teachers to groups.");
       return;
     }
 
@@ -61,7 +61,9 @@ export class SeederAcademicGroupsService {
       return course.creationDate > latest ? course.creationDate : latest;
     }, new Date(0)); // Initialize with a very old date
 
-    console.log(`Latest academic course creation date: ${latestCreationDate}`);
+    console.log(
+      `Latest academic course creation date: ${latestCreationDate.toISOString()}`,
+    );
 
     const groupsToCreate: AcademicGroup[] = [];
     const coursesToUpdate: AcademicCourse[] = [];
@@ -75,9 +77,19 @@ export class SeederAcademicGroupsService {
     );
 
     for (const ac of academicCourses) {
-      const coordinator = getRandomTeacher();
+      let coordinator = getRandomTeacher();
+
+      if (ac.course.semester == 6) {
+        coordinator =
+          allTeachers.find(
+            (teacher) =>
+              teacher.name == "JOSE LUIS" &&
+              teacher.firstLastName == "CALIZAYA",
+          ) || coordinator;
+      }
+
       const theoryA = new AcademicGroup();
-      theoryA.name = 'A';
+      theoryA.name = "A";
       theoryA.type = GroupType.THEORY;
       theoryA.capacity = 40;
       theoryA.academicCourse = ac;
@@ -85,7 +97,7 @@ export class SeederAcademicGroupsService {
       groupsToCreate.push(theoryA);
 
       const theoryB = new AcademicGroup();
-      theoryB.name = 'B';
+      theoryB.name = "B";
       theoryB.type = GroupType.THEORY;
       theoryB.capacity = 40;
       theoryB.academicCourse = ac;
@@ -96,7 +108,7 @@ export class SeederAcademicGroupsService {
       coursesToUpdate.push(ac);
 
       const practiceA = new AcademicGroup();
-      practiceA.name = 'A';
+      practiceA.name = "A";
       practiceA.type = GroupType.PRACTICE;
       practiceA.capacity = 40;
       practiceA.academicCourse = ac;
@@ -104,7 +116,7 @@ export class SeederAcademicGroupsService {
       groupsToCreate.push(practiceA);
 
       const practiceB = new AcademicGroup();
-      practiceB.name = 'B';
+      practiceB.name = "B";
       practiceB.type = GroupType.PRACTICE;
       practiceB.capacity = 40;
       practiceB.academicCourse = ac;
@@ -113,7 +125,7 @@ export class SeederAcademicGroupsService {
 
       // Only create lab groups if the academic course is NOT from the latest academic cycle
       if (ac.creationDate.getTime() !== latestCreationDate.getTime()) {
-        const labGroupNames = ['A', 'B', 'C'];
+        const labGroupNames = ["A", "B", "C"];
         for (let i = 0; i < labGroupNames.length; i++) {
           const labGroup = new AcademicGroup();
           labGroup.name = labGroupNames[i];
@@ -144,7 +156,7 @@ export class SeederAcademicGroupsService {
         );
       }
     } catch (error) {
-      console.error('Failed to save academic groups or update courses:', error);
+      console.error("Failed to save academic groups or update courses:", error);
     }
   }
 }

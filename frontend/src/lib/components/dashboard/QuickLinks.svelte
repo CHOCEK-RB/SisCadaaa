@@ -1,8 +1,11 @@
 <script lang="ts">
   import { Button } from "$lib/components/ui/button";
   import { userRole } from "$lib/store/auth.store";
-  import { GraduationCap, Calendar, ListChecks } from "lucide-svelte";
-  import {type NavAccess, type UserRole, NavigationsAccess} from "$lib/config/access_direct"
+  import {
+    type NavAccess,
+    type UserRole,
+    NavigationsAccess,
+  } from "$lib/config/access_direct";
   const currentRole = $derived($userRole as UserRole);
   const links: NavAccess[] = $derived(NavigationsAccess[currentRole]);
 </script>
@@ -23,3 +26,4 @@
     </a>
   {/each}
 </div>
+

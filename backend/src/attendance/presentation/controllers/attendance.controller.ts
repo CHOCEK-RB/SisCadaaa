@@ -81,6 +81,21 @@ export class AttendanceController {
   }
 
   /**
+   * @method getAllAttendanceForGroup
+   * @description
+   * Retrieves all attendance records for a specific academic group.
+   * @param {string} groupId - The UUID of the academic group.
+   * @returns {Promise<GroupAttendanceRecordResponseDto[]>} A promise that resolves to an array of DTOs containing the group's attendance history.
+   */
+  @Get('all/:groupId')
+  @UseGuards(AuthGuard('jwt'))
+  async getAllAttendanceForGroup(
+    @Param('groupId', ParseUUIDPipe) groupId: string,
+  ): Promise<GroupAttendanceRecordResponseDto[]> {
+    return await this.attendanceQueryService.getAllAttendanceForGroup(groupId);
+  }
+
+  /**
    * @method takeAttendance
    * @description
    * Records or updates attendance for a specific academic group.

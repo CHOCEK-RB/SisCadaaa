@@ -1,8 +1,10 @@
-import { Injectable } from '@nestjs/common';
-import { AcademicCourse } from '../../domain/aggregates/academic_course.entity';
-import { AcademicCourseDTO } from '../dto/academic_course.dto';
-import { CourseDTO } from '../dto/course.dto';
-import { CourseTopicDTO } from '../dto/course_topic.dto';
+import { Injectable } from "@nestjs/common";
+import { AcademicCourse } from "../../domain/aggregates/academic_course.entity";
+import { AcademicCourseDTO } from "../dto/academic_course.dto";
+import { AcademicGroupDTO } from "src/groups/application/dto/academic_group.dto";
+import { CourseDTO } from "../dto/course.dto";
+import { CourseTopicDTO } from "../dto/course_topic.dto";
+import { TeacherProfileDTO } from "src/users/application/dto/teacher.dto";
 
 @Injectable()
 export class AcademicCourseMapper {
@@ -34,6 +36,26 @@ export class AcademicCourseMapper {
         })) ?? [],
     }));
 
+    const coordinatorDto: TeacherProfileDTO | undefined = (academicCourse.coordinator && academicCourse.coordinator.user)
+      ? {
+          id: academicCourse.coordinator.id,
+          userId: academicCourse.coordinator.user.id,
+          email: academicCourse.coordinator.user.email,
+          firstName: academicCourse.coordinator.name,
+          lastName: academicCourse.coordinator.firstLastName,
+          role: "teacher",
+          isActive: academicCourse.coordinator.user.isActive,
+        }
+      : undefined;
+
+    const groupsDto: AcademicGroupDTO[] | undefined = academicCourse.groups?.map(
+      (group) => ({
+        id: group.id,
+        name: group.name,
+        type: group.type,
+      }),
+    );
+    
     const detailDto: AcademicCourseDTO = {
       id: academicCourse.id,
       creationDate: academicCourse.creationDate,
@@ -41,6 +63,9 @@ export class AcademicCourseMapper {
       course: courseDto,
       topics: topicsDto,
       progress: progressDto,
+      coordinator: coordinatorDto,
+      academicPeriod: academicCourse.academicPeriod,
+      groups: groupsDto,
     };
 
     return detailDto;

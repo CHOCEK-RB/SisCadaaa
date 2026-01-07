@@ -92,4 +92,21 @@ export const attendanceService = {
 
     return response;
   },
+
+  async getAllAttendanceForGroup(
+    groupId: string,
+    options: RequestOptions = {},
+  ): Promise<GroupAttendanceRecord[]> {
+    const response = await api.get<GroupAttendanceRecord[]>(
+      `/attendance/all/${groupId}`,
+      options,
+    );
+
+    if (!response) {
+      throw new Error(
+        "No se recibieron datos del servidor, todas las asistencias del grupo",
+      );
+    }
+    return response;
+  },
 };

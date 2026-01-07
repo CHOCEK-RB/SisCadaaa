@@ -30,7 +30,10 @@ export const reservationService = {
   async getMyReservations(
     options: RequestOptions = {},
   ): Promise<Reservation[] | null> {
-    return await api.get<Reservation[]>(`${BASE_ENDPOINT}/my-reservations`, options);
+    return await api.get<Reservation[]>(
+      `${BASE_ENDPOINT}/my-reservations`,
+      options,
+    );
   },
 
   async getReservationsByClassroomId(

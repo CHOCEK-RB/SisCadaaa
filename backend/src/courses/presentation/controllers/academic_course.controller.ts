@@ -6,15 +6,15 @@ import {
   ParseUUIDPipe,
   Post,
   Body,
-} from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
-import { AcademicCourseService } from '../../application/services/academic_course.service';
-import { AcademicCourseDTO } from '../../application/dto/academic_course.dto';
-import { TopicProgressService } from 'src/courses/application/services/topic-progress.service';
-import { UpdateTopicProgressDTO } from 'src/courses/application/dto/update-topic-progress.dto';
-import { Roles } from 'src/auth/presentation/decorators/roles.decorator';
-import { RolesGuard } from 'src/auth/presentation/guards/roles.guard';
-import { Role } from 'src/users/domain/aggregates/role.enum';
+} from "@nestjs/common";
+import { AuthGuard } from "@nestjs/passport";
+import { AcademicCourseService } from "../../application/services/academic_course.service";
+import { AcademicCourseDTO } from "../../application/dto/academic_course.dto";
+import { TopicProgressService } from "src/courses/application/services/topic-progress.service";
+import { UpdateTopicProgressDTO } from "src/courses/application/dto/update-topic-progress.dto";
+import { Roles } from "src/auth/presentation/decorators/roles.decorator";
+import { RolesGuard } from "src/auth/presentation/guards/roles.guard";
+import { Role } from "src/users/domain/aggregates/role.enum";
 
 /**
  * @class AcademicCourseController
@@ -23,8 +23,8 @@ import { Role } from 'src/users/domain/aggregates/role.enum';
  * It provides an endpoint for retrieving details of a specific academic course by ID.
  * All endpoints are protected by JWT authentication.
  */
-@Controller('academic-courses')
-@UseGuards(AuthGuard('jwt'))
+@Controller("academic-courses")
+@UseGuards(AuthGuard("jwt"))
 export class AcademicCourseController {
   /**
    * @constructor
@@ -42,18 +42,28 @@ export class AcademicCourseController {
    * @param {string} id - The UUID of the academic course to find.
    * @returns {Promise<AcademicCourseDTO>} A promise that resolves to the AcademicCourseDTO containing the course details.
    */
-  @Get(':id')
+  @Get(":id")
   async findOne(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param("id", ParseUUIDPipe) id: string,
   ): Promise<AcademicCourseDTO> {
     return this.academicCourseService.findDetailsById(id);
   }
 
-  @Post(':id/progress')
+  /**
+   * Obtiene todos los cursos académicos que pertenecen a un Periodo Académico (GlobalEvent) específico.
+   */
+  @Get("period/:periodId")
+  async findAllByPeriod(
+    @Param("periodId", ParseUUIDPipe) periodId: string,
+  ): Promise<AcademicCourseDTO[]> {
+    return this.academicCourseService.findAllByPeriod(periodId);
+  }
+
+  @Post(":id/progress")
   @UseGuards(RolesGuard)
   @Roles(Role.TEACHER)
   async updateTopicProgress(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param("id", ParseUUIDPipe) id: string,
     @Body() updateTopicProgressDTO: UpdateTopicProgressDTO,
   ) {
     return this.topicProgressService.update(id, updateTopicProgressDTO);

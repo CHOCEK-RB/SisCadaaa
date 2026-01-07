@@ -1,7 +1,8 @@
-import { ScheduleSlotDTO } from './schedule.dto';
-import { AcademicCourseDTO } from 'src/courses/application/dto/academic_course.dto';
-import { TeacherProfileDTO } from 'src/users/application/dto/teacher.dto';
-import { EnrollmentDetailDTO } from 'src/enrollment/application/dto/enrollment.dto';
+import { ScheduleSlotDTO } from "./schedule.dto";
+import { AcademicCourseDTO } from "src/courses/application/dto/academic_course.dto";
+import { TeacherProfileDTO } from "src/users/application/dto/teacher.dto";
+import { EnrollmentDetailDTO } from "src/enrollment/application/dto/enrollment.dto";
+import { CourseTopicDTO } from "src/courses/application/dto/course_topic.dto";
 
 export class AcademicGroupDTO {
   id: string;
@@ -13,4 +14,5 @@ export class AcademicGroupDTO {
   teacher?: TeacherProfileDTO;
   enrollments?: EnrollmentDetailDTO[];
   enrollmentsCount?: number;
+  topics?: CourseTopicDTO[];
 }
