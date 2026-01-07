@@ -95,4 +95,17 @@ export const userService = {
 
     return response;
   },
+
+  async getStudentById(id: string, options: RequestOptions = {}) {
+    console.log(`UserService.getStudentById llamado para ID: ${id}`);
+    
+    const response = await api.get<UserProfileDTO>(`/students/${id}`, options);
+
+    if (!response) {
+      throw new Error("No se pudo encontrar el estudiante solicitado");
+    }
+
+    return response;
+  },
+
 };

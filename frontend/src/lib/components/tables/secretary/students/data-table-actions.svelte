@@ -5,6 +5,7 @@
   import EditStudentSheet from "./edit-student-sheet.svelte";
   import DeleteStudentDialog from "./delete-student-dialog.svelte";
   import type { StudentUserDTO } from "./student-columns";
+    import { goto } from "$app/navigation";
 
   let { student } = $props<{ student: StudentUserDTO }>();
 
@@ -12,7 +13,7 @@
   let dialogOpen = $state(false);
 
   function viewDetails() {
-    console.log("View details for student ID:", student.id);
+    goto(`/secretary/search/student/${student.userId}`);
   }
 </script>
 

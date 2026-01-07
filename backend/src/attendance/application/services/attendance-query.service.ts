@@ -15,7 +15,13 @@ import { AttendanceStatus } from "../../domain/aggregates/attendance.entity";
 import { StudentAttendanceInfoDTO } from "../dto/student-attendance-info.dto";
 import { GroupAttendanceRecordResponseDto } from "../dto/group-attendance-record-response.dto";
 import { StudentCourseAttendanceResponseDto } from "../dto/student-course-attendance-response.dto";
-
+export interface StudentAttendanceReportItem {
+  name: string;
+  code: string;
+  present: number;
+  absent: number;
+  percentage: number;
+}
 /**
  * @class AttendanceQueryService
  * @description
@@ -328,5 +334,55 @@ export class AttendanceQueryService {
     );
 
     return history;
+  }
+
+  async getStudentAttendanceReport(
+    id: string,
+  ): Promise<StudentAttendanceReportItem[]> {
+    let student = await this.studentRepository.findById(id);
+    if (!student) {
+      student = await this.studentRepository.findByUserId(id);
+    }
+
+    if (!student) {
+      throw new NotFoundException(`Estudiante no encontrado con el ID: ${id}`);
+    }
+
+    const report: StudentAttendanceReportItem[] = [];
+    const currentSemester = student.semester;
+    const allEnrollments = student.enrollments || [];
+
+    const currentSemesterEnrollments = allEnrollments.filter((enrollment) => {
+      return enrollment.course.course.semester === currentSemester;
+    });
+    for (const enrollment of currentSemesterEnrollments) {
+      const academicCourse = enrollment.course;
+      const groupIds = enrollment.groups.map((g) => g.id);
+      const records = await this.attendanceRepository.findByGroupIds(groupIds);
+
+      let presentCount = 0;
+      let absentCount = 0;
+
+      records.forEach((record) => {
+        const status = record.studentStatuses[student.id];
+        if (status === AttendanceStatus.PRESENT) presentCount++;
+        else if (status === AttendanceStatus.ABSENT) absentCount++;
+      });
+
+      const totalClasses = presentCount + absentCount;
+
+      report.push({
+        name: academicCourse.course.name,
+        code: academicCourse.course.code,
+        present: presentCount,
+        absent: absentCount,
+        percentage:
+          totalClasses > 0
+            ? Math.round((presentCount / totalClasses) * 100)
+            : 0,
+      });
+    }
+
+    return report;
   }
 }

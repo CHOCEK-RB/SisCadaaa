@@ -3,17 +3,17 @@ import {
   Inject,
   NotFoundException,
   ForbiddenException,
-} from '@nestjs/common';
-import { JwtPayload } from 'src/auth/domain/interfaces/jwt-payload.interface';
-import { IEnrollmentRepository } from '../../domain/repositories/ienrollment.repository';
-import { IStudentRepository } from 'src/users/domain/repositories/istudent.repository';
-import { Enrollment } from '../../domain/aggregates/enrollment.entity';
-import { AcademicGroupDTO } from 'src/groups/application/dto/academic_group.dto';
-import { ScheduleSlotDTO } from 'src/groups/application/dto/schedule.dto';
-import { EnrollmentMapper } from '../mappers/enrollment.mapper';
-import { GroupedEnrollmentsResponseDto } from '../dto/grouped-enrollments-response.dto';
-import { GradesAndPercentResponseDto } from '../dto/grades-and-percent-response.dto';
-import { GradesAndSchemeDTO } from '../dto/grades-and-scheme.dto';
+} from "@nestjs/common";
+import { JwtPayload } from "src/auth/domain/interfaces/jwt-payload.interface";
+import { IEnrollmentRepository } from "../../domain/repositories/ienrollment.repository";
+import { IStudentRepository } from "src/users/domain/repositories/istudent.repository";
+import { Enrollment } from "../../domain/aggregates/enrollment.entity";
+import { AcademicGroupDTO } from "src/groups/application/dto/academic_group.dto";
+import { ScheduleSlotDTO } from "src/groups/application/dto/schedule.dto";
+import { EnrollmentMapper } from "../mappers/enrollment.mapper";
+import { GroupedEnrollmentsResponseDto } from "../dto/grouped-enrollments-response.dto";
+import { GradesAndPercentResponseDto } from "../dto/grades-and-percent-response.dto";
+import { GradesAndSchemeDTO } from "../dto/grades-and-scheme.dto";
 
 @Injectable()
 export class EnrollmentQueryService {
@@ -39,9 +39,9 @@ export class EnrollmentQueryService {
   async getMyEnrollmentsGroupedByPeriod(
     authenticatedUser: JwtPayload,
   ): Promise<GroupedEnrollmentsResponseDto> {
-    if (authenticatedUser.role !== 'student') {
+    if (authenticatedUser.role !== "student") {
       throw new ForbiddenException(
-        'Only students can access their enrollments.',
+        "Only students can access their enrollments.",
       );
     }
 
@@ -80,8 +80,8 @@ export class EnrollmentQueryService {
 
     const sortedGrouped: GroupedEnrollmentsResponseDto = Object.keys(grouped)
       .sort((a, b) => {
-        const [yearA, semesterA] = a.split('-');
-        const [yearB, semesterB] = b.split('-');
+        const [yearA, semesterA] = a.split("-");
+        const [yearB, semesterB] = b.split("-");
         if (yearA !== yearB) return parseInt(yearB) - parseInt(yearA);
         return semesterB.localeCompare(semesterA);
       })
@@ -97,8 +97,8 @@ export class EnrollmentQueryService {
     academicCourseId: string,
     authenticatedUser: JwtPayload,
   ): Promise<GradesAndSchemeDTO | null> {
-    if (authenticatedUser.role !== 'student') {
-      throw new ForbiddenException('Only students can view their grades.');
+    if (authenticatedUser.role !== "student") {
+      throw new ForbiddenException("Only students can view their grades.");
     }
 
     const studentProfile = await this.studentRepository.findByUserId(
@@ -138,8 +138,8 @@ export class EnrollmentQueryService {
     academicCourseId: string,
     authenticatedUser: JwtPayload,
   ): Promise<AcademicGroupDTO[] | null> {
-    if (authenticatedUser.role !== 'student') {
-      throw new ForbiddenException('Only students can view their schedule.');
+    if (authenticatedUser.role !== "student") {
+      throw new ForbiddenException("Only students can view their schedule.");
     }
 
     const studentProfile = await this.studentRepository.findByUserId(
@@ -204,8 +204,8 @@ export class EnrollmentQueryService {
   async getMySchedule(
     authenticatedUser: JwtPayload,
   ): Promise<AcademicGroupDTO[] | null> {
-    if (authenticatedUser.role !== 'student') {
-      throw new ForbiddenException('Only students can view their schedule.');
+    if (authenticatedUser.role !== "student") {
+      throw new ForbiddenException("Only students can view their schedule.");
     }
 
     const studentProfile = await this.studentRepository.findByUserId(
@@ -269,8 +269,8 @@ export class EnrollmentQueryService {
   async getAllGrades(
     authenticatedUser: JwtPayload,
   ): Promise<GradesAndPercentResponseDto[]> {
-    if (authenticatedUser.role !== 'student') {
-      throw new ForbiddenException('Only students can view their schedule.');
+    if (authenticatedUser.role !== "student") {
+      throw new ForbiddenException("Only students can view their schedule.");
     }
 
     const studentProfile = await this.studentRepository.findByUserId(
@@ -330,5 +330,53 @@ export class EnrollmentQueryService {
     }
 
     return grades;
+  }
+
+  async getGradesByStudentId(
+    id: string,
+  ): Promise<GradesAndPercentResponseDto[]> {
+    let student = await this.studentRepository.findById(id);
+    if (!student) {
+      student = await this.studentRepository.findByUserId(id);
+    }
+
+    if (!student) {
+      throw new NotFoundException(`Estudiante no encontrado con el ID: ${id}`);
+    }
+
+    const enrollments =
+      await this.enrollmentRepository.findAllWithGradesByStudent(student.id);
+    if (!enrollments) return [];
+
+    return enrollments
+      .sort(
+        (a, b) =>
+          (b.course.course.semester || 0) - (a.course.course.semester || 0),
+      )
+      .map((enr) => {
+        return {
+          course: {
+            id: enr.course.id,
+            creationDate: enr.course.creationDate,
+            course: {
+              id: enr.course.course.id,
+              name: enr.course.course.name,
+              code: enr.course.course.code,
+            },
+            semester: enr.course.course.semester,
+          },
+
+          grades: { ...enr.grades },
+
+          percent: {
+            firstContinue: enr.course.grades?.firstContinue ?? 0,
+            secondContinue: enr.course.grades?.secondContinue ?? 0,
+            thirdContinue: enr.course.grades?.thirdContinue ?? 0,
+            firstPartial: enr.course.grades?.firstPartial ?? 0,
+            secondPartial: enr.course.grades?.secondPartial ?? 0,
+            thirdPartial: enr.course.grades?.thirdPartial ?? 0,
+          },
+        } as GradesAndPercentResponseDto;
+      });
   }
 }

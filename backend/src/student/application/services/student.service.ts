@@ -3,7 +3,10 @@ import {
   FindAllStudentsOptions,
   IUserRepository,
 } from "src/users/domain/repositories/iuser.repository";
-import { UserMapper } from "src/users/application/mappers/user.mapper";
+import {
+  AnyProfileDTO,
+  UserMapper,
+} from "src/users/application/mappers/user.mapper";
 import { PaginatedUsersDto } from "src/users/application/dto/paginated-users.dto";
 import { UpdateStudentDto } from "../dto/update-student.dto";
 import { User } from "src/users/domain/aggregates/user.entity";
@@ -29,10 +32,23 @@ export class StudentService {
     };
   }
 
-  async update(
-    id: string,
-    updateStudentDto: UpdateStudentDto,
-  ): Promise<User> {
+  async findOne(id: string): Promise<AnyProfileDTO> {
+    let user = await this.userRepository.findById(id);
+    if (!user || !user.studentProfile) {
+      const student = await this.studentRepository.findById(id);
+      if (student && student.user) {
+        user = await this.userRepository.findById(student.user.id);
+      }
+    }
+    if (!user || !user.studentProfile) {
+      throw new NotFoundException(
+        `El estudiante con id: ${id} no fue econtrado`,
+      );
+    }
+    return this.userMapper.toDto(user);
+  }
+
+  async update(id: string, updateStudentDto: UpdateStudentDto): Promise<User> {
     const user = await this.userRepository.findById(id);
     if (!user || !user.studentProfile) {
       throw new NotFoundException(`Student with id ${id} not found`);

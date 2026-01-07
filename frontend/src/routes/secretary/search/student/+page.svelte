@@ -101,7 +101,7 @@
     <p class="text-red-500">{data.error}</p>
   {:else}
     <DataTable
-      {columns}
+      columns={columns}
       data={data.students}
       bind:filterValue
       bind:pageIndex

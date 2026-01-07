@@ -123,4 +123,15 @@ export const enrollmentService = {
       return { isActive: false }; // Por seguridad, si falla, se asume cerrado.
     }
   },
+
+    async getGradesByStudentId(studentId: string, options: RequestOptions = {}) {
+    const response = await api.get<GradesAndPercent[]>(
+      `/enrollments/student/${studentId}/grades`,
+      options
+    );
+    if (!response) {
+      throw new Error("No se recibieron calificaciones del servidor");
+    }
+    return response;
+  }
 };

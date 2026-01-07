@@ -20,6 +20,7 @@ import { Roles } from "src/auth/presentation/decorators/roles.decorator";
 import { Role } from "src/users/domain/aggregates/role.enum";
 import { StudentService } from "../../application/services/student.service";
 import { UpdateStudentDto } from "../../application/dto/update-student.dto";
+import { AnyProfileDTO } from "src/users/application/mappers/user.mapper";
 
 @Controller("students")
 export class StudentController {
@@ -60,5 +61,14 @@ export class StudentController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param("id", ParseUUIDPipe) id: string) {
     return this.studentService.remove(id);
+  }
+
+  @Get(":id")
+  @UseGuards(AuthGuard("jwt"), RolesGuard)
+  @Roles(Role.ADMIN, Role.SECRETARY)
+  async findOne(
+    @Param("id", ParseUUIDPipe) id: string,
+  ): Promise<AnyProfileDTO> {
+    return this.studentService.findOne(id);
   }
 }
