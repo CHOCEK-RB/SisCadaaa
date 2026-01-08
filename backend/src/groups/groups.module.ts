@@ -27,7 +27,7 @@ import { ClassroomModule } from 'src/classroom/classroom.module';
   controllers: [GroupsController],
 
   imports: [
-    TypeOrmModule.forFeature([AcademicGroup, ScheduleSlot]),
+    TypeOrmModule.forFeature([AcademicGroup, ScheduleSlot, GradeAttachment]),
     forwardRef(() => CourseModule),
     forwardRef(() => AttendanceModule),
     forwardRef(() => EnrollmentModule),
