@@ -19,6 +19,7 @@ import { GroupsService } from './application/services/groups.service';
 import { GradingPeriodActiveGuard } from 'src/enrollment/presentation/guards/grading-period-active.guard';
 
 import { UserModule } from 'src/users/users.module';
+import { ClassroomModule } from 'src/classroom/classroom.module';
 
 @Module({
   controllers: [GroupsController],
@@ -29,6 +30,7 @@ import { UserModule } from 'src/users/users.module';
     forwardRef(() => AttendanceModule),
     forwardRef(() => EnrollmentModule),
     forwardRef(() => UserModule),
+    forwardRef(() => ClassroomModule),
     EventsModule,
   ],
 

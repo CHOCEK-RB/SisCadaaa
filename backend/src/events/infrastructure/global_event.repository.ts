@@ -39,9 +39,21 @@ export class GlobalEventRepository implements IGlobalEventRepository {
   }
 
   async findAllByType(type: EventType): Promise<GlobalEvent[]> {
-    // Added
-    return await this.eventRepository.find({ where: { type } }); // Added
-  } // Added
+    return await this.eventRepository.find({ where: { type } });
+  }
+
+  async findAllActiveByType(type: EventType): Promise<GlobalEvent[]> {
+    const now = new Date();
+
+    return await this.eventRepository.find({
+      where: {
+        type: type,
+        isActive: true,
+        startDate: LessThanOrEqual(now),
+        endDate: MoreThanOrEqual(now),
+      },
+    });
+  }
 
   async save(event: Partial<GlobalEvent>): Promise<GlobalEvent>;
   async save(events: Partial<GlobalEvent>[]): Promise<GlobalEvent[]>;
@@ -55,3 +67,4 @@ export class GlobalEventRepository implements IGlobalEventRepository {
     }
   }
 }
+

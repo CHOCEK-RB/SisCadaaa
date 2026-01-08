@@ -96,6 +96,14 @@ export const userService = {
     return response;
   },
 
+  async searchTeachers(term: string): Promise<{ id: string; name: string }[]> {
+    const response = await this.getTeachers({ searchQuery: term, limit: 10 }); // Limit to 10 results for search suggestions
+    if (!response || !response.data) {
+      return [];
+    }
+    return response.data.map(teacher => ({ id: teacher.id, name: `${teacher.firstName} ${teacher.lastName}` }));
+  },
+
   async getStudentById(id: string, options: RequestOptions = {}) {
     console.log(`UserService.getStudentById llamado para ID: ${id}`);
     

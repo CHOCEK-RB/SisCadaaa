@@ -11,16 +11,25 @@ import { IAcademicGroupRepository } from "../../domain/repositories/iacademic_gr
 import { IStudentRepository } from "src/users/domain/repositories/istudent.repository";
 import { ITeacherRepository } from "src/users/domain/repositories/iteacher.repository";
 import { IEnrollmentRepository } from "src/enrollment/domain/repositories/ienrollment.repository";
+import { IAcademicCourseRepository } from "src/courses/domain/repositories/icourse_academic.repository"; // Corrected import
 import { JwtPayload } from "src/auth/domain/interfaces/jwt-payload.interface";
 import { AcademicGroupDTO } from "../dto/academic_group.dto";
+import { CreateAcademicGroupDto } from "../dto/create-academic-group.dto"; // Added import
 import { AcademicCourseDTO } from "src/courses/application/dto/academic_course.dto";
 import {
   Enrollment,
   Grades,
 } from "src/enrollment/domain/aggregates/enrollment.entity";
-import { GroupType } from "../../domain/aggregates/academic_group.entity";
+import { GroupType, AcademicGroup } from "../../domain/aggregates/academic_group.entity"; // Added AcademicGroup import
+import { Teacher } from "src/users/domain/aggregates/teacher.entity"; // Added Teacher import
 import { ScheduleSlotDTO } from "../dto/schedule.dto";
 import { StudentInfoDTO } from "../dto/student-info.dto";
+import { IClassroomRepository } from 'src/classroom/domain/repositories/iclassroom.repository';
+import { IScheduleSlotRepository } from '../../domain/repositories/ischedule.repository';
+import { ScheduleSlot, DayOfWeek } from '../../domain/aggregates/schedule.entity';
+import { Classroom } from 'src/classroom/domain/aggregates/classroom.entity';
+import { CreateScheduleDto } from '../dto/create-schedule.dto';
+import { UpdateAcademicGroupDto } from '../dto/update-academic-group.dto';
 
 export interface GroupsForPeriods {
   [period: string]: AcademicGroupDTO[];
@@ -69,7 +78,214 @@ export class GroupsService {
     private readonly teacherRepository: ITeacherRepository,
     @Inject(IEnrollmentRepository)
     private readonly enrollmentRepository: IEnrollmentRepository,
+    @Inject(IAcademicCourseRepository) // Injected
+    private readonly academicCourseRepository: IAcademicCourseRepository, // Injected
+    @Inject(IClassroomRepository)
+    private readonly classroomRepository: IClassroomRepository,
+    @Inject(IScheduleSlotRepository)
+    private readonly scheduleSlotRepository: IScheduleSlotRepository,
   ) {}
+
+  async createAcademicGroup(
+    createAcademicGroupDto: CreateAcademicGroupDto,
+  ): Promise<AcademicGroupDTO> {
+    const { academicCourseId, teacherId, name, capacity, type } =
+      createAcademicGroupDto;
+
+    const academicCourse = await this.academicCourseRepository.findById(
+      academicCourseId,
+    );
+    if (!academicCourse) {
+      throw new NotFoundException(
+        `AcademicCourse with ID ${academicCourseId} not found.`,
+      );
+    }
+
+    let teacher: Teacher | null = null;
+    if (teacherId) {
+      teacher = await this.teacherRepository.findById(teacherId);
+      if (!teacher) {
+        throw new NotFoundException(`Teacher with ID ${teacherId} not found.`);
+      }
+    }
+
+    const newAcademicGroup = new AcademicGroup();
+    newAcademicGroup.name = name;
+    newAcademicGroup.capacity = capacity;
+    newAcademicGroup.type = type;
+    newAcademicGroup.academicCourse = academicCourse;
+    newAcademicGroup.teacher = teacher;
+
+    const savedGroup = await this.academicGroupRepository.save(newAcademicGroup);
+
+    return {
+      id: savedGroup.id,
+      name: savedGroup.name,
+      type: savedGroup.type,
+      capacity: savedGroup.capacity,
+      course: {
+        id: academicCourse.id,
+        course: {
+          id: academicCourse.course.id,
+          name: academicCourse.course.name,
+          code: academicCourse.course.code,
+        },
+      },
+      teacher: savedGroup.teacher
+        ? {
+            id: savedGroup.teacher.id,
+            userId: savedGroup.teacher.user.id,
+            email: savedGroup.teacher.user.email,
+            firstName: savedGroup.teacher.name,
+            lastName: `${savedGroup.teacher.firstLastName} ${savedGroup.teacher.secondLastName}`.trim(),
+            role: "teacher",
+          }
+        : undefined,
+    };
+  }
+
+  async createSchedule(createScheduleDto: CreateScheduleDto): Promise<void> {
+    const { groupId, classroomId, scheduleSlots } = createScheduleDto;
+
+    const academicGroup = await this.academicGroupRepository.findById(groupId);
+    if (!academicGroup) {
+      throw new NotFoundException(`AcademicGroup with ID ${groupId} not found.`);
+    }
+
+    const classroom = await this.classroomRepository.findById(classroomId);
+    if (!classroom) {
+      throw new NotFoundException(`Classroom with ID ${classroomId} not found.`);
+    }
+
+    const newScheduleSlots: ScheduleSlot[] = [];
+
+    for (const slotDto of scheduleSlots) {
+      const dayOfWeek = slotDto.day; // DayOfWeek enum value
+
+      // 1. Check for conflicts with other schedules in the same classroom (Classroom Conflict Check)
+      const existingClassroomSchedule =
+        await this.scheduleSlotRepository.findConflictingSchedule(
+          academicGroup.id, // Keep this parameter, but the implementation should ignore it for classroom-wide check
+          classroom.id,
+          dayOfWeek,
+          slotDto.startTime,
+          slotDto.endTime,
+        );
+
+      if (existingClassroomSchedule) {
+        throw new BadRequestException(
+          `Classroom conflict: Classroom ${classroom.name} is already occupied on ${dayOfWeek} from ${slotDto.startTime} to ${slotDto.endTime}.`,
+        );
+      }
+
+      // 2. Check for conflicts within the academic group's own schedule (Academic Group Conflict Check)
+      const existingGroupSchedule =
+        await this.scheduleSlotRepository.findAcademicGroupConflict(
+          academicGroup.id,
+          dayOfWeek,
+          slotDto.startTime,
+          slotDto.endTime,
+        );
+
+      if (existingGroupSchedule) {
+        throw new BadRequestException(
+          `Group conflict: Academic Group ${academicGroup.name} already has a schedule on ${dayOfWeek} from ${slotDto.startTime} to ${slotDto.endTime}.`,
+        );
+      }
+
+      const newScheduleSlot = new ScheduleSlot();
+      newScheduleSlot.academicGroup = academicGroup;
+      newScheduleSlot.classroom = classroom;
+      newScheduleSlot.day = dayOfWeek;
+      newScheduleSlot.startTime = slotDto.startTime;
+      newScheduleSlot.endTime = slotDto.endTime;
+
+      newScheduleSlots.push(newScheduleSlot);
+    }
+
+    await this.scheduleSlotRepository.save(newScheduleSlots);
+  }
+
+  async deleteScheduleSlot(scheduleSlotId: string, groupId: string): Promise<void> {
+    const scheduleSlot = await this.scheduleSlotRepository.findByIdWithAcademicGroup(scheduleSlotId);
+
+    if (!scheduleSlot) {
+      throw new NotFoundException(`ScheduleSlot with ID ${scheduleSlotId} not found.`);
+    }
+
+    if (scheduleSlot.academicGroup.id !== groupId) {
+      throw new ForbiddenException(`ScheduleSlot with ID ${scheduleSlotId} does not belong to AcademicGroup with ID ${groupId}.`);
+    }
+
+    await this.scheduleSlotRepository.delete(scheduleSlotId);
+  }
+
+  async updateAcademicGroup(
+    groupId: string,
+    updateAcademicGroupDto: UpdateAcademicGroupDto,
+  ): Promise<AcademicGroupDTO> {
+    const existingGroup = await this.academicGroupRepository.findById(groupId);
+    if (!existingGroup) {
+      throw new NotFoundException(`AcademicGroup with ID ${groupId} not found.`);
+    }
+
+    // Handle teacher update
+    if (updateAcademicGroupDto.teacherId !== undefined) {
+      if (updateAcademicGroupDto.teacherId === null) {
+        // Explicitly setting teacher to null
+        existingGroup.teacher = null;
+      } else {
+        const teacher = await this.teacherRepository.findById(
+          updateAcademicGroupDto.teacherId,
+        );
+        if (!teacher) {
+          throw new NotFoundException(
+            `Teacher with ID ${updateAcademicGroupDto.teacherId} not found.`,
+          );
+        }
+        existingGroup.teacher = teacher;
+      }
+    }
+
+    // Update other properties
+    if (updateAcademicGroupDto.name !== undefined) {
+      existingGroup.name = updateAcademicGroupDto.name;
+    }
+    if (updateAcademicGroupDto.capacity !== undefined) {
+      existingGroup.capacity = updateAcademicGroupDto.capacity;
+    }
+    if (updateAcademicGroupDto.type !== undefined) {
+      existingGroup.type = updateAcademicGroupDto.type;
+    }
+
+    const updatedGroup = await this.academicGroupRepository.save(existingGroup);
+
+    // Reconstruct AcademicGroupDTO
+    return {
+      id: updatedGroup.id,
+      name: updatedGroup.name,
+      type: updatedGroup.type,
+      capacity: updatedGroup.capacity,
+      course: {
+        id: updatedGroup.academicCourse.id,
+        course: {
+          id: updatedGroup.academicCourse.course.id,
+          name: updatedGroup.academicCourse.course.name,
+          code: updatedGroup.academicCourse.course.code,
+        },
+      },
+      teacher: updatedGroup.teacher
+        ? {
+            id: updatedGroup.teacher.id,
+            userId: updatedGroup.teacher.user.id,
+            email: updatedGroup.teacher.user.email,
+            firstName: updatedGroup.teacher.name,
+            lastName: `${updatedGroup.teacher.firstLastName} ${updatedGroup.teacher.secondLastName}`.trim(),
+            role: "teacher",
+          }
+        : undefined,
+    };
+  }
 
   async getGroupDetails(id: string): Promise<AcademicGroupDTO> {
     const group = await this.academicGroupRepository.findGroupDetailsById(id);

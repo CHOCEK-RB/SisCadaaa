@@ -33,7 +33,7 @@ export class AcademicCourse {
     nullable: true,
     onDelete: "SET NULL",
   })
-  coordinator: Teacher;
+  coordinator: Teacher | null;
 
   @Column("timestamptz")
   creationDate: Date;

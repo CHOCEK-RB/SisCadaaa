@@ -40,7 +40,7 @@ export class AcademicGroup {
     nullable: true,
     onDelete: "SET NULL",
   })
-  teacher: Teacher;
+  teacher: Teacher | null;
 
   @OneToMany(() => ScheduleSlot, (slot) => slot.academicGroup, {
     cascade: true,

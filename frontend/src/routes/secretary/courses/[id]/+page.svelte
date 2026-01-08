@@ -3,13 +3,12 @@
   import { Button } from "$lib/components/ui/button/index.js";
   import { ArrowDownToLine } from "lucide-svelte";
   import type { AcademicCourseDTO } from "$lib/types/course.types";
-  import { Badge } from "$lib/components/ui/badge/index.js";
+  import CreateAcademicGroupForm from "./CreateAcademicGroupForm.svelte"; // Added import
 
-  const { data } = $props();
-  const {
-    course,
-    error,
-  }: { course: AcademicCourseDTO | null; error: string | null } = data;
+  const { data } = $props<{ course: AcademicCourseDTO }>();
+
+  let course = $state<AcademicCourseDTO>(data.course);
+  let error = $state(data.error);
 
   const coordinatorFullName = $derived(() => {
     if (!course?.coordinator) return "No asignado";
@@ -21,6 +20,11 @@
     return (
       course?.groups?.slice().sort((a, b) => a.name.localeCompare(b.name)) || []
     );
+  });
+
+  $effect(() => {
+    course = data.course;
+    error = data.error;
   });
 </script>
 
@@ -94,6 +98,7 @@
             </Card.Description>
           </Card.Header>
           <Card.Content class="space-y-3">
+            <CreateAcademicGroupForm academicCourse={course} />
             {#each sortedGroups() as group (group.id)}
               <a href={`/secretary/groups/${group.id}`} class="block">
                 <Card.Root

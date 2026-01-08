@@ -6,6 +6,10 @@ import {
   ParseUUIDPipe,
   Patch,
   Body,
+  Post, // Added Post
+  HttpCode, // Added HttpCode for clarity
+  HttpStatus, // Added HttpStatus for clarity
+  Delete, // Added Delete
 } from "@nestjs/common";
 
 import { AuthGuard } from "@nestjs/passport";
@@ -21,8 +25,11 @@ import {
   type UpdateGradeDto,
 } from "../../application/services/groups.service";
 import { AcademicGroupDTO } from "../../application/dto/academic_group.dto";
+import { CreateAcademicGroupDto } from "../../application/dto/create-academic-group.dto"; // Added import
 import { AcademicCourseDTO } from "src/courses/application/dto/academic_course.dto";
 import { StudentInfoDTO } from "../../application/dto/student-info.dto"; // Added import
+import { CreateScheduleDto } from "../../application/dto/create-schedule.dto";
+import { UpdateAcademicGroupDto } from "../../application/dto/update-academic-group.dto";
 
 /**
  * @class GroupsController
@@ -39,6 +46,47 @@ export class GroupsController {
    * @param {GroupsService} groupsService - Service for handling business logic related to academic groups.
    */
   constructor(private readonly groupsService: GroupsService) {}
+
+  /**
+   * @method createAcademicGroup
+   * @description
+   * Creates a new academic group.
+   * @param {CreateAcademicGroupDto} createAcademicGroupDto - DTO containing data for the new academic group.
+   * @returns {Promise<AcademicGroupDTO>} A promise that resolves to the created academic group DTO.
+   */
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  async createAcademicGroup(
+    @Body() createAcademicGroupDto: CreateAcademicGroupDto,
+  ): Promise<AcademicGroupDTO> {
+    return await this.groupsService.createAcademicGroup(createAcademicGroupDto);
+  }
+
+  @Post("schedule")
+  @HttpCode(HttpStatus.CREATED)
+  async createSchedule(
+    @Body() createScheduleDto: CreateScheduleDto,
+  ): Promise<{ message: string }> {
+    await this.groupsService.createSchedule(createScheduleDto);
+    return { message: "Schedule created successfully" };
+  }
+
+  @Delete(":groupId/schedule/:scheduleSlotId")
+  @HttpCode(HttpStatus.NO_CONTENT) // 204 No Content for successful deletion
+  async deleteScheduleSlot(
+    @Param("groupId", ParseUUIDPipe) groupId: string,
+    @Param("scheduleSlotId", ParseUUIDPipe) scheduleSlotId: string,
+  ): Promise<void> {
+    await this.groupsService.deleteScheduleSlot(scheduleSlotId, groupId);
+  }
+
+  @Patch(':groupId')
+  async updateAcademicGroup(
+    @Param('groupId', ParseUUIDPipe) groupId: string,
+    @Body() updateAcademicGroupDto: UpdateAcademicGroupDto,
+  ): Promise<AcademicGroupDTO> {
+    return this.groupsService.updateAcademicGroup(groupId, updateAcademicGroupDto);
+  }
 
   @Get(":id/details")
   @UseGuards(AuthGuard("jwt"))

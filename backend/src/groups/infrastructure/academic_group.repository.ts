@@ -158,6 +158,14 @@ export class AcademicGroupRepository implements IAcademicGroupRepository {
     });
   }
 
+  async update(
+    id: string,
+    updatedFields: Partial<AcademicGroup>,
+  ): Promise<AcademicGroup | null> {
+    await this.typeormRepo.update(id, updatedFields);
+    return this.findById(id); // Fetch and return the updated entity
+  }
+
   async findByIdAcademicCourse(
     courseAcademicId: string,
   ): Promise<AcademicGroup[] | null> {

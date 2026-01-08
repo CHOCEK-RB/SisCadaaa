@@ -19,6 +19,13 @@ export class ScheduleSlotRepository implements IScheduleSlotRepository {
     return this.typeormRepo.findOne({ where: { id } });
   }
 
+  async findByIdWithAcademicGroup(id: string): Promise<ScheduleSlot | null> {
+    return this.typeormRepo.findOne({
+      where: { id },
+      relations: ['academicGroup'], // Eager-load the academicGroup relation
+    });
+  }
+
   async findByAcademicGroup(groupId: string): Promise<ScheduleSlot[] | null> {
     return this.typeormRepo.find({ where: { academicGroup: { id: groupId } } });
   }
@@ -72,5 +79,44 @@ export class ScheduleSlotRepository implements IScheduleSlotRepository {
         { startTime, endTime },
       )
       .getMany();
+  }
+
+  async findConflictingSchedule(
+    academicGroupId: string, // Keep for now as it's passed from GroupsService, but not used in query
+    classroomId: string,
+    day: DayOfWeek,
+    startTime: string,
+    endTime: string,
+  ): Promise<ScheduleSlot | null> {
+    return this.typeormRepo
+      .createQueryBuilder('scheduleSlot')
+      .where('scheduleSlot.classroom.id = :classroomId', { classroomId })
+      .andWhere('scheduleSlot.day = :day', { day })
+      .andWhere(
+        '(:startTime < scheduleSlot.endTime AND :endTime > scheduleSlot.startTime)',
+        { startTime, endTime },
+      )
+      .getOne();
+  }
+
+  async findAcademicGroupConflict(
+    academicGroupId: string,
+    day: DayOfWeek,
+    startTime: string,
+    endTime: string,
+  ): Promise<ScheduleSlot | null> {
+    return this.typeormRepo
+      .createQueryBuilder('scheduleSlot')
+      .where('scheduleSlot.academicGroup.id = :academicGroupId', { academicGroupId })
+      .andWhere('scheduleSlot.day = :day', { day })
+      .andWhere(
+        '(:startTime < scheduleSlot.endTime AND :endTime > scheduleSlot.startTime)',
+        { startTime, endTime },
+      )
+      .getOne();
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.typeormRepo.delete(id);
   }
 }

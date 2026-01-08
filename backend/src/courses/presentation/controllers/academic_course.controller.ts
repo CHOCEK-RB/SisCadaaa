@@ -15,6 +15,7 @@ import { UpdateTopicProgressDTO } from "src/courses/application/dto/update-topic
 import { Roles } from "src/auth/presentation/decorators/roles.decorator";
 import { RolesGuard } from "src/auth/presentation/guards/roles.guard";
 import { Role } from "src/users/domain/aggregates/role.enum";
+import { CreateAcademicCourseDTO } from "../../application/dto/create-academic-course.dto";
 
 /**
  * @class AcademicCourseController
@@ -67,5 +68,16 @@ export class AcademicCourseController {
     @Body() updateTopicProgressDTO: UpdateTopicProgressDTO,
   ) {
     return this.topicProgressService.update(id, updateTopicProgressDTO);
+  }
+
+  @Post()
+  @UseGuards(RolesGuard)
+  @Roles(Role.SECRETARY, Role.ADMIN)
+  async createAcademicCourse(
+    @Body() createAcademicCourseDTO: CreateAcademicCourseDTO,
+  ): Promise<AcademicCourseDTO> {
+    return this.academicCourseService.createAcademicCourse(
+      createAcademicCourseDTO,
+    );
   }
 }

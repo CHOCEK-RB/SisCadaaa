@@ -54,5 +54,9 @@ export interface IAcademicGroupRepository {
   getCourseInfo(id: string): Promise<AcademicGroup | null>;
   getEnrollments(id: string): Promise<AcademicGroup | null>;
   getAttendances(id: string): Promise<AcademicGroup | null>;
+  update(
+    id: string,
+    updatedFields: Partial<AcademicGroup>,
+  ): Promise<AcademicGroup | null>;
   findByClassroomId(classroomId: string): Promise<AcademicGroup[]>;
 }

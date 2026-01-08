@@ -4,15 +4,15 @@ import {
   NotFoundException,
   ConflictException,
   BadRequestException,
-} from '@nestjs/common';
-import { IReservationRepository } from '../../domain/repositories/ireservation.repository';
-import { CreateReservationDto } from '../dto/create-reservation.dto';
-import { Reservation } from '../../domain/aggregates/reservation.entity';
-import { IUserRepository } from '../../../users/domain/repositories/iuser.repository';
-import { IClassroomRepository } from '../../../classroom/domain/repositories/iclassroom.repository';
-import { User } from 'src/users/domain/aggregates/user.entity';
-import { IScheduleSlotRepository } from 'src/groups/domain/repositories/ischedule.repository'; // Import
-import { DayOfWeek } from 'src/groups/domain/aggregates/schedule.entity'; // Import
+} from "@nestjs/common";
+import { IReservationRepository } from "../../domain/repositories/ireservation.repository";
+import { CreateReservationDto } from "../dto/create-reservation.dto";
+import { Reservation } from "../../domain/aggregates/reservation.entity";
+import { IUserRepository } from "../../../users/domain/repositories/iuser.repository";
+import { IClassroomRepository } from "../../../classroom/domain/repositories/iclassroom.repository";
+import { User } from "src/users/domain/aggregates/user.entity";
+import { IScheduleSlotRepository } from "src/groups/domain/repositories/ischedule.repository"; // Import
+import { DayOfWeek } from "src/groups/domain/aggregates/schedule.entity"; // Import
 
 @Injectable()
 export class ReservationService {
@@ -56,7 +56,7 @@ export class ReservationService {
 
     if (startTimeDate >= endTimeDate) {
       throw new BadRequestException(
-        'La hora de inicio debe ser anterior a la hora de finalización.',
+        "La hora de inicio debe ser anterior a la hora de finalización.",
       );
     }
 
@@ -77,7 +77,7 @@ export class ReservationService {
 
     if (overlappingReservations.length > 0) {
       throw new ConflictException(
-        'El aula ya está reservada para este horario.',
+        "El aula ya está reservada para este horario.",
       );
     }
 
@@ -97,7 +97,7 @@ export class ReservationService {
 
       if (overlappingSchedules.length > 0) {
         throw new ConflictException(
-          'La reserva se superpone con un horario de clase existente.',
+          "La reserva se superpone con un horario de clase existente.",
         );
       }
     }

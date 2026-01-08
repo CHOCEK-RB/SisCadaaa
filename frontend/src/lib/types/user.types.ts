@@ -14,6 +14,8 @@ export interface TeacherProfileDTO extends UserProfileDTO {
   teachingGroups?: AcademicGroupDTO[];
 }
 
+export type TeacherDTO = TeacherProfileDTO;
+
 export interface StudentUserDTO extends UserProfileDTO {
     cui: string;
     semester: number;

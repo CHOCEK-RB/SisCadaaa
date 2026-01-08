@@ -3,6 +3,12 @@ import type { AcademicCourseDTO } from "$lib/types/course.types";
 import type { RequestOptions } from "./api.service";
 import type { GlobalEvent } from "$lib/types/event.types";
 
+interface CreateAcademicCourseInput {
+  courseId: string;
+  coordinatorId?: string;
+  academicPeriodId: string;
+}
+
 export const academicCourseService = {
   async getCourse(id: string, options: RequestOptions = {}) {
     const response = await api.get<AcademicCourseDTO>(
@@ -72,6 +78,33 @@ export const academicCourseService = {
 
     if (!response) {
       throw new Error("No data received from the server for courses by period");
+    }
+    return response;
+  },
+
+  async createAcademicCourse(
+    data: CreateAcademicCourseInput,
+    options: RequestOptions = {},
+  ): Promise<AcademicCourseDTO> {
+    const response = await api.post<AcademicCourseDTO>(
+      `/academic-courses`,
+      data,
+      options,
+    );
+
+    if (!response) {
+      throw new Error("No data received from the server after creating academic course");
+    }
+    return response;
+  },
+
+  async getActiveAcademicPeriods(
+    options: RequestOptions = {},
+  ): Promise<GlobalEvent[]> {
+    const response = await api.get<GlobalEvent[]>(`/events/active-periods`, options);
+
+    if (!response) {
+      throw new Error("No data received from the server for active academic periods");
     }
     return response;
   },

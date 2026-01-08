@@ -2,6 +2,12 @@ import type { Classroom } from "./classroom.types";
 import type { TeacherProfileDTO } from "./user.types";
 import type { AcademicCourseDTO } from "./course.types";
 
+export enum AcademicGroupType {
+  LABORATORY = "laboratory",
+  THEORY = "theory",
+  PRACTICE = "practice",
+}
+
 export interface AcademicGroupDTO {
   id: string;
   name: string;

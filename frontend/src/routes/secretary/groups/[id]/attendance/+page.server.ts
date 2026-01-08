@@ -1,22 +1,93 @@
-import type { PageServerLoad } from './$types';
-import { attendanceService } from '$lib/services/attendance.service';
-import { groupsService } from '$lib/services/groups.service'; // Import groupsService
-import { error } from '@sveltejs/kit';
+import type { PageServerLoad } from "./$types";
+import { groupsService } from "$lib/services/groups.service";
+import { attendanceService } from "$lib/services/attendance.service";
 
-export const load: PageServerLoad = async ({ fetch, params }) => {
-	const { id } = params; // This is the groupId
-	try {
-		const [attendanceHistory, enrolledStudents] = await Promise.all([
-			attendanceService.getAllAttendanceForGroup(id, { fetch }), // Fetch history
-			groupsService.getStudentsInGroup(id, { fetch }) // Fetch enrolled students
-		]);
+type StudentStats = {
+  cui: string;
+  name: string;
+  present: number;
+  absent: number;
+  total: number;
+  percentage: number;
+};
 
-		return {
-			attendanceHistory,
-			enrolledStudents
-		};
-	} catch (e: any) {
-		console.error('Error loading group attendance data:', e);
-		throw error(e.status || 500, e.body?.message || 'Could not load group attendance data');
-	}
+function calculateStudentStats(
+  enrolledStudents: any[],
+  attendanceHistory: any[],
+): StudentStats[] {
+  const studentMap = new Map<string, any>();
+
+  enrolledStudents.forEach((student: any) => {
+    const id = student.studentId || student.id;
+    studentMap.set(id, {
+      cui: student.cui,
+      name: `${student.lastName}, ${student.firstName}`,
+      present: 0,
+      absent: 0,
+      total: 0,
+      percentage: 0,
+    });
+  });
+
+  if (attendanceHistory.length > 0) {
+    attendanceHistory.forEach((record) => {
+      record.students.forEach((student: any) => {
+        if (studentMap.has(student.studentId)) {
+          const stats = studentMap.get(student.studentId)!;
+          stats.total++;
+          if (student.status === "present") stats.present++;
+          else stats.absent++;
+        }
+      });
+    });
+  }
+
+  return Array.from(studentMap.values())
+    .map((stats) => ({
+      ...stats,
+      percentage:
+        stats.total > 0 ? Math.round((stats.present / stats.total) * 100) : 100,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export const load: PageServerLoad = async ({ params, fetch }) => {
+  const { id } = params;
+
+  try {
+    const groupGrades = await groupsService.getGroupGradesForSecretary(id, {
+      fetch,
+    });
+    const attendanceHistory = await attendanceService.getAllAttendanceForGroup(
+      id,
+      { fetch },
+    );
+
+    const enrolledStudents = groupGrades.students || [];
+    const studentStats = calculateStudentStats(
+      enrolledStudents,
+      attendanceHistory,
+    );
+
+    return {
+      academicGroupId: id,
+      academicCourseId: groupGrades.courseCode,
+      groupGrades,
+      attendanceHistory,
+      studentStats,
+    };
+  } catch (err: any) {
+    console.error("Error loading attendance data:", err);
+
+    return {
+      academicGroupId: id,
+      academicCourseId: "",
+      groupGrades: null,
+      attendanceHistory: [],
+      studentStats: [],
+      error:
+        err.message ||
+        "Error al cargar los datos de asistencia. Intenta de nuevo más tarde.",
+    };
+  }
 };

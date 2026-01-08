@@ -4,14 +4,16 @@
   import * as Select from "$lib/components/ui/select/index.js";
   import { Skeleton } from "$lib/components/ui/skeleton/index.js";
   import type { GlobalEvent } from "$lib/types/event.types";
+  import CreateAcademicCourseForm from "./CreateAcademicCourseForm.svelte";
 
   const { data } = $props();
 
-  let periods = $state(data.periods);
+  let periods = $state<GlobalEvent[]>(data.periods);
   let courses = $state(data.courses);
   let error = $state(data.error);
   let isLoading = $state(false);
   let selectedPeriodId = $state(data.selectedPeriodId);
+  let activePeriods = $state<GlobalEvent[]>(data.activePeriods);
 
   const triggerContent = $derived(
     periods.find((p: GlobalEvent) => p.id === selectedPeriodId)?.name ||
@@ -43,6 +45,10 @@
       .getCoursesByPeriod(selectedPeriodId)
       .then((newCourses) => {
         courses = newCourses;
+        console.log(
+          `Refreshed courses for period ${selectedPeriodId}:`,
+          newCourses,
+        );
       })
       .catch((err) => {
         error =
@@ -53,6 +59,14 @@
         isLoading = false;
       });
   });
+
+  $effect(() => {
+    periods = data.periods;
+    courses = data.courses;
+    error = data.error;
+    selectedPeriodId = data.selectedPeriodId;
+    activePeriods = data.activePeriods;
+  });
 </script>
 
 <div class="container mx-auto p-4 md:p-8">
@@ -60,11 +74,11 @@
     class="mb-6 flex flex-col items-start justify-between md:flex-row md:items-center"
   >
     <h1 class="mb-4 text-2xl font-bold md:mb-0">Cursos Académicos</h1>
-    {#if periods.length > 0}
-      <div class="flex items-center gap-2">
+    <div class="flex items-center gap-4">
+      {#if periods.length > 0}
         <span class="text-sm font-medium">Período:</span>
         <Select.Root type="single" bind:value={selectedPeriodId}>
-          <Select.Trigger class="w-[200px]">
+          <Select.Trigger class="w-[250px]">
             {triggerContent}
           </Select.Trigger>
           <Select.Content>
@@ -75,8 +89,9 @@
             {/each}
           </Select.Content>
         </Select.Root>
-      </div>
-    {/if}
+      {/if}
+      <CreateAcademicCourseForm {activePeriods} />
+    </div>
   </div>
 
   {#if error}

@@ -1,9 +1,9 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { IGlobalEventRepository } from 'src/events/domain/repositories/iglobal_event.repository';
+import { Injectable, Inject } from "@nestjs/common";
+import { IGlobalEventRepository } from "src/events/domain/repositories/iglobal_event.repository";
 import {
   GlobalEvent,
   EventType,
-} from 'src/events/domain/aggregates/global_event.entity';
+} from "src/events/domain/aggregates/global_event.entity";
 
 /**
  * @class SeederEventsService
@@ -37,91 +37,90 @@ export class SeederEventsService {
 
     // Academic Periods
     eventsToCreate.push({
-      name: 'Período Académico 2021-A',
+      name: "Período Académico 2021-A",
       type: EventType.ACADEMIC,
-      startDate: new Date('2021-02-01T00:00:00Z'),
-      endDate: new Date('2021-07-31T23:59:59Z'),
+      startDate: new Date("2021-02-01T00:00:00Z"),
+      endDate: new Date("2021-07-31T23:59:59Z"),
       isActive: true,
     });
     eventsToCreate.push({
-      name: 'Período Académico 2021-B',
+      name: "Período Académico 2021-B",
       type: EventType.ACADEMIC,
-      startDate: new Date('2021-08-01T00:00:00Z'),
-      endDate: new Date('2021-12-31T23:59:59Z'),
+      startDate: new Date("2021-08-01T00:00:00Z"),
+      endDate: new Date("2021-12-31T23:59:59Z"),
       isActive: true,
     });
     eventsToCreate.push({
-      name: 'Período Académico 2022-A',
+      name: "Período Académico 2022-A",
       type: EventType.ACADEMIC,
-      startDate: new Date('2022-02-01T00:00:00Z'),
-      endDate: new Date('2022-07-31T23:59:59Z'),
+      startDate: new Date("2022-02-01T00:00:00Z"),
+      endDate: new Date("2022-07-31T23:59:59Z"),
       isActive: true,
     });
     eventsToCreate.push({
-      name: 'Período Académico 2022-B',
+      name: "Período Académico 2022-B",
       type: EventType.ACADEMIC,
-      startDate: new Date('2022-08-01T00:00:00Z'),
-      endDate: new Date('2022-12-31T23:59:59Z'),
+      startDate: new Date("2022-08-01T00:00:00Z"),
+      endDate: new Date("2022-12-31T23:59:59Z"),
       isActive: true,
     });
     eventsToCreate.push({
-      name: 'Período Académico 2023-A',
+      name: "Período Académico 2023-A",
       type: EventType.ACADEMIC,
-      startDate: new Date('2023-02-01T00:00:00Z'),
-      endDate: new Date('2023-07-31T23:59:59Z'),
+      startDate: new Date("2023-02-01T00:00:00Z"),
+      endDate: new Date("2023-07-31T23:59:59Z"),
       isActive: true,
     });
     eventsToCreate.push({
-      name: 'Período Académico 2023-B',
+      name: "Período Académico 2023-B",
       type: EventType.ACADEMIC,
-      startDate: new Date('2023-08-01T00:00:00Z'),
-      endDate: new Date('2023-12-31T23:59:59Z'),
+      startDate: new Date("2023-08-01T00:00:00Z"),
+      endDate: new Date("2023-12-31T23:59:59Z"),
       isActive: true,
     });
     eventsToCreate.push({
-      name: 'Período Académico 2024-A',
+      name: "Período Académico 2024-A",
       type: EventType.ACADEMIC,
-      startDate: new Date('2024-02-01T00:00:00Z'),
-      endDate: new Date('2024-07-31T23:59:59Z'),
+      startDate: new Date("2024-02-01T00:00:00Z"),
+      endDate: new Date("2024-07-31T23:59:59Z"),
       isActive: true,
     });
     eventsToCreate.push({
-      name: 'Período Académico 2024-B',
+      name: "Período Académico 2024-B",
       type: EventType.ACADEMIC,
-      startDate: new Date('2024-08-01T00:00:00Z'),
-      endDate: new Date('2024-12-31T23:59:59Z'),
+      startDate: new Date("2024-08-01T00:00:00Z"),
+      endDate: new Date("2024-12-31T23:59:59Z"),
       isActive: true,
     });
     eventsToCreate.push({
-      name: 'Período Académico 2025-A',
+      name: "Período Académico 2025-A",
       type: EventType.ACADEMIC,
-      startDate: new Date('2025-02-01T00:00:00Z'),
-      endDate: new Date('2025-07-31T23:59:59Z'),
+      startDate: new Date("2025-02-01T00:00:00Z"),
+      endDate: new Date("2025-07-31T23:59:59Z"),
       isActive: true,
     });
     eventsToCreate.push({
-      name: 'Período Académico 2025-B',
+      name: "Período Académico 2025-B",
       type: EventType.ACADEMIC,
-      startDate: new Date('2025-08-01T00:00:00Z'),
-      endDate: new Date('2025-12-31T23:59:59Z'),
+      startDate: new Date("2025-08-01T00:00:00Z"),
+      endDate: new Date("2026-12-31T23:59:59Z"),
       isActive: true,
     });
-
 
     // Other events
     eventsToCreate.push({
-      name: 'Registro de Notas Finales 2025-II',
+      name: "Registro de Notas Finales 2025-II",
       type: EventType.GRADING,
-      startDate: new Date('2025-12-16T00:00:00Z'),
-      endDate: new Date('2025-12-22T23:59:59Z'),
+      startDate: new Date("2025-12-16T00:00:00Z"),
+      endDate: new Date("2026-12-22T23:59:59Z"),
       isActive: true,
     });
 
     eventsToCreate.push({
-      name: 'Matrícula de Laboratorios 2025-II',
+      name: "Matrícula de Laboratorios 2025-II",
       type: EventType.LAB_ENROLLMENT,
-      startDate: new Date('2025-07-20T00:00:00Z'),
-      endDate: new Date('2025-12-11T23:59:59Z'),
+      startDate: new Date("2025-07-20T00:00:00Z"),
+      endDate: new Date("2026-01-11T23:59:59Z"),
       isActive: true,
     });
 
@@ -138,7 +137,7 @@ export class SeederEventsService {
         `Successfully seeded/verified ${eventsToCreate.length} global events.`,
       );
     } catch (error) {
-      console.error('Failed to save global events:', error);
+      console.error("Failed to save global events:", error);
       throw error;
     }
   }

@@ -4,37 +4,37 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
-} from 'typeorm';
+} from "typeorm";
 
-import { AcademicGroup } from './academic_group.entity';
-import { Classroom } from 'src/classroom/domain/aggregates/classroom.entity';
+import { AcademicGroup } from "./academic_group.entity";
+import { Classroom } from "src/classroom/domain/aggregates/classroom.entity";
 
 export enum DayOfWeek {
-  MONDAY = 'monday',
-  TUESDAY = 'tuesday',
-  WEDNESDAY = 'wednesday',
-  THURSDAY = 'thursday',
-  FRIDAY = 'friday',
+  MONDAY = "monday",
+  TUESDAY = "tuesday",
+  WEDNESDAY = "wednesday",
+  THURSDAY = "thursday",
+  FRIDAY = "friday",
 }
 
-@Entity('schedule_slots')
+@Entity("schedule_slots")
 export class ScheduleSlot {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column('enum', { enum: DayOfWeek })
+  @Column("enum", { enum: DayOfWeek })
   day: DayOfWeek;
 
-  @Column('timetz')
+  @Column("timetz")
   startTime: string;
 
-  @Column('timetz')
+  @Column("timetz")
   endTime: string;
 
   @ManyToOne(() => Classroom, (classroom) => classroom.schedules)
   classroom: Classroom;
 
   @ManyToOne(() => AcademicGroup, (group) => group.schedule)
-  @JoinColumn({ name: 'academicGroupId' })
+  @JoinColumn({ name: "academicGroupId" })
   academicGroup: AcademicGroup;
 }

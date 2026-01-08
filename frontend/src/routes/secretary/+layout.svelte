@@ -25,6 +25,12 @@
     secretary: "Secretaria",
     student: "Estudiante",
     search: "Buscar",
+    groups: "Grupos",
+    schedule: "Horario",
+    grades: "Notas",
+    courses: "Cursos",
+    attendance: "Asistencia",
+    academic: "Historial Academico",
   };
 
   function generateSegments(pathname: string): BreadcrumbSegment[] {

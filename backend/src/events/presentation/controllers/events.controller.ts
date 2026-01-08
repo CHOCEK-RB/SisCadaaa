@@ -35,4 +35,9 @@ export class EventsController {
   async findAllAcademicPeriods(): Promise<GlobalEvent[]> {
     return await this.eventService.findAllAcademicPeriods();
   }
+
+  @Get('active-periods') // NEW ENDPOINT
+  async findActiveAcademicPeriods(): Promise<GlobalEvent[]> {
+    return await this.eventService.findActiveAcademicPeriods(); // NEW SERVICE METHOD
+  }
 }

@@ -11,10 +11,17 @@ export const load: PageServerLoad = async ({ fetch }) => {
       periods.map((p) => p.name),
     );
 
-    // Sort periods by start date, newest first
     periods.sort(
       (a, b) =>
         new Date(b.startDate).getTime() - new Date(a.startDate).getTime(),
+    );
+
+    const activePeriods = await academicCourseService.getActiveAcademicPeriods({
+      fetch,
+    });
+    console.log(
+      "✅ [server] Fetched active periods for form:",
+      activePeriods.map((p) => p.name),
     );
 
     let courses: AcademicCourseDTO[] = [];
@@ -42,6 +49,7 @@ export const load: PageServerLoad = async ({ fetch }) => {
       periods,
       courses,
       selectedPeriodId,
+      activePeriods,
     };
   } catch (error) {
     console.error(
@@ -52,6 +60,7 @@ export const load: PageServerLoad = async ({ fetch }) => {
       periods: [],
       courses: [],
       selectedPeriodId: null,
+      activePeriods: [],
       error: "Failed to load data from the server.",
     };
   }
