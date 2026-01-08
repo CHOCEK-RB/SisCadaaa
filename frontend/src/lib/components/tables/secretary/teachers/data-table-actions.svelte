@@ -5,6 +5,7 @@
   import EditTeacherSheet from "./edit-teacher-sheet.svelte";
   import DeleteTeacherDialog from "./delete-teacher-dialog.svelte";
   import type { TeacherUserDTO } from "./teacher-columns";
+    import { goto } from "$app/navigation";
 
   let { teacher } = $props<{ teacher: TeacherUserDTO }>();
 
@@ -12,8 +13,7 @@
   let dialogOpen = $state(false);
 
   function viewDetails() {
-    console.log("View details for teacher ID:", teacher.id);
-    // TODO: Implement navigation to detail page
+    goto(`/secretary/search/teacher/${teacher.id}`);
   }
 </script>
 

@@ -1037,4 +1037,88 @@ export class GroupsService {
 
     return students;
   }
+  async getTeacherGroupsHistory(teacherId: string) {
+    const teacher = await this.teacherRepository.findById(teacherId);
+    if (!teacher) throw new NotFoundException("Docente no encontrado");
+
+    const groups =
+      (await this.academicGroupRepository.findAllByIdTeacher(teacherId)) ?? [];
+
+    return groups
+      .map((group) => {
+        const academicCourse = group.academicCourse;
+        if (!academicCourse || !academicCourse.course) return null;
+
+        const date = new Date(academicCourse.creationDate);
+        let year = date.getFullYear();
+        const month = date.getMonth();
+
+        let periodLetter = "B";
+        if (month >= 1 && month <= 5) {
+          periodLetter = "A";
+        } else if (month === 0) {
+          year -= 1;
+          periodLetter = "B";
+        } else {
+          periodLetter = "B";
+        }
+
+        const academicPeriod = `${year}-${periodLetter}`;
+
+        return {
+          id: group.id,
+          groupName: group.name,
+          courseName: academicCourse.course.name,
+          courseCode: academicCourse.course.code,
+          semester: academicCourse.course.semester,
+          academicPeriod,
+          type: group.type,
+          schedule: group.schedule,
+          studentCount: group.enrollments?.length ?? 0,
+        };
+      })
+      .filter((g) => g !== null);
+  }
+  async getScheduleForTeacherBySecretary(teacherId: string): Promise<any[]> {
+    const groups =
+      await this.academicGroupRepository.findScheduleByTeacherIdForSecretary(
+        teacherId,
+      );
+
+    if (!groups || groups.length === 0) return [];
+
+    const allPeriods = [
+      ...new Set(
+        groups.map((g) =>
+          this.getAcademicPeriodLabel(g.academicCourse.creationDate),
+        ),
+      ),
+    ].sort();
+    const latestPeriod = allPeriods[allPeriods.length - 1];
+
+    return groups
+      .filter(
+        (g) =>
+          this.getAcademicPeriodLabel(g.academicCourse.creationDate) ===
+          latestPeriod,
+      )
+      .map((group) => ({
+        id: group.id,
+        name: group.name,
+        type: group.type,
+        schedule: group.schedule.map((s) => ({
+          id: s.id,
+          day: s.day,
+          start: s.startTime,
+          end: s.endTime,
+          classroom: { name: s.classroom?.name || "N/A" },
+        })),
+        course: {
+          course: {
+            name: group.academicCourse.course.name,
+            code: group.academicCourse.course.code,
+          },
+        },
+      }));
+  }
 }

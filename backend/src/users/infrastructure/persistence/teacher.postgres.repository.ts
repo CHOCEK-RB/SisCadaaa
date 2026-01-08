@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Teacher } from '../../domain/aggregates/teacher.entity';
-import { ITeacherRepository } from '../../domain/repositories/iteacher.repository';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { Teacher } from "../../domain/aggregates/teacher.entity";
+import { ITeacherRepository } from "../../domain/repositories/iteacher.repository";
 
 @Injectable()
 export class TeacherPostgresRepository implements ITeacherRepository {
@@ -20,17 +20,17 @@ export class TeacherPostgresRepository implements ITeacherRepository {
   }
 
   async findById(id: string): Promise<Teacher | null> {
-    return this.typeormRepo.findOne({ where: { id }, relations: ['user'] });
+    return this.typeormRepo.findOne({ where: { id }, relations: ["user"] });
   }
 
   async findAll(): Promise<Teacher[] | null> {
-    return this.typeormRepo.find();
+    return this.typeormRepo.find({ relations: ["user"] });
   }
 
   async findByUserId(userId: string): Promise<Teacher | null> {
     return this.typeormRepo.findOne({
       where: { user: { id: userId } },
-      relations: ['user'],
+      relations: ["user"],
     });
   }
 
@@ -43,7 +43,7 @@ export class TeacherPostgresRepository implements ITeacherRepository {
 
     const randomOffset = Math.floor(Math.random() * count);
     const randomTeacher = await this.typeormRepo
-      .createQueryBuilder('teacher')
+      .createQueryBuilder("teacher")
       .offset(randomOffset)
       .limit(1)
       .getOne();

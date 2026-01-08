@@ -3,7 +3,10 @@ import {
   FindAllTeachersOptions,
   IUserRepository,
 } from "src/users/domain/repositories/iuser.repository";
-import { UserMapper } from "src/users/application/mappers/user.mapper";
+import {
+  AnyProfileDTO,
+  UserMapper,
+} from "src/users/application/mappers/user.mapper";
 import { PaginatedUsersDto } from "src/users/application/dto/paginated-users.dto";
 import { UpdateTeacherDto } from "../dto/update-teacher.dto";
 import { User } from "src/users/domain/aggregates/user.entity";
@@ -28,11 +31,20 @@ export class TeacherService {
       total: paginatedResult.total,
     };
   }
-
-  async update(
-    id: string,
-    updateTeacherDto: UpdateTeacherDto,
-  ): Promise<User> {
+  async findOne(id: string): Promise<AnyProfileDTO> {
+    let user = await this.userRepository.findById(id);
+    if (!user || !user.teacherProfile) {
+      const teacher = await this.teacherRepository.findById(id);
+      if (teacher && teacher.user) {
+        user = await this.userRepository.findById(teacher.user.id);
+      }
+    }
+    if (!user || !user.teacherProfile) {
+      throw new NotFoundException(`El profesor con id: ${id} no fue econtrado`);
+    }
+    return this.userMapper.toDto(user);
+  }
+  async update(id: string, updateTeacherDto: UpdateTeacherDto): Promise<User> {
     const user = await this.userRepository.findById(id);
     if (!user || !user.teacherProfile) {
       throw new NotFoundException(`Teacher with id ${id} not found`);

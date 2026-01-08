@@ -25,6 +25,8 @@ import { AttendanceModule } from 'src/attendance/attendance.module';
 import { EventsModule } from 'src/events/events.module';
 
 import { typeOrmConfig } from '../config/typeorm.config';
+import { ReservationModule } from 'src/reservation/reservation.module';
+import { SeederReservationService } from './application/seeder_reservation.service';
 
 @Module({
   imports: [
@@ -37,6 +39,7 @@ import { typeOrmConfig } from '../config/typeorm.config';
     EnrollmentModule,
     AttendanceModule,
     EventsModule,
+    ReservationModule,
   ],
 
   providers: [
@@ -53,6 +56,7 @@ import { typeOrmConfig } from '../config/typeorm.config';
     SeederAttendanceService,
     SeederTopicProgressService,
     SeederEventsService,
+    SeederReservationService,
   ],
   exports: [
     SeederStudentService,
@@ -68,6 +72,7 @@ import { typeOrmConfig } from '../config/typeorm.config';
     SeederAttendanceService,
     SeederTopicProgressService,
     SeederEventsService,
+    SeederReservationService,
   ],
 })
 export class SeedingModule {}

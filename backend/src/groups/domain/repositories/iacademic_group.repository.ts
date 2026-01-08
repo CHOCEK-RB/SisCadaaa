@@ -59,4 +59,8 @@ export interface IAcademicGroupRepository {
     updatedFields: Partial<AcademicGroup>,
   ): Promise<AcademicGroup | null>;
   findByClassroomId(classroomId: string): Promise<AcademicGroup[]>;
+  findAllByIdTeacher(teacherId: string): Promise<AcademicGroup[] | null>;
+  findScheduleByTeacherIdForSecretary(
+    teacherId: string,
+  ): Promise<AcademicGroup[]>;
 }
