@@ -7,6 +7,7 @@ import {
   type Icon as IconType,
   SquareCheck,
   Calendar,
+  CalendarDays,
 } from "lucide-svelte";
 
 export interface NavLink {
@@ -40,15 +41,21 @@ export const navigationLinks: Record<UserRole, NavLink[]> = {
     { url: "/secretary", title: "Inicio", icon: House },
     { url: "/secretary/search", title: "Gestionar Usuarios", icon: Users },
     { url: "/secretary/courses", title: "Gestionar Cursos", icon: BookOpen },
+    {
+      url: "/secretary/events",
+      title: "Gestionar Eventos",
+      icon: CalendarDays,
+    },
   ],
   admin: [
-    { url: "/home", title: "Inicio", icon: House },
-    { url: "/manage-users", title: "Gestionar Usuarios", icon: Users },
-    { url: "/system-settings", title: "Ajustes Sistema", icon: Settings },
-  ],
-  unknown: [
-    { url: "/home", title: "Inicio", icon: House },
-    { url: "/settings", title: "Configuración", icon: Settings },
+    { url: "/admin", title: "Inicio", icon: House },
+    { url: "/admin/search", title: "Gestionar Usuarios", icon: Users },
+    { url: "/admin/courses", title: "Gestionar Cursos", icon: BookOpen },
+    {
+      url: "/admin/events",
+      title: "Gestionar Eventos",
+      icon: CalendarDays,
+    },
   ],
 };
 

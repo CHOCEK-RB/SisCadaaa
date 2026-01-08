@@ -1,9 +1,10 @@
-import { Injectable, Inject } from "@nestjs/common";
+import { Injectable, Inject, BadRequestException } from "@nestjs/common";
 import {
   GlobalEvent,
   EventType,
 } from "../domain/aggregates/global_event.entity";
 import { IGlobalEventRepository } from "../domain/repositories/iglobal_event.repository";
+import { Not, LessThanOrEqual, MoreThanOrEqual } from "typeorm";
 
 /**
  * @class GlobalEventService
@@ -42,5 +43,61 @@ export class GlobalEventService {
   // NEW METHOD
   async findActiveAcademicPeriods(): Promise<GlobalEvent[]> {
     return this.eventRepository.findAllActiveByType(EventType.ACADEMIC);
+  }
+
+  async createEvent(event: GlobalEvent): Promise<GlobalEvent> {
+    if (
+      (event.type === EventType.LAB_ENROLLMENT || event.type === EventType.GRADING) &&
+      event.isActive
+    ) {
+      await this._ensureSingleActiveEventType(event.type, event);
+    }
+    return this.eventRepository.create(event);
+  }
+
+  async findEventById(id: string): Promise<GlobalEvent | null> {
+    return this.eventRepository.findById(id);
+  }
+
+  async findAllEvents(): Promise<GlobalEvent[]> {
+    return this.eventRepository.findAll();
+  }
+
+  async updateEvent(event: GlobalEvent): Promise<GlobalEvent> {
+    if (
+      (event.type === EventType.LAB_ENROLLMENT || event.type === EventType.GRADING) &&
+      event.isActive
+    ) {
+      await this._ensureSingleActiveEventType(event.type, event, event.id);
+    }
+    return this.eventRepository.update(event);
+  }
+
+  async deleteEvent(id: string): Promise<void> {
+    return this.eventRepository.delete(id);
+  }
+
+  private async _ensureSingleActiveEventType(
+    type: EventType,
+    newEvent: GlobalEvent,
+    currentEventId?: string,
+  ): Promise<void> {
+    // Find all *other* active events of the same type that overlap with newEvent's date range
+    const overlappingEvents = await this.eventRepository.find({
+      where: {
+        type: type,
+        isActive: true,
+        // Overlap condition: (StartA <= EndB AND EndA >= StartB)
+        startDate: LessThanOrEqual(newEvent.endDate),
+        endDate: MoreThanOrEqual(newEvent.startDate),
+        ...(currentEventId && { id: Not(currentEventId) }), // Exclude current event if it's an update
+      },
+    });
+
+    if (overlappingEvents.length > 0) {
+      throw new BadRequestException(
+        `Only one active ${type} event is allowed at a time. An overlapping active event already exists.`,
+      );
+    }
   }
 }

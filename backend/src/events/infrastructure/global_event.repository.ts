@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import {
   FindOneOptions,
+  FindManyOptions, // Added FindManyOptions
   Repository,
   LessThanOrEqual,
   MoreThanOrEqual,
@@ -55,6 +56,35 @@ export class GlobalEventRepository implements IGlobalEventRepository {
     });
   }
 
+  async create(event: GlobalEvent): Promise<GlobalEvent> {
+    return await this.eventRepository.save(event);
+  }
+
+  async findById(id: string): Promise<GlobalEvent | null> {
+    return await this.eventRepository.findOneBy({ id });
+  }
+
+  async findAll(): Promise<GlobalEvent[]> {
+    return await this.eventRepository.find();
+  }
+
+  // New find method implementation
+  async find(options: FindManyOptions<GlobalEvent>): Promise<GlobalEvent[]> {
+    return await this.eventRepository.find(options);
+  }
+
+  async update(event: GlobalEvent): Promise<GlobalEvent> {
+    const existingEvent = await this.eventRepository.findOneBy({ id: event.id });
+    if (!existingEvent) {
+      throw new Error('Event not found'); // Or handle this more gracefully, e.g., throw NotFoundException
+    }
+    return await this.eventRepository.save(event);
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.eventRepository.delete(id);
+  }
+
   async save(event: Partial<GlobalEvent>): Promise<GlobalEvent>;
   async save(events: Partial<GlobalEvent>[]): Promise<GlobalEvent[]>;
   async save(
@@ -67,4 +97,3 @@ export class GlobalEventRepository implements IGlobalEventRepository {
     }
   }
 }
-

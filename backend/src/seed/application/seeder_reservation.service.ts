@@ -30,7 +30,7 @@ export class SeederReservationService {
     const teachers = (await this.teacherRepository.findAll()) ?? [];
 
     const cesar = teachers.find(
-      (t) => t.name === "CESAR ALEJANDRO" && t.firstLastName === "HAÑARI",
+      (t) => t.name === "JOSE LUIS" && t.firstLastName === "CALIZAYA",
     );
 
     if (!cesar) {

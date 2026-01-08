@@ -7,18 +7,32 @@
   import type { PageData } from "./$types";
   import { toast } from "svelte-sonner";
   import * as Table from "$lib/components/ui/table";
+  import * as Card from "$lib/components/ui/card";
   import { cn } from "$lib/utils";
   import { SvelteMap } from "svelte/reactivity";
   import { groupsService } from "$lib/services/groups.service";
   import { goto } from "$app/navigation";
+  import { classroomService } from "$lib/services/classroom.service";
+  import type { ClassroomSchedule } from "$lib/types/classroom.types";
 
   let { data }: { data: PageData } = $props();
   const groupId = data.groupId;
   let classrooms: Classroom[] = data.classrooms;
 
   let selectedClassroomId = $state<string | undefined>();
+  let isLoadingClassroomSchedule = $state(false);
+  let classroomScheduleData = $state<ClassroomSchedule | null>(null);
+  let occupiedSlots: { day: string; startTime: string; endTime: string }[] =
+    $state([]);
 
   const daysOfWeek = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
+  const dayMap: Record<string, string> = {
+    monday: "Lunes",
+    tuesday: "Martes",
+    wednesday: "Miércoles",
+    thursday: "Jueves",
+    friday: "Viernes",
+  };
   const timeSlots = [
     { start: "07:00", end: "07:50" },
     { start: "07:50", end: "08:40" },
@@ -119,6 +133,12 @@
     selectedSlots = newSelectedSlots;
   }
 
+  // Helper function to convert HH:MM string to minutes since midnight
+  function timeToMinutes(time: string): number {
+    const [hours, minutes] = time.split(":").map(Number);
+    return hours * 60 + (minutes || 0);
+  }
+
   async function handleSubmit(event: Event) {
     event.preventDefault();
 
@@ -133,7 +153,6 @@
 
     const scheduleData = Array.from(selectedSlots.entries()).map(
       ([dayName, slotIndices]) => {
-        // Find the first and last selected slot index to determine the continuous block
         const minSlotIndex = Math.min(...slotIndices);
         const maxSlotIndex = Math.max(...slotIndices);
 
@@ -141,7 +160,7 @@
         const endTime = timeSlots[maxSlotIndex].end;
 
         return {
-          day: dayNameMapping[dayName], // Use mapping for enum matching on backend
+          day: dayNameMapping[dayName],
           startTime: startTime,
           endTime: endTime,
         };
@@ -176,6 +195,38 @@
     if (classrooms.length > 0 && !selectedClassroomId) {
       selectedClassroomId = classrooms[0].id;
     }
+  });
+
+  $effect(() => {
+    async function fetchClassroomSchedule() {
+      if (!selectedClassroomId) {
+        classroomScheduleData = null;
+        occupiedSlots = [];
+        return;
+      }
+      isLoadingClassroomSchedule = true;
+      try {
+        const schedule =
+          await classroomService.getScheduleForClassroom(selectedClassroomId);
+        classroomScheduleData = schedule;
+
+        occupiedSlots = (schedule?.academicGroups || []).flatMap((group) =>
+          (group.schedule || []).map((slot) => ({
+            day: dayMap[slot.day.toLowerCase()],
+            startTime: slot.start,
+            endTime: slot.end,
+          })),
+        );
+
+        selectedSlots.clear();
+      } catch (error) {
+        console.error("Error fetching classroom schedule:", error);
+        toast.error("Error al cargar el horario del aula.");
+      } finally {
+        isLoadingClassroomSchedule = false;
+      }
+    }
+    fetchClassroomSchedule();
   });
 </script>
 
@@ -251,13 +302,53 @@
                   {@const isSelected = selectedSlots
                     .get(day)
                     ?.includes(slotIndex)}
+                  {@const currentSlotStartMinutes = timeToMinutes(slot.start)}
+                  {@const currentSlotEndMinutes = timeToMinutes(slot.end)}
+                  {@const isOccupied = occupiedSlots.some((occupied) => {
+                    if (occupied.day !== day) return false;
+                    const occupiedStartMinutes = timeToMinutes(
+                      occupied.startTime,
+                    );
+                    const occupiedEndMinutes = timeToMinutes(occupied.endTime);
+                    return (
+                      currentSlotStartMinutes < occupiedEndMinutes &&
+                      occupiedStartMinutes < currentSlotEndMinutes
+                    );
+                  })}
                   <Table.Cell
                     class={cn("w-[180px] cursor-pointer p-1", {
-                      "border-red-500/20 bg-primary/20 text-primary-foreground ":
-                        isSelected,
+                      "pointer-events-none": isOccupied,
+                      "bg-primary/20 text-primary-foreground": isSelected,
                     })}
-                    onclick={() => toggleSlot(day, slotIndex)}
-                  ></Table.Cell>
+                    onclick={() => {
+                      if (!isOccupied) toggleSlot(day, slotIndex);
+                      else toast.info("Este horario ya está ocupado.");
+                    }}
+                  >
+                    {#if isOccupied}
+                      <Card.Root
+                        class="flex h-full  justify-center border-gray-300 bg-chart-2/20"
+                      >
+                        <Card.Header class="p-2">
+                          <Card.Title class="text-lg">Ocupado</Card.Title>
+                          <Card.Description class="text-sm">
+                            {slot.start} - {slot.end}
+                          </Card.Description>
+                        </Card.Header>
+                      </Card.Root>
+                    {:else if isSelected}
+                      <Card.Root
+                        class="flex h-full  justify-center border-gray-300 bg-chart-1/20"
+                      >
+                        <Card.Header class="p-2">
+                          <Card.Title class="text-lg">Seleccionado</Card.Title>
+                          <Card.Description class="text-sm">
+                            {slot.start} - {slot.end}
+                          </Card.Description>
+                        </Card.Header>
+                      </Card.Root>
+                    {/if}
+                  </Table.Cell>
                 {/each}
               </Table.Row>
             {/each}

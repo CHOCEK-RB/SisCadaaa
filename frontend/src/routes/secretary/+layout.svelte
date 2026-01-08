@@ -31,6 +31,9 @@
     courses: "Cursos",
     attendance: "Asistencia",
     academic: "Historial Academico",
+    events: "Eventos",
+    teacher: "Profesor",
+    reserves: "Reservas",
   };
 
   function generateSegments(pathname: string): BreadcrumbSegment[] {

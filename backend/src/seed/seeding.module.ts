@@ -15,6 +15,7 @@ import { SeederAttendanceService } from './application/seeder_attendance.service
 import { SeederTopicProgressService } from './application/seeder_topic_progress.service';
 import { SeederEventsService } from './application/seeder_events.service';
 import { SeederSecretaryService } from './application/seeder_secretary.service';
+import { SeederAdminService } from './application/seeder_admin.service';
 
 import { UserModule } from 'src/users/users.module';
 import { CourseModule } from 'src/courses/course.module';
@@ -46,6 +47,7 @@ import { SeederReservationService } from './application/seeder_reservation.servi
     SeederStudentService,
     SeederTeacherService,
     SeederSecretaryService,
+    SeederAdminService,
     SeederCoursesService,
     SeederTopicsService,
     SeederScheduleService,
@@ -62,6 +64,7 @@ import { SeederReservationService } from './application/seeder_reservation.servi
     SeederStudentService,
     SeederTeacherService,
     SeederSecretaryService,
+    SeederAdminService,
     SeederCoursesService,
     SeederTopicsService,
     SeederScheduleService,

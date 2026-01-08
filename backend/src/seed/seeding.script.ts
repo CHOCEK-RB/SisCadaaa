@@ -13,6 +13,7 @@ import { SeederAttendanceService } from './application/seeder_attendance.service
 import { SeederTopicProgressService } from './application/seeder_topic_progress.service';
 import { SeederEventsService } from './application/seeder_events.service';
 import { SeederSecretaryService } from './application/seeder_secretary.service';
+import { SeederAdminService } from './application/seeder_admin.service';
 import { SeederReservationService } from './application/seeder_reservation.service';
 
 async function bootstrap() {
@@ -31,6 +32,10 @@ async function bootstrap() {
     console.log('Seeding secretaries...');
     const seederSecretary = appContext.get(SeederSecretaryService);
     await seederSecretary.seedSecretaries('secretaries.csv');
+
+    console.log('Seeding admins...');
+    const seederAdmin = appContext.get(SeederAdminService);
+    await seederAdmin.seedAdmins('admins.csv');
 
     console.log('Seeding courses...');
     const seederCourses = appContext.get(SeederCoursesService);

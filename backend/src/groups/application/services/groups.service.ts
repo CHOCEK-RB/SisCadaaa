@@ -7,8 +7,8 @@ import {
   InternalServerErrorException,
 } from "@nestjs/common";
 
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
 
 import { IAcademicGroupRepository } from "../../domain/repositories/iacademic_group.repository";
 import { IStudentRepository } from "src/users/domain/repositories/istudent.repository";
@@ -23,26 +23,27 @@ import {
   Enrollment,
   Grades,
 } from "src/enrollment/domain/aggregates/enrollment.entity";
-import { GroupType, AcademicGroup } from "../../domain/aggregates/academic_group.entity"; // Added AcademicGroup import
+import {
+  GroupType,
+  AcademicGroup,
+} from "../../domain/aggregates/academic_group.entity"; // Added AcademicGroup import
 import { Teacher } from "src/users/domain/aggregates/teacher.entity"; // Added Teacher import
 import { ScheduleSlotDTO } from "../dto/schedule.dto";
 import { StudentInfoDTO } from "../dto/student-info.dto";
-import { IClassroomRepository } from 'src/classroom/domain/repositories/iclassroom.repository';
-import { IScheduleSlotRepository } from '../../domain/repositories/ischedule.repository';
-import { ScheduleSlot, DayOfWeek } from '../../domain/aggregates/schedule.entity';
-import { Classroom } from 'src/classroom/domain/aggregates/classroom.entity';
-import { CreateScheduleDto } from '../dto/create-schedule.dto';
-import { UpdateAcademicGroupDto } from '../dto/update-academic-group.dto';
+import { IClassroomRepository } from "src/classroom/domain/repositories/iclassroom.repository";
+import { IScheduleSlotRepository } from "../../domain/repositories/ischedule.repository";
+import { ScheduleSlot } from "../../domain/aggregates/schedule.entity";
+import { CreateScheduleDto } from "../dto/create-schedule.dto";
+import { UpdateAcademicGroupDto } from "../dto/update-academic-group.dto";
 
 import {
   GradeAttachment,
   GradeAttachmentType,
-} from '../../domain/aggregates/grade_attachment.entity';
+} from "../../domain/aggregates/grade_attachment.entity";
 import {
   GRADE_ATTACHMENT_MAX_BYTES,
   GRADE_ATTACHMENT_PUBLIC_PATH,
-} from '../constants/grade-attachments.constants';
-
+} from "../constants/grade-attachments.constants";
 
 export interface GroupsForPeriods {
   [period: string]: AcademicGroupDTO[];
@@ -56,7 +57,7 @@ export interface StudentGradeInfo {
   lastName: string;
   grades: Grades;
   highestGradePdfUrl?: string | null;
-  lowestGradePdfUrl?: string | null;  
+  lowestGradePdfUrl?: string | null;
 }
 
 export interface GroupGradesResponse {
@@ -110,15 +111,15 @@ export class GroupsService {
   //support for grades attachments
   private validateGradeAttachment(file?: Express.Multer.File): void {
     if (!file) {
-      throw new BadRequestException('PDF file is required.');
+      throw new BadRequestException("PDF file is required.");
     }
 
-    if (!file.mimetype.toLowerCase().includes('pdf')) {
-      throw new BadRequestException('Only PDF files are allowed.');
+    if (!file.mimetype.toLowerCase().includes("pdf")) {
+      throw new BadRequestException("Only PDF files are allowed.");
     }
 
     if (file.size > GRADE_ATTACHMENT_MAX_BYTES) {
-      throw new BadRequestException('PDF file exceeds the maximum size.');
+      throw new BadRequestException("PDF file exceeds the maximum size.");
     }
   }
 
@@ -129,7 +130,7 @@ export class GroupsService {
   private ensureSyllabusAvailable(urlSyllabus?: string) {
     if (!urlSyllabus) {
       throw new ForbiddenException(
-        'Syllabus must be uploaded before accessing this resource.',
+        "Syllabus must be uploaded before accessing this resource.",
       );
     }
   }
@@ -140,9 +141,8 @@ export class GroupsService {
     const { academicCourseId, teacherId, name, capacity, type } =
       createAcademicGroupDto;
 
-    const academicCourse = await this.academicCourseRepository.findById(
-      academicCourseId,
-    );
+    const academicCourse =
+      await this.academicCourseRepository.findById(academicCourseId);
     if (!academicCourse) {
       throw new NotFoundException(
         `AcademicCourse with ID ${academicCourseId} not found.`,
@@ -164,7 +164,8 @@ export class GroupsService {
     newAcademicGroup.academicCourse = academicCourse;
     newAcademicGroup.teacher = teacher;
 
-    const savedGroup = await this.academicGroupRepository.save(newAcademicGroup);
+    const savedGroup =
+      await this.academicGroupRepository.save(newAcademicGroup);
 
     return {
       id: savedGroup.id,
@@ -185,7 +186,8 @@ export class GroupsService {
             userId: savedGroup.teacher.user.id,
             email: savedGroup.teacher.user.email,
             firstName: savedGroup.teacher.name,
-            lastName: `${savedGroup.teacher.firstLastName} ${savedGroup.teacher.secondLastName}`.trim(),
+            lastName:
+              `${savedGroup.teacher.firstLastName} ${savedGroup.teacher.secondLastName}`.trim(),
             role: "teacher",
           }
         : undefined,
@@ -197,12 +199,16 @@ export class GroupsService {
 
     const academicGroup = await this.academicGroupRepository.findById(groupId);
     if (!academicGroup) {
-      throw new NotFoundException(`AcademicGroup with ID ${groupId} not found.`);
+      throw new NotFoundException(
+        `AcademicGroup with ID ${groupId} not found.`,
+      );
     }
 
     const classroom = await this.classroomRepository.findById(classroomId);
     if (!classroom) {
-      throw new NotFoundException(`Classroom with ID ${classroomId} not found.`);
+      throw new NotFoundException(
+        `Classroom with ID ${classroomId} not found.`,
+      );
     }
 
     const newScheduleSlots: ScheduleSlot[] = [];
@@ -254,15 +260,25 @@ export class GroupsService {
     await this.scheduleSlotRepository.save(newScheduleSlots);
   }
 
-  async deleteScheduleSlot(scheduleSlotId: string, groupId: string): Promise<void> {
-    const scheduleSlot = await this.scheduleSlotRepository.findByIdWithAcademicGroup(scheduleSlotId);
+  async deleteScheduleSlot(
+    scheduleSlotId: string,
+    groupId: string,
+  ): Promise<void> {
+    const scheduleSlot =
+      await this.scheduleSlotRepository.findByIdWithAcademicGroup(
+        scheduleSlotId,
+      );
 
     if (!scheduleSlot) {
-      throw new NotFoundException(`ScheduleSlot with ID ${scheduleSlotId} not found.`);
+      throw new NotFoundException(
+        `ScheduleSlot with ID ${scheduleSlotId} not found.`,
+      );
     }
 
     if (scheduleSlot.academicGroup.id !== groupId) {
-      throw new ForbiddenException(`ScheduleSlot with ID ${scheduleSlotId} does not belong to AcademicGroup with ID ${groupId}.`);
+      throw new ForbiddenException(
+        `ScheduleSlot with ID ${scheduleSlotId} does not belong to AcademicGroup with ID ${groupId}.`,
+      );
     }
 
     await this.scheduleSlotRepository.delete(scheduleSlotId);
@@ -274,7 +290,9 @@ export class GroupsService {
   ): Promise<AcademicGroupDTO> {
     const existingGroup = await this.academicGroupRepository.findById(groupId);
     if (!existingGroup) {
-      throw new NotFoundException(`AcademicGroup with ID ${groupId} not found.`);
+      throw new NotFoundException(
+        `AcademicGroup with ID ${groupId} not found.`,
+      );
     }
 
     // Handle teacher update
@@ -328,7 +346,8 @@ export class GroupsService {
             userId: updatedGroup.teacher.user.id,
             email: updatedGroup.teacher.user.email,
             firstName: updatedGroup.teacher.name,
-            lastName: `${updatedGroup.teacher.firstLastName} ${updatedGroup.teacher.secondLastName}`.trim(),
+            lastName:
+              `${updatedGroup.teacher.firstLastName} ${updatedGroup.teacher.secondLastName}`.trim(),
             role: "teacher",
           }
         : undefined,
@@ -584,8 +603,6 @@ export class GroupsService {
       throw new ForbiddenException("Group not found");
     }
 
-    this.ensureSyllabusAvailable(group.academicCourse?.urlSyllabus);
-
     const groupDTO: AcademicGroupDTO = {
       id: group.id,
       name: group.name,
@@ -675,7 +692,9 @@ export class GroupsService {
       throw new ForbiddenException("You are not assigned to teach this group.");
     }
 
-    this.ensureSyllabusAvailable(group.academicCourse?.urlSyllabus);
+    if (authenticatedUser.role === "teacher") {
+      this.ensureSyllabusAvailable(group.academicCourse?.urlSyllabus);
+    }
 
     const allEnrollments = group.enrollments;
 
@@ -742,15 +761,15 @@ export class GroupsService {
     file: Express.Multer.File,
     authenticatedUser: JwtPayload,
   ): Promise<{ url: string }> {
-    if (authenticatedUser.role !== 'teacher') {
-      throw new ForbiddenException('Only teachers can upload grade PDFs.');
+    if (authenticatedUser.role !== "teacher") {
+      throw new ForbiddenException("Only teachers can upload grade PDFs.");
     }
 
     const teacherProfile = await this.teacherRepository.findByUserId(
       authenticatedUser.sub,
     );
     if (!teacherProfile) {
-      throw new NotFoundException('Teacher profile not found.');
+      throw new NotFoundException("Teacher profile not found.");
     }
 
     const group = await this.academicGroupRepository.findById(groupId);
@@ -759,12 +778,12 @@ export class GroupsService {
     }
 
     if (!group.teacher || group.teacher.id !== teacherProfile.id) {
-      throw new ForbiddenException('You are not assigned to teach this group.');
+      throw new ForbiddenException("You are not assigned to teach this group.");
     }
 
     if (group.type !== GroupType.THEORY) {
       throw new BadRequestException(
-        'Grade PDFs can only be uploaded for theory groups.',
+        "Grade PDFs can only be uploaded for theory groups.",
       );
     }
 
@@ -816,7 +835,9 @@ export class GroupsService {
       throw new ForbiddenException("You are not assigned to teach this group.");
     }
 
-    this.ensureSyllabusAvailable(group.academicCourse?.urlSyllabus);
+    if (authenticatedUser.role === "teacher") {
+      this.ensureSyllabusAvailable(group.academicCourse?.urlSyllabus);
+    }
 
     if (group.type !== GroupType.THEORY) {
       throw new BadRequestException(
@@ -885,7 +906,9 @@ export class GroupsService {
       throw new ForbiddenException("You are not assigned to teach this group.");
     }
 
-    this.ensureSyllabusAvailable(group.academicCourse?.urlSyllabus);
+    if (authenticatedUser.role === "teacher") {
+      this.ensureSyllabusAvailable(group.academicCourse?.urlSyllabus);
+    }
 
     if (group.type !== GroupType.THEORY) {
       throw new BadRequestException(
