@@ -60,4 +60,21 @@ export class ReservationController {
   ) {
     return this.reservationService.getReservationsByClassroomId(classroomId);
   }
+  @Get("teacher/:teacherId/history")
+  @Roles(Role.SECRETARY, Role.ADMIN)
+  @UseGuards(RolesGuard)
+  getTeacherHistory(@Param("teacherId", ParseUUIDPipe) teacherId: string) {
+    return this.reservationService.getTeacherReservationHistory(teacherId);
+  }
+
+  @Get("teacher/:teacherId/schedule-view")
+  @Roles(Role.SECRETARY, Role.ADMIN)
+  @UseGuards(RolesGuard)
+  async getReservationsForSecretary(
+    @Param("teacherId", ParseUUIDPipe) teacherId: string,
+  ) {
+    return await this.reservationService.getTeacherReservationsForSchedule(
+      teacherId,
+    );
+  }
 }

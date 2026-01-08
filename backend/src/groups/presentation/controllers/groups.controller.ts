@@ -45,6 +45,10 @@ import {
   GRADE_ATTACHMENT_UPLOAD_DIR,
 } from "../../application/constants/grade-attachments.constants";
 import { GradeAttachmentType } from "../../domain/aggregates/grade_attachment.entity";
+import { Roles } from "src/auth/presentation/decorators/roles.decorator";
+import { JwtAuthGuard } from "src/auth/presentation/guards/jwt-auth.guard";
+import { Role } from "src/users/domain/aggregates/role.enum";
+import { RolesGuard } from "src/auth/presentation/guards/roles.guard";
 
 const gradeAttachmentStorage = diskStorage({
   destination: (_req, _file, callback) => {
@@ -119,12 +123,15 @@ export class GroupsController {
     await this.groupsService.deleteScheduleSlot(scheduleSlotId, groupId);
   }
 
-  @Patch(':groupId')
+  @Patch(":groupId")
   async updateAcademicGroup(
-    @Param('groupId', ParseUUIDPipe) groupId: string,
+    @Param("groupId", ParseUUIDPipe) groupId: string,
     @Body() updateAcademicGroupDto: UpdateAcademicGroupDto,
   ): Promise<AcademicGroupDTO> {
-    return this.groupsService.updateAcademicGroup(groupId, updateAcademicGroupDto);
+    return this.groupsService.updateAcademicGroup(
+      groupId,
+      updateAcademicGroupDto,
+    );
   }
 
   @Get(":id/details")
@@ -326,5 +333,20 @@ export class GroupsController {
       file,
       user,
     );
+  }
+  @Get("teacher/:teacherId/history")
+  @Roles(Role.SECRETARY, Role.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  async getTeacherGroups(@Param("teacherId", ParseUUIDPipe) teacherId: string) {
+    return await this.groupsService.getTeacherGroupsHistory(teacherId);
+  }
+  @Get("teacher/:teacherId/schedule-view")
+  @Roles(Role.SECRETARY, Role.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  async getScheduleForSecretary(
+    @Param("teacherId", ParseUUIDPipe) teacherId: string,
+  ) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return await this.groupsService.getScheduleForTeacherBySecretary(teacherId);
   }
 }

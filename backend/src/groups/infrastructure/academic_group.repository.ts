@@ -71,7 +71,11 @@ export class AcademicGroupRepository implements IAcademicGroupRepository {
   ): Promise<AcademicGroup | null> {
     return this.typeormRepo.findOne({
       where: { id, type },
-      relations: { academicCourse: { course: true }, enrollments: true, teacher: true },
+      relations: {
+        academicCourse: { course: true },
+        enrollments: true,
+        teacher: true,
+      },
     });
   }
 
@@ -241,7 +245,11 @@ export class AcademicGroupRepository implements IAcademicGroupRepository {
   async getScheduleById(id: string): Promise<AcademicGroup | null> {
     return this.typeormRepo.findOne({
       where: { id },
-      relations: { schedule: { classroom: true }, teacher: true, academicCourse: true },
+      relations: {
+        schedule: { classroom: true },
+        teacher: true,
+        academicCourse: true,
+      },
     });
   }
 
@@ -306,5 +314,39 @@ export class AcademicGroupRepository implements IAcademicGroupRepository {
         teacher: true,
       },
     });
+  }
+  async findAllByIdTeacher(teacherId: string): Promise<AcademicGroup[]> {
+    return await this.typeormRepo
+      .createQueryBuilder("group")
+      .innerJoinAndSelect(
+        "group.teacher",
+        "teacher",
+        "teacher.id = :teacherId",
+        { teacherId },
+      )
+      .leftJoinAndSelect("group.academicCourse", "academicCourse")
+      .leftJoinAndSelect("academicCourse.course", "course")
+      .leftJoinAndSelect("group.enrollments", "enrollments")
+      .orderBy({
+        "academicCourse.creationDate": "DESC",
+      })
+      .getMany();
+  }
+  async findScheduleByTeacherIdForSecretary(
+    teacherId: string,
+  ): Promise<AcademicGroup[]> {
+    return await this.typeormRepo
+      .createQueryBuilder("group")
+      .innerJoinAndSelect(
+        "group.teacher",
+        "teacher",
+        "teacher.id = :teacherId",
+        { teacherId },
+      )
+      .leftJoinAndSelect("group.academicCourse", "academicCourse")
+      .leftJoinAndSelect("academicCourse.course", "course")
+      .leftJoinAndSelect("group.schedule", "schedule")
+      .leftJoinAndSelect("schedule.classroom", "classroom")
+      .getMany();
   }
 }

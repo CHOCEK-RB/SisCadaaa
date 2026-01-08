@@ -308,4 +308,8 @@ export const groupsService = {
       options,
     );
   },
+
+  async getTeacherGroupsHistory(teacherId: string, options: RequestOptions = {}) {
+    return await api.get<any[]>(`/groups/teacher/${teacherId}/history`, options);
+  },
 };

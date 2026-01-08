@@ -45,4 +45,9 @@ export const reservationService = {
       options,
     );
   },
+  
+  
+  async getTeacherHistory(userId: string, options: RequestOptions = {}) {
+    return await api.get<any[]>(`/reservations/teacher/${userId}/history`, options);
+  }
 };

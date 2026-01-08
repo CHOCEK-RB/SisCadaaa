@@ -33,7 +33,11 @@ export class ReservationPostgresRepository implements IReservationRepository {
   }
 
   findByUserId(userId: string): Promise<Reservation[]> {
-    return this.reservationRepository.find({ where: { user: { id: userId } } });
+    return this.reservationRepository.find({
+      where: { user: { id: userId } },
+      relations: { classroom: true },
+      order: { startTime: "DESC" },
+    });
   }
 
   findByClassroomId(classroomId: string): Promise<Reservation[]> {
@@ -66,6 +70,16 @@ export class ReservationPostgresRepository implements IReservationRepository {
         startTime: LessThan(endTime),
         endTime: MoreThan(startTime),
       },
+    });
+  }
+
+  findByTeacherId(teacherId: string): Promise<Reservation[]> {
+    return this.reservationRepository.find({
+      where: { user: { id: teacherId } },
+      relations: {
+        classroom: true,
+      },
+      order: { startTime: "DESC" },
     });
   }
 }

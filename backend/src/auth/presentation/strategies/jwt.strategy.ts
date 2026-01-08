@@ -79,10 +79,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     // Maps the User entity to a JwtPayload to standardize authenticated user info.
-    const authenticateduserinfo: JwtPayload = this.jwtPayloadMapper.toJwtPayload(
-      user,
-      pictureURL || '',
-    );
+    const authenticateduserinfo: JwtPayload =
+      this.jwtPayloadMapper.toJwtPayload(user, pictureURL || "");
 
     return authenticateduserinfo;
   }

@@ -20,6 +20,7 @@ import { Roles } from "src/auth/presentation/decorators/roles.decorator";
 import { Role } from "src/users/domain/aggregates/role.enum";
 import { TeacherService } from "../../application/services/teacher.service";
 import { UpdateTeacherDto } from "../../application/dto/update-teacher.dto";
+import { AnyProfileDTO } from "src/users/application/mappers/user.mapper";
 
 @Controller("teachers")
 export class TeacherController {
@@ -60,5 +61,14 @@ export class TeacherController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param("id", ParseUUIDPipe) id: string) {
     return this.teacherService.remove(id);
+  }
+
+  @Get(":id")
+  @UseGuards(AuthGuard("jwt"), RolesGuard)
+  @Roles(Role.ADMIN, Role.SECRETARY)
+  async findOne(
+    @Param("id", ParseUUIDPipe) id: string,
+  ): Promise<AnyProfileDTO> {
+    return this.teacherService.findOne(id);
   }
 }

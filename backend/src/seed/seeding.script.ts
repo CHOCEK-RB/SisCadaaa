@@ -13,6 +13,7 @@ import { SeederAttendanceService } from './application/seeder_attendance.service
 import { SeederTopicProgressService } from './application/seeder_topic_progress.service';
 import { SeederEventsService } from './application/seeder_events.service';
 import { SeederSecretaryService } from './application/seeder_secretary.service';
+import { SeederReservationService } from './application/seeder_reservation.service';
 
 async function bootstrap() {
   const appContext = await NestFactory.createApplicationContext(SeedingModule);
@@ -70,6 +71,10 @@ async function bootstrap() {
     console.log('Seeding schedule...');
     const seederSchedule = appContext.get(SeederScheduleService);
     await seederSchedule.seedSchedule('schedule.csv');
+
+  console.log("Seeding reservations...");
+    const reservationSeeder = appContext.get(SeederReservationService);
+    await reservationSeeder.seedReservations("reservations.csv");
   } catch (error) {
     console.error('Seeding failed:', error);
     throw error;

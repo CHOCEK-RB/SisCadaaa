@@ -13,6 +13,7 @@ import { IClassroomRepository } from "../../../classroom/domain/repositories/icl
 import { User } from "src/users/domain/aggregates/user.entity";
 import { IScheduleSlotRepository } from "src/groups/domain/repositories/ischedule.repository"; // Import
 import { DayOfWeek } from "src/groups/domain/aggregates/schedule.entity"; // Import
+import { ITeacherRepository } from "src/users/domain/repositories/iteacher.repository";
 
 @Injectable()
 export class ReservationService {
@@ -25,6 +26,8 @@ export class ReservationService {
     private readonly classroomRepository: IClassroomRepository,
     @Inject(IScheduleSlotRepository) // Inject
     private readonly scheduleSlotRepository: IScheduleSlotRepository, // Inject
+    @Inject(ITeacherRepository)
+    private readonly teacherRepository: ITeacherRepository,
   ) {}
 
   private mapDayNumberToDayOfWeek(dayNumber: number): DayOfWeek | undefined {
@@ -47,7 +50,7 @@ export class ReservationService {
 
   async createReservation(
     createReservationDto: CreateReservationDto,
-    requestingUser: User,
+    requestingUser: any,
   ): Promise<Reservation> {
     const { classroomId, startTime, endTime } = createReservationDto;
 
@@ -104,7 +107,7 @@ export class ReservationService {
 
     const reservation = new Reservation();
     reservation.classroom = classroom;
-    reservation.user = requestingUser;
+    reservation.user = { id: requestingUser.sub || requestingUser.id } as User;
     reservation.startTime = startTimeDate;
     reservation.endTime = endTimeDate;
 
@@ -139,5 +142,63 @@ export class ReservationService {
 
   async getReservationsForToday(): Promise<Reservation[]> {
     return this.reservationRepository.findForToday();
+  }
+  async getTeacherReservationHistory(teacherId: string) {
+    const teacher = await this.teacherRepository.findById(teacherId);
+
+    if (!teacher || !teacher.user) {
+      throw new NotFoundException(
+        `Perfil de docente con ID ${teacherId} no encontrado`,
+      );
+    }
+
+    const userId = teacher.user.id;
+
+    const reservations = await this.reservationRepository.findByUserId(userId);
+
+    return reservations.map((res) => {
+      const date = new Date(res.startTime);
+      let year = date.getFullYear();
+      const month = date.getMonth();
+
+      let periodLetter = "B";
+
+      if (month >= 2 && month <= 6) {
+        periodLetter = "A";
+      } else if (month <= 1) {
+        year -= 1;
+        periodLetter = "B";
+      } else {
+        periodLetter = "B";
+      }
+      const academicPeriod = `${year}-${periodLetter}`;
+      return {
+        id: res.id,
+        startTime: res.startTime,
+        endTime: res.endTime,
+        status: res.status,
+        classroom: {
+          name: res.classroom?.name ?? "Aula no asignada",
+        },
+        academicPeriod,
+      };
+    });
+  }
+  async getTeacherReservationsForSchedule(teacherId: string) {
+    const teacher = await this.teacherRepository.findById(teacherId);
+    if (!teacher || !teacher.user)
+      throw new NotFoundException("Docente no encontrado");
+
+    const reservations = await this.reservationRepository.findByUserId(
+      teacher.user.id,
+    );
+
+    return reservations.map((res) => ({
+      id: res.id,
+      startTime: res.startTime,
+      endTime: res.endTime,
+      status: res.status,
+      classroom: { name: res.classroom?.name ?? "Sin Aula" },
+    }));
   }
 }

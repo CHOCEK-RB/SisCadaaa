@@ -116,4 +116,15 @@ export const userService = {
     return response;
   },
 
+  async getTeacherById(id: string, options: RequestOptions = {}) {
+    console.log(`UserService.getTeacherById llamado para ID: ${id}`);
+    
+    const response = await api.get<UserProfileDTO>(`/teachers/${id}`, options);
+
+    if (!response) {
+      throw new Error("No se pudo encontrar el profesor solicitado");
+    }
+
+    return response;
+  },
 };
