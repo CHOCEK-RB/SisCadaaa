@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, ForbiddenException } from '@nestjs/common';
 import { ITopicProgressRepository } from 'src/courses/domain/repositories/itopic_progress.repository';
 import { IAcademicCourseRepository } from 'src/courses/domain/repositories/icourse_academic.repository';
 import { UpdateTopicProgressDTO } from '../dto/update-topic-progress.dto';
@@ -25,6 +25,10 @@ export class TopicProgressService {
 		const academicCourse = await this.academicCourseRepo.findById(academicCourseId);
 		if (!academicCourse) {
 			throw new Error('AcademicCourse not found');
+		}
+
+		if (!academicCourse.urlSyllabus) {
+			throw new ForbiddenException('Syllabus is required before updating topics.');
 		}
 
 		let topicProgress = academicCourse.progress.find((p) => p.groupName === groupName);

@@ -3,19 +3,71 @@
   import { Button } from "$lib/components/ui/button";
   import { Upload, Download, FileText, Info } from "lucide-svelte";
   import type { AcademicCourseDTO } from "$lib/types/course.types";
+  import { academicCourseService } from "$lib/services/academic_course.service";
+  import { toast } from "svelte-sonner";
 
   type Props = {
     courseDetails: AcademicCourseDTO | undefined;
   };
 
   let { courseDetails }: Props = $props();
+  let fileInput: HTMLInputElement | null = null;
+  let isUploading = $state(false);
 
   console.log(courseDetails);
+  const MAX_SYLLABUS_SIZE = 5 * 1024 * 1024;
 
   function handleUploadSyllabus() {
-    alert(
-      "Aquí se implementará la lógica para subir o reemplazar el archivo del sílabo.",
-    );
+    fileInput?.click();
+  }
+
+  function resetFileInput() {
+    if (fileInput) {
+      fileInput.value = "";
+    }
+  }
+
+  async function handleFileSelected(event: Event) {
+    const target = event.target as HTMLInputElement;
+    const file = target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    if (file.type !== "application/pdf") {
+      toast.error("El sílabo debe estar en formato PDF.");
+      resetFileInput();
+      return;
+    }
+
+    if (file.size > MAX_SYLLABUS_SIZE) {
+      toast.error("El archivo supera el límite de 5 MB.");
+      resetFileInput();
+      return;
+    }
+
+    if (!courseDetails?.id) {
+      toast.error("No se pudo identificar el curso.");
+      resetFileInput();
+      return;
+    }
+
+    isUploading = true;
+    try {
+      const updatedCourse = await academicCourseService.uploadSyllabus(
+        courseDetails.id,
+        file,
+      );
+      courseDetails = updatedCourse;
+      toast.success("Sílabo cargado correctamente.");
+    } catch (error: any) {
+      toast.error(
+        error?.message || "Ocurrió un error al subir el sílabo.",
+      );
+    } finally {
+      isUploading = false;
+      resetFileInput();
+    }
   }
 </script>
 
@@ -64,6 +116,19 @@
     </Card.Title>
   </Card.Header>
   <Card.Content>
+    {#if !courseDetails?.urlSyllabus}
+      <div class="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+        Debes subir el sílabo para habilitar el acceso a las funciones del
+        curso.
+      </div>
+    {/if}
+    <input
+      bind:this={fileInput}
+      type="file"
+      accept="application/pdf"
+      class="hidden"
+      onchange={handleFileSelected}
+    />
     {#if courseDetails?.urlSyllabus}
       <p class="mb-4 text-sm text-gray-600">
         Ya existe un sílabo cargado para este curso.
@@ -79,9 +144,14 @@
           Ver Sílabo Actual
         </Button>
       </a>
-      <Button onclick={handleUploadSyllabus} variant="outline" class="w-full">
+      <Button 
+        onclick={handleUploadSyllabus}
+        variant="outline"
+        class="w-full"
+        disabled={isUploading}
+      >
         <Upload class="mr-2 h-4 w-4" />
-        Reemplazar Sílabo
+        {isUploading ? "Subiendo..." : "Reemplazar Sílabo"}
       </Button>
     {:else}
       <p class="mb-4 text-sm text-gray-600">

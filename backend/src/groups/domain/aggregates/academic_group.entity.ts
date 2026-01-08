@@ -13,6 +13,9 @@ import { Teacher } from "src/users/domain/aggregates/teacher.entity";
 import { Attendance } from "src/attendance/domain/aggregates/attendance.entity";
 import { Enrollment } from "src/enrollment/domain/aggregates/enrollment.entity";
 
+import { GradeAttachment } from './grade_attachment.entity';
+
+
 export enum GroupType {
   LABORATORY = "laboratory",
   THEORY = "theory",
@@ -53,4 +56,7 @@ export class AcademicGroup {
 
   @ManyToMany(() => Enrollment, (enrollment) => enrollment.groups)
   enrollments: Enrollment[];
+
+  @OneToMany(() => GradeAttachment, (attachment) => attachment.group)
+  gradeAttachments: GradeAttachment[];
 }

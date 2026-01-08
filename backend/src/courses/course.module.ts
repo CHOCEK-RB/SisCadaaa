@@ -29,7 +29,7 @@ import { UserModule } from 'src/users/users.module';
 import { EventsModule } from 'src/events/events.module';
 import { ITeacherRepository } from 'src/users/domain/repositories/iteacher.repository';
 import { IGlobalEventRepository } from 'src/events/domain/repositories/iglobal_event.repository';
-
+import { StorageModule } from 'src/storage/storage.module';
 @Module({
   controllers: [AcademicCourseController, CourseController], // Add CourseController
   imports: [
@@ -42,6 +42,7 @@ import { IGlobalEventRepository } from 'src/events/domain/repositories/iglobal_e
     forwardRef(() => GroupsModule),
     UserModule,
     EventsModule,
+    StorageModule,
   ],
 
   providers: [

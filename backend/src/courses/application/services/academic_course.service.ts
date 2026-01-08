@@ -1,4 +1,4 @@
-import { Injectable, Inject, NotFoundException } from "@nestjs/common";
+import { Injectable, Inject, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { IAcademicCourseRepository } from "../../domain/repositories/icourse_academic.repository";
 import { AcademicCourseDTO } from "../dto/academic_course.dto";
 import { AcademicCourseMapper } from "../mappers/academic-course.mapper";
@@ -8,6 +8,9 @@ import { ITeacherRepository } from "src/users/domain/repositories/iteacher.repos
 import { IGlobalEventRepository } from "src/events/domain/repositories/iglobal_event.repository";
 import { AcademicCourse } from "../../domain/aggregates/academic_course.entity";
 import { Teacher } from "src/users/domain/aggregates/teacher.entity";
+import { StorageService } from 'src/storage/storage.service';
+import { JwtPayload } from 'src/auth/domain/interfaces/jwt-payload.interface';
+import type { Multer } from 'multer';
 
 /**
  * @class AcademicCourseService
@@ -29,6 +32,7 @@ export class AcademicCourseService {
     private readonly courseRepository: ICourseRepository,
     @Inject(ITeacherRepository)
     private readonly teacherRepository: ITeacherRepository,
+    private readonly storageService: StorageService,
     @Inject(IGlobalEventRepository)
     private readonly globalEventRepository: IGlobalEventRepository,
     private readonly academicCourseMapper: AcademicCourseMapper,
@@ -50,6 +54,56 @@ export class AcademicCourseService {
     }
 
     return this.academicCourseMapper.toDto(academicCourse);
+  }
+
+  async uploadSyllabus(
+    academicCourseId: string,
+    file: Express.Multer.File,
+    authenticatedUser: JwtPayload,
+  ): Promise<AcademicCourseDTO> {
+    if (authenticatedUser.role !== 'teacher') {
+      throw new ForbiddenException('Only teachers can upload syllabi.');
+    }
+
+    const teacherProfile = await this.teacherRepository.findByUserId(
+      authenticatedUser.sub,
+    );
+
+    if (!teacherProfile) {
+      throw new ForbiddenException('Teacher profile not found.');
+    }
+
+    const academicCourse = await this.academicCourseRepository.findById(
+      academicCourseId,
+    );
+
+    if (!academicCourse) {
+      throw new NotFoundException(
+        `AcademicCourse with ID ${academicCourseId} not found`,
+      );
+    }
+
+    if (!academicCourse.coordinator) {
+      throw new ForbiddenException(
+        'Only the course coordinator can upload the syllabus.',
+      );
+    }
+
+    if (academicCourse.coordinator.id !== teacherProfile.id) {
+      throw new ForbiddenException(
+        'Only the course coordinator can upload the syllabus.',
+      );
+    }
+
+    const url = await this.storageService.saveSyllabus(
+      academicCourseId,
+      file,
+    );
+
+    academicCourse.urlSyllabus = url;
+    const savedCourse = await this.academicCourseRepository.save(academicCourse);
+
+    return this.academicCourseMapper.toDto(savedCourse);
   }
 
   async findAllByPeriod(periodId: string): Promise<AcademicCourseDTO[]> {

@@ -24,6 +24,9 @@
   import EditStudentGradesDialog from "./EditStudentGradesDialog.svelte";
   import UploadGradesDialog from "./UploadGradesDialog.svelte";
 
+  import { groupsService } from "$lib/services/groups.service";
+  import UploadGradePdfDialog from "./UploadGradePdfDialog.svelte";
+
   let { groupGradesData } = $props<{ groupGradesData: GroupGradesResponse }>();
 
   let sorting = $state<SortingState>([]);
@@ -145,7 +148,7 @@
 </script>
 
 <div class="w-full space-y-4">
-  <div class="flex items-center justify-between gap-4 p-1">
+  <div class="flex flex-wrap items-center justify-between gap-4 p-1">
     <Input
       placeholder="Filtrar por estudiante..."
       value={(table.getColumn("fullName")?.getFilterValue() as string) ?? ""}
@@ -154,10 +157,32 @@
       class="max-w-sm"
     />
 
+    <div class="flex flex-wrap gap-2">
+      <UploadGradePdfDialog
+        groupId={groupGradesData.groupId}
+        actionLabel="Subir PDF: Nota Más Alta"
+        successMessage="PDF de nota más alta subido correctamente"
+        uploadAction={groupsService.uploadHighestGradePdf}
+        currentUrl={groupGradesData.highestGradePdfUrl}
+        downloadLabel="Ver PDF de la nota más alta"
+      />
+      <UploadGradePdfDialog
+        groupId={groupGradesData.groupId}
+        actionLabel="Subir PDF: Nota Más Baja"
+        successMessage="PDF de nota más baja subido correctamente"
+        uploadAction={groupsService.uploadLowestGradePdf}
+        currentUrl={groupGradesData.lowestGradePdfUrl}
+        downloadLabel="Ver PDF de la nota más baja"
+      />
+      <UploadGradesDialog {groupGradesData} />
+    </div>
+
     {#if groupGradesData.canEdit}
       <UploadGradesDialog {groupGradesData} />
     {/if}
   </div>
+
+  
 
   <div class="rounded-md border shadow-sm">
     <Table.Root>

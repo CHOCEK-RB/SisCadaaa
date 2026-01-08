@@ -19,6 +19,8 @@ import { StudentModule } from './student/student.module';
 import { TeacherModule } from './teacher/teacher.module';
 import { EventsModule } from './events/events.module';
 import { ReservationModule } from './reservation/reservation.module';
+import { StorageModule } from './storage/storage.module';
+
 
 @Module({
   imports: [
