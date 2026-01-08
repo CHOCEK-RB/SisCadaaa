@@ -7,6 +7,9 @@ import {
   InternalServerErrorException,
 } from "@nestjs/common";
 
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+
 import { IAcademicGroupRepository } from "../../domain/repositories/iacademic_group.repository";
 import { IStudentRepository } from "src/users/domain/repositories/istudent.repository";
 import { ITeacherRepository } from "src/users/domain/repositories/iteacher.repository";
@@ -31,6 +34,16 @@ import { Classroom } from 'src/classroom/domain/aggregates/classroom.entity';
 import { CreateScheduleDto } from '../dto/create-schedule.dto';
 import { UpdateAcademicGroupDto } from '../dto/update-academic-group.dto';
 
+import {
+  GradeAttachment,
+  GradeAttachmentType,
+} from '../../domain/aggregates/grade_attachment.entity';
+import {
+  GRADE_ATTACHMENT_MAX_BYTES,
+  GRADE_ATTACHMENT_PUBLIC_PATH,
+} from '../constants/grade-attachments.constants';
+
+
 export interface GroupsForPeriods {
   [period: string]: AcademicGroupDTO[];
 }
@@ -42,6 +55,8 @@ export interface StudentGradeInfo {
   firstName: string;
   lastName: string;
   grades: Grades;
+  highestGradePdfUrl?: string | null;
+  lowestGradePdfUrl?: string | null;  
 }
 
 export interface GroupGradesResponse {
@@ -51,6 +66,10 @@ export interface GroupGradesResponse {
   courseName: string;
   courseCode: string;
   canEdit: boolean;
+
+  highestGradePdfUrl?: string | null;
+  lowestGradePdfUrl?: string | null;
+
   students: StudentGradeInfo[];
   gradingScheme: {
     firstContinue: number;
@@ -84,7 +103,36 @@ export class GroupsService {
     private readonly classroomRepository: IClassroomRepository,
     @Inject(IScheduleSlotRepository)
     private readonly scheduleSlotRepository: IScheduleSlotRepository,
+    @InjectRepository(GradeAttachment)
+    private readonly gradeAttachmentRepository: Repository<GradeAttachment>,
   ) {}
+
+  //support for grades attachments
+  private validateGradeAttachment(file?: Express.Multer.File): void {
+    if (!file) {
+      throw new BadRequestException('PDF file is required.');
+    }
+
+    if (!file.mimetype.toLowerCase().includes('pdf')) {
+      throw new BadRequestException('Only PDF files are allowed.');
+    }
+
+    if (file.size > GRADE_ATTACHMENT_MAX_BYTES) {
+      throw new BadRequestException('PDF file exceeds the maximum size.');
+    }
+  }
+
+  private getAttachmentUrl(filename: string): string {
+    return `${GRADE_ATTACHMENT_PUBLIC_PATH}/${filename}`;
+  }
+
+  private ensureSyllabusAvailable(urlSyllabus?: string) {
+    if (!urlSyllabus) {
+      throw new ForbiddenException(
+        'Syllabus must be uploaded before accessing this resource.',
+      );
+    }
+  }
 
   async createAcademicGroup(
     createAcademicGroupDto: CreateAcademicGroupDto,
@@ -536,6 +584,8 @@ export class GroupsService {
       throw new ForbiddenException("Group not found");
     }
 
+    this.ensureSyllabusAvailable(group.academicCourse?.urlSyllabus);
+
     const groupDTO: AcademicGroupDTO = {
       id: group.id,
       name: group.name,
@@ -625,7 +675,21 @@ export class GroupsService {
       throw new ForbiddenException("You are not assigned to teach this group.");
     }
 
+    this.ensureSyllabusAvailable(group.academicCourse?.urlSyllabus);
+
     const allEnrollments = group.enrollments;
+
+    //load grade attachments
+    const attachments = await this.gradeAttachmentRepository.find({
+      where: { group: { id: groupId } },
+    });
+
+    const highestAttachment = attachments.find(
+      (attachment) => attachment.type === GradeAttachmentType.HIGHEST,
+    );
+    const lowestAttachment = attachments.find(
+      (attachment) => attachment.type === GradeAttachmentType.LOWEST,
+    );
 
     const students: StudentGradeInfo[] = allEnrollments.map((enrollment) => ({
       enrollmentId: enrollment.id,
@@ -642,6 +706,8 @@ export class GroupsService {
         secondPartial: -1,
         thirdPartial: -1,
       },
+      highestGradePdfUrl: null,
+      lowestGradePdfUrl: null,
     }));
 
     students.sort((a, b) => a.lastName.localeCompare(b.lastName));
@@ -653,6 +719,10 @@ export class GroupsService {
       courseName: group.academicCourse.course.name,
       courseCode: group.academicCourse.course.code,
       canEdit: group.type === GroupType.THEORY,
+
+      highestGradePdfUrl: highestAttachment?.url ?? null,
+      lowestGradePdfUrl: lowestAttachment?.url ?? null,
+
       students,
       gradingScheme: group.academicCourse.grades || {
         firstContinue: 0,
@@ -663,6 +733,62 @@ export class GroupsService {
         thirdPartial: 0,
       },
     };
+  }
+
+  //grade attachments support
+  async uploadGradePdf(
+    groupId: string,
+    type: GradeAttachmentType,
+    file: Express.Multer.File,
+    authenticatedUser: JwtPayload,
+  ): Promise<{ url: string }> {
+    if (authenticatedUser.role !== 'teacher') {
+      throw new ForbiddenException('Only teachers can upload grade PDFs.');
+    }
+
+    const teacherProfile = await this.teacherRepository.findByUserId(
+      authenticatedUser.sub,
+    );
+    if (!teacherProfile) {
+      throw new NotFoundException('Teacher profile not found.');
+    }
+
+    const group = await this.academicGroupRepository.findById(groupId);
+    if (!group) {
+      throw new NotFoundException(`Group with ID ${groupId} not found.`);
+    }
+
+    if (!group.teacher || group.teacher.id !== teacherProfile.id) {
+      throw new ForbiddenException('You are not assigned to teach this group.');
+    }
+
+    if (group.type !== GroupType.THEORY) {
+      throw new BadRequestException(
+        'Grade PDFs can only be uploaded for theory groups.',
+      );
+    }
+
+    this.validateGradeAttachment(file);
+
+    const url = this.getAttachmentUrl(file.filename);
+    const existingAttachment = await this.gradeAttachmentRepository.findOne({
+      where: { group: { id: groupId }, type },
+    });
+
+    const attachment =
+      existingAttachment ??
+      this.gradeAttachmentRepository.create({
+        group,
+        type,
+      });
+
+    attachment.url = url;
+    attachment.uploadedAt = new Date();
+    attachment.uploadedBy = teacherProfile;
+
+    await this.gradeAttachmentRepository.save(attachment);
+
+    return { url };
   }
 
   async updateStudentGrades(
@@ -689,6 +815,8 @@ export class GroupsService {
     if (!group.teacher || group.teacher.id !== teacherProfile.id) {
       throw new ForbiddenException("You are not assigned to teach this group.");
     }
+
+    this.ensureSyllabusAvailable(group.academicCourse?.urlSyllabus);
 
     if (group.type !== GroupType.THEORY) {
       throw new BadRequestException(
@@ -756,6 +884,8 @@ export class GroupsService {
     if (!group.teacher || group.teacher.id !== teacherProfile.id) {
       throw new ForbiddenException("You are not assigned to teach this group.");
     }
+
+    this.ensureSyllabusAvailable(group.academicCourse?.urlSyllabus);
 
     if (group.type !== GroupType.THEORY) {
       throw new BadRequestException(

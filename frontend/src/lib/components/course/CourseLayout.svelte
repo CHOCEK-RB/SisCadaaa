@@ -16,9 +16,10 @@
 		courseDetails: AcademicCourseDTO | null;
 		children: Snippet;
 		role: UserRole;
+		showNavigation?: boolean;
 	};
 
-	let { courseDetails, children, role }: Props = $props();
+	let { courseDetails, children, role, showNavigation = true }: Props = $props();
 
 	const year = new Date(courseDetails!.creationDate.toString()).getFullYear();
 
@@ -90,23 +91,25 @@
 		{/if}
 	</div>
 
-	<NavigationMenu.Root class="mb-6">
-		<NavigationMenu.List>
-			{#each navLinks as item (item.href)}
-				{@const isActive = page.url.pathname === item.href}
-				<NavigationMenu.Item>
-					<NavigationMenu.Link
-						href={item.href}
-						active={isActive}
-						class="flex items-center gap-2 p-3 pr-16 pl-16"
-					>
-						<item.icon class="h-10 w-10 shrink-0" />
-						<span>{item.title}</span>
-					</NavigationMenu.Link>
-				</NavigationMenu.Item>
-			{/each}
-		</NavigationMenu.List>
-	</NavigationMenu.Root>
+	{#if showNavigation}
+		<NavigationMenu.Root class="mb-6">
+			<NavigationMenu.List>
+				{#each navLinks as item (item.href)}
+					{@const isActive = page.url.pathname === item.href}
+					<NavigationMenu.Item>
+						<NavigationMenu.Link
+							href={item.href}
+							active={isActive}
+							class="flex items-center gap-2 p-3 pr-16 pl-16"
+						>
+							<item.icon class="h-10 w-10 shrink-0" />
+							<span>{item.title}</span>
+						</NavigationMenu.Link>
+					</NavigationMenu.Item>
+				{/each}
+			</NavigationMenu.List>
+		</NavigationMenu.Root>
+	{/if}
 
 	{@render children()}
 </div>

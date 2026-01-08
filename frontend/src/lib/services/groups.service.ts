@@ -21,6 +21,8 @@ export interface StudentGradeInfo {
     secondPartial: number;
     thirdPartial: number;
   };
+  highestGradePdfUrl?: string | null;
+  lowestGradePdfUrl?: string | null;
 }
 
 export interface GroupGradesResponse {
@@ -39,6 +41,8 @@ export interface GroupGradesResponse {
     secondPartial: number;
     thirdPartial: number;
   };
+  highestGradePdfUrl?: string | null;
+  lowestGradePdfUrl?: string | null;
 }
 
 export interface UpdateGradeDto {
@@ -278,5 +282,30 @@ export const groupsService = {
       throw new Error("No se recibió respuesta del servidor al actualizar el grupo académico.");
     }
     return response;
+  },
+
+  // PDF uploaders for highest and lowest grades
+  async uploadHighestGradePdf(
+    groupId: string,
+    formData: FormData,
+    options: RequestOptions = {},
+  ): Promise<void> {
+    await api.postFormData(
+      `/groups/${groupId}/grades/highest/pdf`,
+      formData,
+      options,
+    );
+  },
+
+  async uploadLowestGradePdf(
+    groupId: string,
+    formData: FormData,
+    options: RequestOptions = {},
+  ): Promise<void> {
+    await api.postFormData(
+      `/groups/${groupId}/grades/lowest/pdf`,
+      formData,
+      options,
+    );
   },
 };

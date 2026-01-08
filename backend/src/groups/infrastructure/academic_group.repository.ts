@@ -71,7 +71,7 @@ export class AcademicGroupRepository implements IAcademicGroupRepository {
   ): Promise<AcademicGroup | null> {
     return this.typeormRepo.findOne({
       where: { id, type },
-      relations: { academicCourse: { course: true }, enrollments: true },
+      relations: { academicCourse: { course: true }, enrollments: true, teacher: true },
     });
   }
 
@@ -241,7 +241,7 @@ export class AcademicGroupRepository implements IAcademicGroupRepository {
   async getScheduleById(id: string): Promise<AcademicGroup | null> {
     return this.typeormRepo.findOne({
       where: { id },
-      relations: { schedule: { classroom: true }, teacher: true },
+      relations: { schedule: { classroom: true }, teacher: true, academicCourse: true },
     });
   }
 

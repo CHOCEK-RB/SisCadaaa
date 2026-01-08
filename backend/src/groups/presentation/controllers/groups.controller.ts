@@ -10,9 +10,18 @@ import {
   HttpCode, // Added HttpCode for clarity
   HttpStatus, // Added HttpStatus for clarity
   Delete, // Added Delete
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from "@nestjs/common";
 
 import { AuthGuard } from "@nestjs/passport";
+
+import { FileInterceptor } from "@nestjs/platform-express";
+import { diskStorage } from "multer";
+import { extname } from "path";
+import { randomUUID } from "crypto";
+import * as fs from "fs";
 
 import { GetUser } from "src/users/presentation/decorators/get_user.decorator";
 
@@ -30,6 +39,36 @@ import { AcademicCourseDTO } from "src/courses/application/dto/academic_course.d
 import { StudentInfoDTO } from "../../application/dto/student-info.dto"; // Added import
 import { CreateScheduleDto } from "../../application/dto/create-schedule.dto";
 import { UpdateAcademicGroupDto } from "../../application/dto/update-academic-group.dto";
+
+import {
+  GRADE_ATTACHMENT_MAX_BYTES,
+  GRADE_ATTACHMENT_UPLOAD_DIR,
+} from "../../application/constants/grade-attachments.constants";
+import { GradeAttachmentType } from "../../domain/aggregates/grade_attachment.entity";
+
+const gradeAttachmentStorage = diskStorage({
+  destination: (_req, _file, callback) => {
+    fs.mkdirSync(GRADE_ATTACHMENT_UPLOAD_DIR, { recursive: true });
+    callback(null, GRADE_ATTACHMENT_UPLOAD_DIR);
+  },
+  filename: (_req, file, callback) => {
+    const extension = extname(file.originalname).toLowerCase() || ".pdf";
+    callback(null, `${randomUUID()}${extension}`);
+  },
+});
+
+const pdfFileFilter = (
+  _req: unknown,
+  file: Express.Multer.File,
+  callback: (error: Error | null, acceptFile: boolean) => void,
+) => {
+  if (file.mimetype.toLowerCase().includes("pdf")) {
+    callback(null, true);
+    return;
+  }
+
+  callback(new BadRequestException("Only PDF files are allowed."), false);
+};
 
 /**
  * @class GroupsController
@@ -245,5 +284,47 @@ export class GroupsController {
   ) {
     await this.groupsService.updateMultipleGrades(id, update, user);
     return { success: true, message: "Notas actualizadas correctamente" };
+  }
+
+  @Post("/:id/grades/highest/pdf")
+  @UseInterceptors(
+    FileInterceptor("file", {
+      storage: gradeAttachmentStorage,
+      fileFilter: pdfFileFilter,
+      limits: { fileSize: GRADE_ATTACHMENT_MAX_BYTES },
+    }),
+  )
+  async uploadHighestGradePdf(
+    @Param("id", ParseUUIDPipe) id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @GetUser() user: JwtPayload,
+  ): Promise<{ url: string }> {
+    return await this.groupsService.uploadGradePdf(
+      id,
+      GradeAttachmentType.HIGHEST,
+      file,
+      user,
+    );
+  }
+
+  @Post("/:id/grades/lowest/pdf")
+  @UseInterceptors(
+    FileInterceptor("file", {
+      storage: gradeAttachmentStorage,
+      fileFilter: pdfFileFilter,
+      limits: { fileSize: GRADE_ATTACHMENT_MAX_BYTES },
+    }),
+  )
+  async uploadLowestGradePdf(
+    @Param("id", ParseUUIDPipe) id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @GetUser() user: JwtPayload,
+  ): Promise<{ url: string }> {
+    return await this.groupsService.uploadGradePdf(
+      id,
+      GradeAttachmentType.LOWEST,
+      file,
+      user,
+    );
   }
 }

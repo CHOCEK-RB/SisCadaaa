@@ -9,6 +9,8 @@ import { EventsModule } from 'src/events/events.module';
 import { AcademicGroup } from './domain/aggregates/academic_group.entity';
 import { ScheduleSlot } from './domain/aggregates/schedule.entity';
 
+import { GradeAttachment } from './domain/aggregates/grade_attachment.entity';
+
 import { IAcademicGroupRepository } from './domain/repositories/iacademic_group.repository';
 import { IScheduleSlotRepository } from './domain/repositories/ischedule.repository';
 
@@ -25,7 +27,7 @@ import { ClassroomModule } from 'src/classroom/classroom.module';
   controllers: [GroupsController],
 
   imports: [
-    TypeOrmModule.forFeature([AcademicGroup, ScheduleSlot]),
+    TypeOrmModule.forFeature([AcademicGroup, ScheduleSlot, GradeAttachment]),
     forwardRef(() => CourseModule),
     forwardRef(() => AttendanceModule),
     forwardRef(() => EnrollmentModule),

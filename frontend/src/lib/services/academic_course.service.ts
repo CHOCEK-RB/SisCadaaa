@@ -56,6 +56,26 @@ export const academicCourseService = {
     return response;
   },
 
+  async uploadSyllabus(
+		academicCourseId: string,
+		file: File,
+		options: RequestOptions = {}
+	) {
+		const formData = new FormData();
+		formData.append('file', file);
+
+		const response = await api.postFormData<AcademicCourseDTO>(
+			`/academic-courses/${academicCourseId}/syllabus`,
+			formData,
+			options
+		);
+
+		if (!response) {
+			throw new Error('No se recibieron datos del servidor al subir el sílabo.');
+		}
+		return response;
+	},
+
   async getAcademicPeriods(
     options: RequestOptions = {},
   ): Promise<GlobalEvent[]> {

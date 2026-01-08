@@ -6,6 +6,10 @@ import {
   ParseUUIDPipe,
   Post,
   Body,
+  BadRequestException,
+  UseInterceptors,
+  UploadedFile,
+  Req,
 } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { AcademicCourseService } from "../../application/services/academic_course.service";
@@ -16,6 +20,11 @@ import { Roles } from "src/auth/presentation/decorators/roles.decorator";
 import { RolesGuard } from "src/auth/presentation/guards/roles.guard";
 import { Role } from "src/users/domain/aggregates/role.enum";
 import { CreateAcademicCourseDTO } from "../../application/dto/create-academic-course.dto";
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
+import { Request } from 'express';
+import { JwtPayload } from 'src/auth/domain/interfaces/jwt-payload.interface';
+import type { Multer } from 'multer';
 
 /**
  * @class AcademicCourseController
@@ -78,6 +87,36 @@ export class AcademicCourseController {
   ): Promise<AcademicCourseDTO> {
     return this.academicCourseService.createAcademicCourse(
       createAcademicCourseDTO,
+    );
+  }
+
+  //logic for file upload
+  @Post(':id/syllabus')
+  @UseGuards(RolesGuard)
+  @Roles(Role.TEACHER)
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: 5 * 1024 * 1024 },
+    }),
+  )
+  async uploadSyllabus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req: Request & { user: JwtPayload },
+  ): Promise<AcademicCourseDTO> {
+    if (!file) {
+      throw new BadRequestException('File is required.');
+    }
+
+    if (file.mimetype !== 'application/pdf') {
+      throw new BadRequestException('Only PDF files are allowed.');
+    }
+
+    return this.academicCourseService.uploadSyllabus(
+      id,
+      file,
+      req.user,
     );
   }
 }
